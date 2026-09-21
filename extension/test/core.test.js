@@ -38,3 +38,43 @@ test('build handles paths with spaces, previews and failure preservation', async
   await assert.rejects(build(manifest,'letter',{executable:compiler}),/broken/);
   assert.equal(await fs.readFile(result.output,'utf8'),'%PDF-test');
 });
+test('loads a manifest containing an output-less review-box artifact', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'artifact-rbox-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.writeFile(path.join(root, 'artifact-studio.json'), JSON.stringify({
+    version: 1,
+    ast: { tbox: { schema: 'tbox/data.schema.json' } },
+    artifacts: [
+      { id: 'pdf', template: 'letter.typ', data: 'data.json', output: 'out/letter.pdf' },
+      { id: 'review', template: 'rbox/review.yaml', data: 'data.json',
+        renderer: 'review-box', kind: 'rbox' }
+    ]
+  }));
+  const manifest = path.join(root, 'artifact-studio.json');
+  const { artifacts } = await loadRecipe(manifest);
+  assert.equal(artifacts.length, 2);
+  const review = artifacts.find(a => a.id === 'review');
+  assert.equal(review.renderer, 'review-box');
+  assert.equal(review.output, undefined);
+});
+
+test('a rendering artifact still requires an output, and the error names it', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'artifact-noout-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.writeFile(path.join(root, 'artifact-studio.json'), JSON.stringify({
+    version: 1,
+    artifacts: [{ id: 'pdf', template: 'letter.typ', data: 'data.json' }]
+  }));
+  await assert.rejects(
+    loadRecipe(path.join(root, 'artifact-studio.json')),
+    /artifact "pdf".*output/s
+  );
+});
+
+test('both shipped sample manifests load', async () => {
+  for (const dir of ['supplier-clarification-zh', 'tender-document-v20918']) {
+    const manifest = path.join(__dirname, `../../samples/${dir}/artifact-studio.json`);
+    const { artifacts } = await loadRecipe(manifest);
+    assert.ok(artifacts.length >= 3, `${dir} should expose its artifacts`);
+  }
+});

@@ -27,20 +27,29 @@ async function loadRecipe(file, id) {
   for (const item of config.artifacts) {
     if (!item || typeof item.id !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(item.id) || seen.has(item.id)) throw new Error('Artifact IDs must be unique and contain letters, digits, underscores or hyphens.');
     seen.add(item.id);
-    for (const key of ['template', 'data', 'output']) inside(root, item[key]);
+    const renderer = item.renderer || detectRenderer(item);
+    const required = renderer === 'review-box' ? ['template', 'data'] : ['template', 'data', 'output'];
+    for (const key of required) {
+      try { inside(root, item[key]); }
+      catch (error) { throw new Error(`artifact "${item.id}": ${key}: ${error.message}`); }
+    }
     if (item.ontology) inside(root, item.ontology);
     if (item.dataSchema) inside(root, item.dataSchema);
     if (item.theme) inside(root, item.theme);
-    if (item.output === item.data || item.output === item.template) throw new Error('Output must not overwrite source.');
-    const renderer = detectRenderer(item);
+    if (item.output !== undefined && (item.output === item.data || item.output === item.template)) {
+      throw new Error(`artifact "${item.id}": output must not overwrite source.`);
+    }
     item.renderer = renderer;
     if (!/\.(json|ya?ml)$/i.test(item.data)) throw new Error('Expected .json/.yaml/.yml data.');
     if (renderer === 'typst') {
       if (!/\.typ$/i.test(item.template) || !/\.pdf$/i.test(item.output)) throw new Error('Typst artifacts need a .typ template and .pdf output.');
     } else if (renderer === 'html-display' || renderer === 'html-editor') {
       if (!/\.html?$/i.test(item.template) || !/\.html?$/i.test(item.output)) throw new Error('HTML artifacts need an .html template and .html output.');
+    } else if (renderer === 'review-box') {
+      if (item.output !== undefined) throw new Error(`artifact "${item.id}": review-box artifacts render nothing and must not declare an output.`);
+      if (!/\.ya?ml$/i.test(item.template)) throw new Error(`artifact "${item.id}": review-box needs a .yaml rules template.`);
     } else {
-      throw new Error(`Unsupported renderer: ${renderer}`);
+      throw new Error(`artifact "${item.id}": unsupported renderer: ${renderer}`);
     }
   }
   const recipe = id ? config.artifacts.find(x => x.id === id) : config.artifacts[0];
