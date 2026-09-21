@@ -1,10 +1,10 @@
 # Overleaf-like Artifact Editor
 
-Artifact Studio's web and VS Code editors follow an Overleaf-style layout: **edit on the left, live preview on the right**, with a clear save state.
+Artifact Studio’s web and VS Code editors follow an Overleaf-style layout: **edit on the left, live preview on the right**, with a clear save state.
 
 ## Web (`/artifacts/[id]`)
 
-- **Top bar**: project title, dirty chip (`Unsaved` / `Saving…` / `Saved HH:MM`), Reset, Generate, Save, LLM settings.
+- **Top bar**: project title, dirty chip (`Unsaved` / `Saving…` / `Saved HH:MM`), Reset, Generate, **Validate & save**, LLM settings.
 - **Cmd/Ctrl+S** saves; **autosave** runs ~1.5s after the last edit.
 - **Validation failure** shows schema issues but **keeps the dirty buffer** (nothing is discarded).
 - **Split layout**: Schema form / T-box / R-box / A-box JSON on the left; live HTML preview on the right (drag the divider; toggle Hide preview).
@@ -31,7 +31,7 @@ PUT `/api/artifacts/[id]` returns:
 
 | Artifact id | Web content path | Sample mirrors |
 |-------------|------------------|----------------|
-| `clarification` | `web/content/artifacts/clarification/data.json` | `samples/supplier-clarification-html-zh/data.json` |
+| `clarification` | `web/content/artifacts/clarification/data.json` | `samples/supplier-clarification-zh/data.json (+ abox/data.json)` |
 | `tender` | `web/content/artifacts/tender/data.json` | `samples/tender-document-v20918/data.json`, `…/abox/data.json` |
 
 Set on Vercel project **artifact-studio-web** (team **neolaf1**):
