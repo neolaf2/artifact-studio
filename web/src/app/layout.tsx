@@ -9,8 +9,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Artifact Studio Web',
-  description: 'T-box schema driven artifact editing (clarification letter demo)',
+  title: 'Artifact Studio',
+  description: 'Overleaf-style artifact projects - open or new from clarification / tender templates',
 };
 
 export default function RootLayout({
