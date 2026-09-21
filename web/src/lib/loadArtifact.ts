@@ -21,7 +21,8 @@ function snapshotFromData(
   const summary: ArtifactSnapshotSummary = {};
   if (typeof s.version === 'string') summary.version = s.version;
   if (typeof s.artifactId === 'string') summary.artifactId = s.artifactId;
-  if (typeof s.contentHash === 'string') summary.contentHash = s.contentHash;
+  const hash = s.contentHash ?? s['contentHash'];
+  if (typeof hash === 'string') summary.contentHash = hash;
   if (typeof s.createdAt === 'string') summary.createdAt = s.createdAt;
   if (typeof s.updatedAt === 'string') summary.updatedAt = s.updatedAt;
   return Object.keys(summary).length ? summary : undefined;
