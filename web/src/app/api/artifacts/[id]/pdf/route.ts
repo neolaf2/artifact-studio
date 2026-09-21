@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { readDurableData } from '@/lib/durableStore';
-import { renderArtifactPdf } from '@/lib/renderPdf';
+import { renderArtifactPdf, resolvePdfView, typstAvailable } from '@/lib/renderPdf';
 
 type Ctx = { params: Promise<{ id: string }> };
 
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 /**
  * POST /api/artifacts/:id/pdf
- * Body optional: { data?: object } — current editor A-box; otherwise durable store.
- * Returns application/pdf, or JSON error (501 if Typst missing).
+ * Body optional: { data?: object, preferHtml?: boolean }
+ * - Local: Typst when installed, else HTML preview → PDF
+ * - Vercel: always HTML preview → PDF (no Typst binary)
  */
 export async function POST(req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
@@ -16,11 +20,16 @@ export async function POST(req: Request, ctx: Ctx) {
   }
 
   let data: Record<string, unknown> | undefined;
+  let preferHtml = false;
   try {
-    const body = (await req.json().catch(() => ({}))) as { data?: unknown };
+    const body = (await req.json().catch(() => ({}))) as {
+      data?: unknown;
+      preferHtml?: unknown;
+    };
     if (body.data && typeof body.data === 'object' && !Array.isArray(body.data)) {
       data = body.data as Record<string, unknown>;
     }
+    preferHtml = Boolean(body.preferHtml);
   } catch {
     data = undefined;
   }
@@ -37,7 +46,7 @@ export async function POST(req: Request, ctx: Ctx) {
     }
   }
 
-  const result = await renderArtifactPdf(id, data);
+  const result = await renderArtifactPdf(id, data, { preferHtml });
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
@@ -48,22 +57,30 @@ export async function POST(req: Request, ctx: Ctx) {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${result.filename.replace(/"/g, '')}"`,
       'X-Artifact-Pdf-Source': result.source,
+      'X-Artifact-Pdf-Engine': result.engine,
       'Cache-Control': 'no-store',
     },
   });
 }
 
-/** Lightweight probe: is Typst available + is a view resolved? */
+/** Probe: typst / html engines and resolved Typst view (if any). */
 export async function GET(_req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
-  const { resolvePdfView, typstAvailable } = await import('@/lib/renderPdf');
   const view = await resolvePdfView(id);
   const typst = await typstAvailable();
+  const onVercel = Boolean(process.env.VERCEL);
   return NextResponse.json({
-    ok: Boolean(view) && typst,
+    ok: true,
     typst,
+    onVercel,
+    preferredEngine: onVercel || !typst ? 'html' : 'typst',
     view: view
-      ? { typst: view.typstRel, dataInput: view.dataInput, filename: view.filename, source: view.source }
+      ? {
+          typst: view.typstRel,
+          dataInput: view.dataInput,
+          filename: view.filename,
+          source: view.source,
+        }
       : null,
   });
 }

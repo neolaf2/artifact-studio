@@ -32,7 +32,13 @@ export type ResolvedPdfView = {
 };
 
 export type RenderPdfResult =
-  | { ok: true; pdf: Buffer; filename: string; source: ResolvedPdfView['source'] }
+  | {
+      ok: true;
+      pdf: Buffer;
+      filename: string;
+      source: ResolvedPdfView['source'] | 'html';
+      engine: 'typst' | 'html';
+    }
   | { ok: false; status: number; error: string };
 
 const SAMPLE_BY_TEMPLATE: Record<TemplateId, string> = {
@@ -244,6 +250,41 @@ async function copyTypstTree(view: ResolvedPdfView, destRoot: string): Promise<v
 export async function renderArtifactPdf(
   id: string,
   data: Record<string, unknown>,
+  opts: { preferHtml?: boolean } = {},
+): Promise<RenderPdfResult> {
+  const onVercel = Boolean(process.env.VERCEL);
+  const forceHtml = Boolean(opts.preferHtml) || onVercel;
+
+  if (!forceHtml && (await typstAvailable())) {
+    const typstResult = await renderWithTypst(id, data);
+    if (typstResult.ok) return typstResult;
+    const html = await renderHtmlFallback(id, data);
+    if (html.ok) return html;
+    return typstResult;
+  }
+
+  return renderHtmlFallback(id, data);
+}
+
+async function renderHtmlFallback(
+  id: string,
+  data: Record<string, unknown>,
+): Promise<RenderPdfResult> {
+  const { renderHtmlPreviewPdf } = await import('./renderHtmlPdf');
+  const html = await renderHtmlPreviewPdf(id, data);
+  if (!html.ok) return { ok: false, status: html.status, error: html.error };
+  return {
+    ok: true,
+    pdf: html.pdf,
+    filename: html.filename,
+    source: 'html',
+    engine: 'html',
+  };
+}
+
+async function renderWithTypst(
+  id: string,
+  data: Record<string, unknown>,
 ): Promise<RenderPdfResult> {
   const view = await resolvePdfView(id);
   if (!view) {
@@ -279,11 +320,13 @@ export async function renderArtifactPdf(
     }
 
     const pdf = await fs.readFile(outPdf);
-    return { ok: true, pdf, filename: view.filename, source: view.source };
+    return { ok: true, pdf, filename: view.filename, source: view.source, engine: 'typst' };
   } finally {
     await fs.rm(staging, { recursive: true, force: true }).catch(() => {});
   }
 }
+
+
 
 export async function typstAvailable(): Promise<boolean> {
   try {
