@@ -31,20 +31,21 @@ function readSnapshotHash(snapshot: Record<string, unknown> | undefined): string
 }
 
 
-async function downloadPdfFromHtml(html: string, filename: string) {
-  const w = window.open('', '_blank', 'noopener,noreferrer,width=900,height=1200');
-  if (!w) throw new Error('Popup blocked — allow popups to download PDF from HTML preview');
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  await new Promise<void>((resolve) => {
-    const done = () => resolve();
-    if (w.document.readyState === 'complete') done();
-    else w.addEventListener('load', done, { once: true });
-  });
-  w.focus();
-  w.print(); // user can "Save as PDF"
-  // Do not close immediately — let the print dialog finish
+
+async function downloadPdfFromHtmlClient(html: string, filename: string) {
+  const html2pdf = (await import('html2pdf.js')).default;
+  const opt = {
+    margin: 10,
+    filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+  } as const;
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html;
+  // Prefer the .sheet card if present
+  const target = (wrapper.querySelector('.sheet') as HTMLElement) || wrapper;
+  await html2pdf().set(opt).from(target).save();
 }
 
 export function ArtifactEditor({ initial }: Props) {
@@ -198,25 +199,32 @@ export function ArtifactEditor({ initial }: Props) {
   }
 
 
+
   async function onDownloadPdf() {
     setPdfBusy(true);
-    setStatus('Building PDF with Typst…');
+    setStatus('Building PDF…');
     try {
       const res = await fetch(`/api/artifacts/${bundle.meta.id}/pdf`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ data }),
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({} as { error?: string }));
-        // Vercel without Chromium binaries: fall back to printing the live HTML preview
-        try {
-          await downloadPdfFromHtml(previewHtml, `${bundle.meta.id}.pdf`);
-          setStatus('Use the print dialog → Save as PDF (HTML preview fallback)');
+      const ctype = res.headers.get('content-type') || '';
+      if (ctype.includes('application/json')) {
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || `PDF failed (${res.status})`);
+        if (body.engine === 'html-client' && typeof body.html === 'string') {
+          await downloadPdfFromHtmlClient(body.html, body.filename || `${bundle.meta.id}.pdf`);
+          setStatus(`PDF downloaded (${body.filename || bundle.meta.id + '.pdf'}, html)`);
           return;
-        } catch {
-          throw new Error(body.error || `PDF failed (${res.status})`);
         }
+        throw new Error(body.error || 'Unexpected PDF response');
+      }
+      if (!res.ok) {
+        // Last resort: client preview HTML already in memory
+        await downloadPdfFromHtmlClient(previewHtml, `${bundle.meta.id}.pdf`);
+        setStatus(`PDF downloaded (${bundle.meta.id}.pdf, html)`);
+        return;
       }
       const blob = await res.blob();
       const cd = res.headers.get('Content-Disposition') || '';
@@ -236,6 +244,7 @@ export function ArtifactEditor({ initial }: Props) {
       setPdfBusy(false);
     }
   }
+
 
   const chipLabel = chip === 'saving' ? 'Saving…' : chip === 'unsaved' ? 'Unsaved' : savedAt ? `Saved ${formatSavedClock(savedAt)}` : 'Saved';
   const chipClass = chip === 'saving' ? 'border-sky-300 bg-sky-50 text-sky-900' : chip === 'unsaved' ? 'border-amber-400 bg-amber-50 text-amber-950' : 'border-emerald-300 bg-emerald-50 text-emerald-900';

@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { readDurableData } from '@/lib/durableStore';
-import { renderArtifactPdf, resolvePdfView, typstAvailable } from '@/lib/renderPdf';
+import {
+  renderArtifactPdf,
+  resolvePdfView,
+  typstAvailable,
+} from '@/lib/renderPdf';
+import { artifactPreviewHtml } from '@/lib/renderHtmlPdf';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -10,8 +15,11 @@ export const maxDuration = 60;
 /**
  * POST /api/artifacts/:id/pdf
  * Body optional: { data?: object, preferHtml?: boolean }
- * - Local: Typst when installed, else HTML preview → PDF
- * - Vercel: always HTML preview → PDF (no Typst binary)
+ *
+ * - Local + Typst: server returns application/pdf (Typst)
+ * - Vercel / no Typst: returns JSON { engine: "html-client", html, filename }
+ *   so the browser can turn the same preview HTML into a PDF (Chromium binaries
+ *   do not reliably ship in Vercel serverless).
  */
 export async function POST(req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
@@ -46,9 +54,47 @@ export async function POST(req: Request, ctx: Ctx) {
     }
   }
 
-  const result = await renderArtifactPdf(id, data, { preferHtml });
+  const onVercel = Boolean(process.env.VERCEL);
+  const typst = !onVercel && (await typstAvailable());
+
+  // Vercel (or explicit preferHtml without local Chromium path): client-side HTML→PDF
+  if (onVercel || preferHtml || !typst) {
+    // Still try server Chromium locally when preferHtml and Chrome exists;
+    // on Vercel always hand HTML to the client.
+    if (!onVercel) {
+      const result = await renderArtifactPdf(id, data, { preferHtml: true });
+      if (result.ok) {
+        return new NextResponse(new Uint8Array(result.pdf), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${result.filename.replace(/"/g, '')}"`,
+            'X-Artifact-Pdf-Source': result.source,
+            'X-Artifact-Pdf-Engine': result.engine,
+            'Cache-Control': 'no-store',
+          },
+        });
+      }
+    }
+
+    const html = artifactPreviewHtml(id, data);
+    return NextResponse.json({
+      engine: 'html-client',
+      filename: `${id}.pdf`,
+      html,
+    });
+  }
+
+  const result = await renderArtifactPdf(id, data);
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
+    // Last resort: client HTML
+    const html = artifactPreviewHtml(id, data);
+    return NextResponse.json({
+      engine: 'html-client',
+      filename: `${id}.pdf`,
+      html,
+      warning: result.error,
+    });
   }
 
   return new NextResponse(new Uint8Array(result.pdf), {
@@ -63,7 +109,6 @@ export async function POST(req: Request, ctx: Ctx) {
   });
 }
 
-/** Probe: typst / html engines and resolved Typst view (if any). */
 export async function GET(_req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
   const view = await resolvePdfView(id);
@@ -73,7 +118,7 @@ export async function GET(_req: Request, ctx: Ctx) {
     ok: true,
     typst,
     onVercel,
-    preferredEngine: onVercel || !typst ? 'html' : 'typst',
+    preferredEngine: onVercel ? 'html-client' : typst ? 'typst' : 'html',
     view: view
       ? {
           typst: view.typstRel,
