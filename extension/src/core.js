@@ -27,20 +27,31 @@ async function loadRecipe(file, id) {
   for (const item of config.artifacts) {
     if (!item || typeof item.id !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(item.id) || seen.has(item.id)) throw new Error('Artifact IDs must be unique and contain letters, digits, underscores or hyphens.');
     seen.add(item.id);
-    for (const key of ['template', 'data', 'output']) inside(root, item[key]);
-    if (item.ontology) inside(root, item.ontology);
-    if (item.dataSchema) inside(root, item.dataSchema);
-    if (item.theme) inside(root, item.theme);
-    if (item.output === item.data || item.output === item.template) throw new Error('Output must not overwrite source.');
-    const renderer = detectRenderer(item);
+    const renderer = item.renderer || detectRenderer(item);
+    const required = renderer === 'review-box' ? ['template', 'data'] : ['template', 'data', 'output'];
+    for (const key of required) {
+      try { inside(root, item[key]); }
+      catch (error) { throw new Error(`artifact "${item.id}": ${key}: ${error.message}`); }
+    }
+    for (const key of ['ontology', 'dataSchema', 'theme']) {
+      if (!item[key]) continue;
+      try { inside(root, item[key]); }
+      catch (error) { throw new Error(`artifact "${item.id}": ${key}: ${error.message}`); }
+    }
+    if (item.output !== undefined && (item.output === item.data || item.output === item.template)) {
+      throw new Error(`artifact "${item.id}": output must not overwrite source.`);
+    }
     item.renderer = renderer;
-    if (!/\.(json|ya?ml)$/i.test(item.data)) throw new Error('Expected .json/.yaml/.yml data.');
+    if (!/\.(json|ya?ml)$/i.test(item.data)) throw new Error(`artifact "${item.id}": data must be .json/.yaml/.yml.`);
     if (renderer === 'typst') {
       if (!/\.typ$/i.test(item.template) || !/\.pdf$/i.test(item.output)) throw new Error('Typst artifacts need a .typ template and .pdf output.');
     } else if (renderer === 'html-display' || renderer === 'html-editor') {
       if (!/\.html?$/i.test(item.template) || !/\.html?$/i.test(item.output)) throw new Error('HTML artifacts need an .html template and .html output.');
+    } else if (renderer === 'review-box') {
+      if (item.output !== undefined) throw new Error(`artifact "${item.id}": review-box artifacts render nothing and must not declare an output.`);
+      if (!/\.ya?ml$/i.test(item.template)) throw new Error(`artifact "${item.id}": review-box needs a .yaml rules template.`);
     } else {
-      throw new Error(`Unsupported renderer: ${renderer}`);
+      throw new Error(`artifact "${item.id}": unsupported renderer: ${renderer}`);
     }
   }
   const recipe = id ? config.artifacts.find(x => x.id === id) : config.artifacts[0];
@@ -79,6 +90,17 @@ function run(executable, args, cwd, log = () => {}) {
   });
 }
 
+async function readClosure(depsFile) {
+  try {
+    const parsed = JSON.parse(await fs.readFile(depsFile, 'utf8'));
+    // inputs are relative to the compile cwd, which run() pins to the project root; outputs are the compiler's temp paths.
+    const norm = list => (Array.isArray(list) ? list : []).map(p => String(p).split(path.sep).join('/'));
+    return { inputs: norm(parsed.inputs), outputs: norm(parsed.outputs) };
+  } catch {
+    return { inputs: [], outputs: [] };
+  }
+}
+
 async function build(file, id, options = {}) {
   const { root, recipe } = await loadRecipe(file, id);
   if (recipe.renderer === 'html-display' || recipe.renderer === 'html-editor') {
@@ -96,7 +118,16 @@ async function build(file, id, options = {}) {
   const staging = await fs.mkdtemp(path.join(path.dirname(output), '.artifact-build-'));
   try {
     const tempPDF = path.join(staging, 'output.pdf');
-    await run(executable, [...common, tempPDF], root, options.log);
+    const depsFile = path.join(staging, 'deps.json');
+    const depsArgs = ['--deps', depsFile, '--deps-format', 'json'];
+    try {
+      await run(executable, [...common.slice(0, -1), ...depsArgs, template, tempPDF], root, options.log);
+    } catch (error) {
+      if (!/unexpected argument.*--deps/i.test(String(error.message))) throw error;
+      // Typst < 0.15 has no --deps; the closure is optional, the build is not.
+      await run(executable, [...common, tempPDF], root, options.log);
+    }
+    const closure = await readClosure(depsFile);
     await fs.copyFile(tempPDF, output);
     let pages = [];
     if (options.previewDir) {
@@ -110,7 +141,7 @@ async function build(file, id, options = {}) {
         throw new Error(`PDF saved, but preview failed: ${error.message}`);
       }
     }
-    return { id: recipe.id, output, pages };
+    return { id: recipe.id, output, pages, closure };
   } finally { await fs.rm(staging, { recursive: true, force: true }); }
 }
 

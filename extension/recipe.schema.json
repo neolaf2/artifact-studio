@@ -10,16 +10,21 @@
     "version": {
       "const": 1
     },
+    "ast": {
+      "type": "object",
+      "description": "Declared T-box / A-box / R-box / views roles. Consumed by the project model for role assignment."
+    },
     "artifacts": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": [
-          "id",
-          "template",
-          "data",
-          "output"
+        "required": ["id", "template", "data"],
+        "allOf": [
+          {
+            "if": { "not": { "properties": { "renderer": { "const": "review-box" } }, "required": ["renderer"] } },
+            "then": { "required": ["output"] }
+          }
         ],
         "additionalProperties": false,
         "properties": {
@@ -44,9 +49,14 @@
             "enum": [
               "typst",
               "html-display",
-              "html-editor"
+              "html-editor",
+              "review-box"
             ],
             "description": "Build backend. Inferred from template/output when omitted."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Free-form role label (view, rbox, ...). Advisory; roles come from the ast block."
           },
           "theme": {
             "type": "string",

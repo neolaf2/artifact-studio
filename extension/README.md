@@ -17,7 +17,7 @@ LaTeX Workshop is the concrete workflow reference used for this starter: compile
 
 ## Run locally
 
-Prerequisites: desktop VS Code 1.95 or later, local Typst, and Node.js for CLI/testing/packaging. A recent maintained Node.js release is appropriate; core tests here ran on Node.js 24.19.0.
+Prerequisites: desktop VS Code 1.95 or later, local Typst, and Node.js for CLI/testing/packaging. A recent maintained Node.js release is appropriate; core tests here ran on Node.js 24.19.0. Typst **0.15.1 or newer** is recommended: it reports each build's dependency closure (`--deps`), which drives the project tree and watch mode. Older versions still build; the tree then shows only declared files.
 
 1. Extract this project and open the `artifact-studio` folder in VS Code.
 2. Press **F5** and select **Run Artifact Studio**. No npm install or transpilation is needed to launch it.
@@ -78,10 +78,11 @@ Data is passed as a file, not interpolated into Typst source. Normal strings rem
 | Output access | Opens the PDF with the system's associated application |
 | Project example | Creates a new clarification-letter example without overwriting an existing one |
 | CLI | Shares the extension's build core and returns a JSON result |
+| **Project tree** | T-box / A-box / R-box / Shared groups plus every artifact, backed by the dependency closure Typst reports for each build. |
 
 The preview is a raster page preview, not an embedded PDF reader. Text selection, annotations, source-to-preview synchronization, and PDF search are not implemented. Adding those would be a subsequent iteration.
 
-Watch mode rebuilds on saved filesystem changes, not every keystroke. It watches common template/data/image/bibliography extensions, not a compiler-derived dependency graph. Builds are serialized within the extension. Preview generation is a second Typst compilation, so avoid changing inputs during a build when exact PDF/preview correspondence matters. Output is copied from a successful temporary PDF; this preserves the last good output on compiler failure but is not a transactional artifact archive.
+Watch mode rebuilds on saved filesystem changes, not every keystroke. After the first successful build it watches only the files the compiler reported reading for the selected artifact; before that, or on a Typst without `--deps`, it watches common template/data/image/bibliography extensions. Builds are serialized within the extension. Preview generation is a second Typst compilation, so avoid changing inputs during a build when exact PDF/preview correspondence matters. Output is copied from a successful temporary PDF; this preserves the last good output on compiler failure but is not a transactional artifact archive.
 
 ## Agent integration
 

@@ -7,6 +7,8 @@ const { loadRecipe, build } = require('./core');
 const { buildHtml, loadDataFile } = require('./html');
 const { ArtifactEditorProvider, VIEW_TYPE } = require('./artifactEditor');
 const { loadAstContext, resolveCompanionPaths } = require('./ast');
+const { declaredModel, mergeClosures } = require('./projectModel');
+const { treeNodes } = require('./projectTree');
 
 function activate(context) {
   llmGenerate.bindSecrets(context.secrets);
@@ -14,6 +16,7 @@ function activate(context) {
   const diagnostics = vscode.languages.createDiagnosticCollection('artifact-studio');
   const changed = new vscode.EventEmitter();
   let selected, pdfPanel, htmlPanel, last, watching = false, timer, queue = Promise.resolve();
+  const closures = new Map(); // `${manifestPath}::${artifactId}` -> { inputs, outputs }
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 10);
   status.text = '$(files) Artifact Studio';
   status.command = 'artifactStudio.build';
@@ -21,19 +24,43 @@ function activate(context) {
 
   const provider = {
     onDidChangeTreeData: changed.event,
-    async getChildren() {
+    async getChildren(element) {
+      if (element) return element.children || [];
+      const manifests = await vscode.workspace.findFiles('**/artifact-studio.json', '**/{node_modules,.git}/**', 100);
+      const roots = [];
+      for (const uri of manifests) {
+        let manifest;
+        try {
+          manifest = JSON.parse(await fs.readFile(uri.fsPath, 'utf8'));
+          await loadRecipe(uri.fsPath); // semantic validation; errors read `artifact "<id>": ...`
+        } catch (error) {
+          roots.push({ kind: 'warning', label: path.basename(path.dirname(uri.fsPath)), description: error.message });
+          continue;
+        }
+        const declared = declaredModel(manifest);
+        const byId = {};
+        for (const a of declared.artifacts) {
+          const hit = closures.get(`${uri.fsPath}::${a.id}`);
+          if (hit) byId[a.id] = hit;
+        }
+        roots.push({
+          kind: 'group',
+          label: path.basename(path.dirname(uri.fsPath)),
+          description: uri.fsPath,
+          children: treeNodes(declared, mergeClosures(declared, byId), uri.fsPath)
+        });
+      }
+      return roots;
+    },
+    async listArtifacts() {
       const manifests = await vscode.workspace.findFiles('**/artifact-studio.json', '**/{node_modules,.git}/**', 100);
       const items = [];
       for (const uri of manifests) {
         try {
           const { artifacts } = await loadRecipe(uri.fsPath);
           for (const recipe of artifacts) {
-            items.push({
-              file: uri.fsPath,
-              id: recipe.id,
-              output: recipe.output,
-              renderer: recipe.renderer || 'typst'
-            });
+            if (recipe.renderer === 'review-box') continue; // validates only; not buildable in this plan
+            items.push({ file: uri.fsPath, id: recipe.id, output: recipe.output, renderer: recipe.renderer || 'typst' });
           }
         } catch (error) {
           output.appendLine(`${uri.fsPath}: ${error.message}`);
@@ -41,17 +68,38 @@ function activate(context) {
       }
       return items;
     },
-    getTreeItem(item) {
-      const node = new vscode.TreeItem(item.id);
-      node.description = `${item.renderer} · ${item.output}`;
-      node.tooltip = item.file;
-      const icon =
-        item.renderer === 'html-editor' ? 'edit' :
-        item.renderer === 'html-display' ? 'browser' :
-        'file-pdf';
-      node.iconPath = new vscode.ThemeIcon(icon);
-      node.command = { command: 'artifactStudio.build', title: 'Build Artifact', arguments: [item] };
-      return node;
+    getTreeItem(node) {
+      const collapsible = node.children && node.children.length
+        ? vscode.TreeItemCollapsibleState.Collapsed
+        : vscode.TreeItemCollapsibleState.None;
+      const item = new vscode.TreeItem(node.label, collapsible);
+      if (node.description) item.description = node.description;
+      if (node.kind === 'warning') {
+        item.iconPath = new vscode.ThemeIcon('warning');
+        item.tooltip = node.description;
+      } else if (node.kind === 'artifact') {
+        item.iconPath = new vscode.ThemeIcon(
+          node.renderer === 'html-editor' ? 'edit' :
+          node.renderer === 'html-display' ? 'browser' :
+          node.renderer === 'review-box' ? 'checklist' : 'file-pdf');
+        if (node.renderer !== 'review-box') {
+          item.command = {
+            command: 'artifactStudio.build',
+            title: 'Build Artifact',
+            arguments: [{ file: node.manifestPath, id: node.artifactId, output: node.output, renderer: node.renderer }]
+          };
+        }
+      } else if (node.kind === 'file') {
+        const abs = path.join(path.dirname(node.manifestPath), node.path);
+        item.resourceUri = vscode.Uri.file(abs);
+        item.iconPath = vscode.ThemeIcon.File;
+        item.command = /(^|\/)data\.(json|ya?ml)$/i.test(node.path)
+          ? { command: 'artifactStudio.openAstEditor', title: 'Open AST Editor', arguments: [vscode.Uri.file(abs)] }
+          : { command: 'vscode.open', title: 'Open', arguments: [vscode.Uri.file(abs)] };
+      } else {
+        item.iconPath = new vscode.ThemeIcon('folder');
+      }
+      return item;
     }
   };
   const view = vscode.window.createTreeView('artifactStudio.artifacts', { treeDataProvider: provider });
@@ -59,7 +107,7 @@ function activate(context) {
   async function choose(item) {
     if (item?.file && item?.id) selected = item;
     if (!selected) {
-      const items = await provider.getChildren();
+      const items = await provider.listArtifacts();
       if (!items.length) throw new Error('No artifact-studio.json found. Run Artifact Studio: New Example Project.');
       selected = items.length === 1
         ? items[0]
@@ -165,6 +213,7 @@ function activate(context) {
           previewDir: preview || pdfPanel ? path.join(context.globalStorageUri.fsPath, 'previews') : undefined,
           log: s => output.append(s)
         });
+        if (result.closure) closures.set(`${target.file}::${result.id}`, result.closure);
         const previous = last;
         last = result;
         if (preview || pdfPanel) showPdfPreview(result);
@@ -356,6 +405,11 @@ function activate(context) {
     const root = path.dirname(selected.file);
     if (!uri.fsPath.startsWith(root + path.sep)) return;
     if (!/\.(typ|html?|css|json|ya?ml|png|jpe?g|svg|bib|csv)$/i.test(uri.fsPath)) return;
+    const entry = closures.get(`${selected.file}::${selected.id}`);
+    if (entry && entry.inputs.length) {
+      const rel = path.relative(root, uri.fsPath).split(path.sep).join('/');
+      if (!entry.inputs.includes(rel)) return;
+    }
     clearTimeout(timer);
     timer = setTimeout(() => { enqueue(undefined, { preview: true }).catch(() => {}); }, 400);
   }
