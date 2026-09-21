@@ -22,7 +22,12 @@ Copyright © 2026 **Richard Tong**. 授权协议：[Apache License 2.0](./LICENS
 | **上游** | 自定义 **Artifact AST 编辑器**（Schema 驱动表单、WorkspaceEdit、诊断） |
 | **下游** | 同一数据驱动 **HTML** 展示/编辑 · **Typst PDF** |
 
-演示样例：[`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
+演示样例：[`samples/supplier-clarification-html-zh`]
+
+- **招标文件双路线样例：** [`samples/tender-document-v20918`](./samples/tender-document-v20918/) · [演示指南](./docs/zh/招标文件样例演示指南.md) · [T/A/R 约定](./docs/zh/产物TAR箱模型.md)
+  - **T-box** = Schema + 本体 · **A-box** = 带版本实例（`snapshot`）· **R-box** = `rbox/review.yaml` 规则/发现 · HTML/Typst = **视图**（不再称为 R-box）
+
+[`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
 
 1. 安装扩展 **v0.4.0+**
 2. 打开 `data.json` → 进入 Artifact AST Editor
@@ -321,7 +326,9 @@ HTML 产物使用 `"renderer": "html-display"` 或 `"html-editor"`，模板为 `
 |------|------|
 | `web/` | Next.js App Router 应用 |
 | `/` | 产物目录 |
-| `/artifacts/clarification` | 基于 T-box Schema 的表单 + 本体说明 + HTML 预览 |
+| `/artifacts/tender` | 招标文件 V20918：表单 + **T-box** 本体 + **R-box** 审核标签 + **A-box** JSON（对齐快照） |
+| `/artifacts/clarification` | 基于 T-box Schema 的表单 + 本体说明 + HTML 预览（无 rbox 时不显示 R-box 标签） |
+| `/settings` | 浏览器配置 OpenAI 兼容 LLM API Key（httpOnly Cookie） |
 | `GET/PUT /api/artifacts/:id` | 读取 / 校验并保存 A-box JSON |
 
 ```bash
@@ -331,8 +338,9 @@ npm run dev
 # → http://localhost:3000
 ```
 
-演示内容包：`web/content/artifacts/clarification/`（由 `samples/supplier-clarification-html-zh` 播种）。
+演示内容包：`web/content/artifacts/tender/`（T/A/R + 视图）与 `web/content/artifacts/clarification/`。
 编辑受预定义 JSON Schema（T-box）约束，并对照本体说明展示。
+招标文件还会加载 `rbox/review.yaml` 显示 **R-box review** 标签，并在存在时展示 A-box `snapshot.version` 芯片。
 
 ## LLM 端点配置
 
@@ -395,3 +403,8 @@ Copyright © 2026 **Richard Tong**.
 ## 作者
 
 **Richard Tong** — [@neolaf2](https://github.com/neolaf2)
+
+
+## 招标文件样例（V20918）
+
+同一 AST 支持 VS Code 扩展与 Web 编辑；Web 可在 `/settings` 配置 LLM API Key。详见 [docs/zh/招标文件样例演示指南.md](./docs/zh/招标文件样例演示指南.md)。

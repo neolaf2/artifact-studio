@@ -15,3 +15,7 @@ export function artifactSchemaPath(id: string): string {
 export function artifactTboxPath(id: string): string {
   return path.join(artifactContentDir(id), 'tbox.md');
 }
+
+export function artifactRboxPath(id: string): string {
+  return path.join(artifactContentDir(id), 'rbox', 'review.yaml');
+}

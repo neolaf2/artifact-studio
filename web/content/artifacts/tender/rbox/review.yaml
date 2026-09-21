@@ -1,0 +1,305 @@
+apiVersion: artifact-studio/v1
+kind: ReviewBox
+metadata:
+  id: tender-document-v20918-rbox
+  title: 招标文件智能审核 R-box（MVP）
+  version: 1.0.0
+  language: zh-CN
+binding:
+  abox:
+    path: ../abox/data.json
+    artifactId: TENDER-23-CNCCC-FW-GK-1347-01
+    snapshotVersion: 1.0.0
+    contentHash: sha256:c43847c0ae5d7870d9ab3c0ad4e661f00fcb9e35589e8ac604c077dbce1496b3
+  tbox:
+    schema: ../tbox/data.schema.json
+    ontology: ../tbox/ontology.md
+rules:
+- id: RULE-BID-WINDOW-20D
+  category: legality
+  severity: high
+  title: 投标文件发售至截止不少于二十日
+  description: 自招标文件开始发售之日起至投标截止之日止，不得少于二十日。
+  appliesTo:
+    chapters:
+    - ch01
+    jsonPaths:
+    - meta.sale_start
+    - meta.bid_deadline
+  check:
+    type: min_calendar_days_between
+    from: meta.sale_start
+    to: meta.bid_deadline
+    minDays: 20
+  legalBasis: 招投标法/实施条例相关条款（示例引用，人工复核）
+  remediation: 延长投标截止日或提前发售，使日历日间隔≥20日。
+- id: RULE-PERF-BOND-MAX-10PCT
+  category: commercial
+  severity: high
+  title: 履约保证金不超过中标合同金额10%
+  description: 履约保证金比例不得超过中标合同金额的百分之十。
+  appliesTo:
+    chapters:
+    - ch02
+    jsonPaths:
+    - meta.performance_bond_ratio
+  check:
+    type: max_ratio
+    path: meta.performance_bond_ratio
+    max: 0.1
+  legalBasis: 招投标法实施条例相关条款（示例引用，人工复核）
+  remediation: 将履约担保比例调整至≤10%，或补充经批准的例外说明。
+- id: RULE-BID-BOND-MAX-2PCT
+  category: commercial
+  severity: high
+  title: 投标保证金不超过项目估算价2%
+  description: 投标保证金不得超过项目估算价的百分之二。
+  appliesTo:
+    chapters:
+    - ch02
+    jsonPaths:
+    - meta.bid_bond_cny
+    - meta.estimate_cny_wan
+  check:
+    type: max_ratio_of_estimate
+    bondPath: meta.bid_bond_cny
+    estimateWanPath: meta.estimate_cny_wan
+    maxRatio: 0.02
+  legalBasis: 招投标法实施条例相关条款（示例引用，人工复核）
+  remediation: 下调投标保证金至估算价2%以内（本样例估算价1200万→上限24万）。
+- id: RULE-NO-GEO-DISCRIMINATION
+  category: negative_list
+  severity: high
+  title: 不得设置地域歧视性资格条件
+  description: 不得以在特定行政区域设立分支机构等不合理条件限制、排斥潜在投标人。
+  appliesTo:
+    chapters:
+    - ch01
+    jsonPaths:
+    - chapters
+  check:
+    type: text_pattern_forbidden
+    scope: chapters
+    patterns:
+    - 须在.*设(立)?分支机构
+    - 本地注册
+  legalBasis: 招投标法实施条例第三十二条等（示例引用，人工复核）
+  remediation: 删除“须在某市设分支机构”等地域限制条款，改为与履约能力相关的客观要求。
+- id: RULE-NO-BRAND-LOCKIN
+  category: negative_list
+  severity: medium
+  title: 指定品牌须加“或相当于”
+  description: 技术规格引用品牌/型号时，应加“或相当于”等表述，避免品牌锁定。
+  appliesTo:
+    chapters:
+    - ch06
+    jsonPaths:
+    - chapters
+  check:
+    type: brand_or_equivalent_required
+    scope: chapters
+  legalBasis: 招投标法及政府采购相关规定（示例引用，人工复核）
+  remediation: 在品牌/产品名称后补充“或相当于”，并明确等效判定标准。
+- id: RULE-NO-INTERNAL-PERF-BONUS
+  category: policy
+  severity: high
+  title: 不得对特定系统内业绩加分
+  description: 评审办法不得仅因投标人拥有招标人/集团系统内业绩而加分，涉嫌限制竞争。
+  appliesTo:
+    chapters:
+    - ch01
+    jsonPaths:
+    - chapters
+  check:
+    type: text_pattern_forbidden
+    scope: chapters
+    patterns:
+    - 系统内业绩
+    - 集团内.*加分
+  legalBasis: 公平竞争审查及招投标负面清单相关要求（示例引用，人工复核）
+  remediation: 删除“星海能源/XX能源系统内业绩加分”条款，或改为与项目履约相关的同类业绩客观标准。
+- id: RULE-SERVICE-PERIOD-CONSISTENCY
+  category: consistency
+  severity: high
+  title: 服务期公告与任务大纲须一致
+  description: 招标公告载明的服务期应与任务大纲/合同条款一致。
+  appliesTo:
+    chapters:
+    - ch01
+    jsonPaths:
+    - meta.service_period_announced
+    - meta.service_period_sow
+  check:
+    type: fields_equivalent
+    paths:
+    - meta.service_period_announced
+    - meta.service_period_sow
+  legalBasis: 招标文件内部一致性与规范编制要求（示例引用，人工复核）
+  remediation: 统一公告与任务大纲服务期表述（例如同为36个月或同为24个月）。
+- id: RULE-SERVICE-LOCATION-CONSISTENCY
+  category: consistency
+  severity: medium
+  title: 服务地点范围须前后一致
+  description: 公告、任务大纲与合同中的服务地点范围应一致，避免朝阳区具体地址、京津范围与全国表述冲突。
+  appliesTo:
+    chapters:
+    - ch06
+    jsonPaths:
+    - meta.service_locations
+  check:
+    type: location_scope_consistent
+    paths:
+    - meta.service_locations
+    - chapters
+  legalBasis: 招标文件内部一致性与规范编制要求（示例引用，人工复核）
+  remediation: 统一服务地点口径（例如明确为北京、天津，删除冲突的全国或单一街道表述）。
+findings:
+- id: S1-01-01
+  ruleId: RULE-BID-WINDOW-20D
+  severity: high
+  status: pending_review
+  location:
+    chapter: ch01
+    label: 投标截止距发售不足二十日
+  title: 投标截止距发售不足二十日
+  description: 发售时间为 2023-06-01，投标截止为 2023-06-16，日历间隔仅约 15 日，不足法定二十日要求。
+  cause: 发售与截标排期未按最短法定期限校核。
+  responsibility: 采购管理部门牵头，法务/合规复核。
+  correctiveAction: 将投标截止日延后至发售日起满二十日，或提前发售并同步修订公告与时间表。
+  releaseCondition: 确认 sale_start 与 bid_deadline 日历日间隔≥20 日后，经合规确认。
+  evidence:
+    aboxPaths:
+    - meta.sale_start
+    - meta.bid_deadline
+    note: 金标准批注 S1-01-01：发售 2023-06-01，截止 2023-06-16，仅15日
+- id: S1-01-02
+  ruleId: RULE-PERF-BOND-MAX-10PCT
+  severity: high
+  status: pending_review
+  location:
+    chapter: ch02
+    label: 履约保证金比例超10%
+  title: 履约保证金比例超10%
+  description: 履约担保比例设定为合同金额的 15%，超过通常不得超过 10% 的上限。
+  cause: 保证金条款沿用高比例模板，未与制度上限核对。
+  responsibility: 采购管理部门牵头，财务与合规复核。
+  correctiveAction: 将 meta.performance_bond_ratio 调整为 ≤0.10，或补充经批准的例外文件。
+  releaseCondition: 比例≤10%或取得有效例外批准并完成复核。
+  evidence:
+    aboxPaths:
+    - meta.performance_bond_ratio
+    note: 金标准批注 S1-01-02：合同金额15%履约担保
+- id: S1-01-03
+  ruleId: RULE-BID-BOND-MAX-2PCT
+  severity: high
+  status: pending_review
+  location:
+    chapter: ch02
+    label: 投标保证金超估算价2%
+  title: 投标保证金超估算价2%
+  description: 投标保证金 30 万元，相对估算价 1200 万元的 2%（24 万元）超限。
+  cause: 保证金金额与估算价比例未二次复核。
+  responsibility: 采购管理部门牵头，财务复核。
+  correctiveAction: 将投标保证金下调至不超过估算价 2%（本样例≤24 万元）。
+  releaseCondition: bid_bond_cny ≤ estimate×2% 并经财务确认。
+  evidence:
+    aboxPaths:
+    - meta.bid_bond_cny
+    - meta.estimate_cny_wan
+    note: 金标准批注 S1-01-03：30万 vs 估算价2%=24万
+- id: S1-01-04
+  ruleId: RULE-NO-GEO-DISCRIMINATION
+  severity: high
+  status: pending_review
+  location:
+    chapter: ch01
+    label: 地域歧视资格条件
+  title: 地域歧视资格条件
+  description: 资格条件要求投标人须在天津市设立分支机构，属于不合理的地域限制，可能排斥外地合格供应商。
+  cause: 资格条件照搬属地化表述，未做公平竞争审查。
+  responsibility: 采购管理部门牵头，法务复核。
+  correctiveAction: 删除“须在天津市设分支机构”要求；如确需属地服务能力，改为可客观证明的服务响应时效等条件。
+  releaseCondition: 删除或改写地域限制条款并经法务确认。
+  evidence:
+    aboxPaths:
+    - chapters
+    note: 金标准批注 S1-01-04：须在天津市设分支机构
+- id: S1-01-05
+  ruleId: RULE-NO-BRAND-LOCKIN
+  severity: medium
+  status: pending_review
+  location:
+    chapter: ch06
+    label: 指定品牌未加或相当于
+  title: 指定品牌未加或相当于
+  description: 技术要求点名阿里云 QuickBI 及 DataV 等产品，未加“或相当于”表述，存在品牌锁定风险。
+  cause: 技术规格直接引用厂商产品名，未补充等效条款。
+  responsibility: 需求/技术部门牵头，采购与合规复核。
+  correctiveAction: 在品牌/产品后增加“或相当于”，并写明功能等效判定标准。
+  releaseCondition: 完成“或相当于”修订或改为纯功能指标描述。
+  evidence:
+    aboxPaths:
+    - chapters
+    note: 金标准批注 S1-01-05：阿里云 QuickBI 及 DataV
+- id: S1-01-06
+  ruleId: RULE-NO-INTERNAL-PERF-BONUS
+  severity: high
+  status: pending_review
+  location:
+    chapter: ch01
+    label: 系统内业绩加分
+  title: 系统内业绩加分
+  description: 评审办法对“星海能源/XX能源系统内业绩”给予加分，构成对特定集团体系供应商的不当优待，限制公平竞争。
+  cause: 评分办法沿用集团内业绩偏好条款，未做负面清单核对。
+  responsibility: 采购管理部门牵头，合规与法务复核。
+  correctiveAction: 删除系统内业绩加分；如需考察经验，改为与本项目同类的客观业绩标准（不限定特定集团）。
+  releaseCondition: 删除或改写系统内加分条款并经合规确认。
+  evidence:
+    aboxPaths:
+    - chapters
+    note: 金标准批注 S1-01-06（历史原文提及系统内业绩；本 R-box 以星海能源/XX能源代称）
+- id: S1-03-01
+  ruleId: RULE-SERVICE-PERIOD-CONSISTENCY
+  severity: high
+  status: pending_review
+  location:
+    chapter: ch01
+    label: 服务期前后不一致
+  title: 服务期前后不一致
+  description: 招标公告服务期为“3年”，任务大纲为“24个月”，前后不一致，影响合同履行口径。
+  cause: 公告与任务大纲版本未做交叉校核。
+  responsibility: 需求部门与采购管理部门共同牵头。
+  correctiveAction: 统一 meta.service_period_announced 与 meta.service_period_sow，并同步修订相关章节正文。
+  releaseCondition: 两处服务期表述一致并完成交叉校核留痕。
+  evidence:
+    aboxPaths:
+    - meta.service_period_announced
+    - meta.service_period_sow
+    note: 金标准批注 S1-03-01：公告3年 vs 任务大纲24个月
+- id: S1-03-08
+  ruleId: RULE-SERVICE-LOCATION-CONSISTENCY
+  severity: medium
+  status: pending_review
+  location:
+    chapter: ch06
+    label: 服务地点范围不一致
+  title: 服务地点范围不一致
+  description: 文件中同时出现朝阳区创达三路具体地址、北京/天津范围与全国表述，服务地点范围不一致。
+  cause: 多处地点描述分别起草，未经统一口径。
+  responsibility: 需求部门牵头，采购管理部门复核。
+  correctiveAction: 统一服务地点为与 meta.service_locations 一致的范围，删除冲突表述。
+  releaseCondition: 地点口径统一并完成全文检索复核。
+  evidence:
+    aboxPaths:
+    - meta.service_locations
+    - chapters
+    note: 金标准批注 S1-03-08：朝阳区创达三路 vs 北京天津 vs 全国
+releaseDecision:
+  status: not_ready
+  statusLabel: 不满足发布条件
+  condition: 至少完成全部高风险 findings 的整改或合规复核留痕，并对其余问题明确责任与证据后，方可进入发布流程。
+  requiredActions:
+  - 完成投标文件发售—截止二十日、履约/投标保证金比例、地域限制与系统内业绩加分等高风险项整改。
+  - 统一服务期与服务地点口径，完成公告/任务大纲交叉校核。
+  - 对品牌锁定条款补充“或相当于”或改为功能指标，并由技术与合规复核。
+  - 更新 A-box 后重算 snapshot.contentHash，并与本 R-box binding 对齐。

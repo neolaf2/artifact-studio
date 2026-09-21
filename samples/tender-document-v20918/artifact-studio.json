@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "ast": {
+    "tbox": {
+      "schema": "tbox/data.schema.json",
+      "ontology": "tbox/ontology.md",
+      "schemaRootCompat": "data.schema.json"
+    },
+    "abox": {
+      "data": "abox/data.json",
+      "dataTwin": "abox/data.yaml",
+      "snapshotNote": "abox/SNAPSHOT.md",
+      "rootCompat": {
+        "data": "data.json",
+        "dataTwin": "data.yaml"
+      }
+    },
+    "rbox": {
+      "review": "rbox/review.yaml",
+      "schema": "rbox/review.schema.json",
+      "readme": "rbox/README.md"
+    },
+    "views": {
+      "htmlDisplay": "form.display.html",
+      "htmlEditor": "form.editor.html",
+      "typst": "tender.typ",
+      "theme": "theme.css",
+      "note": "HTML/Typst are views/templates — not R-box. R-box is rules/review YAML."
+    },
+    "note": "T-box=schema+ontology; A-box=versioned instance; R-box=rules/review; views=HTML/Typst. Same AST for VS Code Artifact AST Editor and Next.js /artifacts/tender."
+  },
+  "artifacts": [
+    {
+      "id": "tender-html-display",
+      "template": "form.display.html",
+      "data": "abox/data.yaml",
+      "output": "output/display.html",
+      "dataSchema": "tbox/data.schema.json",
+      "renderer": "html-display",
+      "kind": "view"
+    },
+    {
+      "id": "tender-html-editor",
+      "template": "form.editor.html",
+      "data": "abox/data.yaml",
+      "output": "output/editor.html",
+      "dataSchema": "tbox/data.schema.json",
+      "renderer": "html-editor",
+      "kind": "view"
+    },
+    {
+      "id": "tender-pdf",
+      "template": "tender.typ",
+      "data": "abox/data.yaml",
+      "output": "output/tender.pdf",
+      "dataSchema": "tbox/data.schema.json",
+      "renderer": "typst",
+      "kind": "view"
+    },
+    {
+      "id": "tender-review-rbox",
+      "template": "rbox/review.yaml",
+      "data": "abox/data.json",
+      "dataSchema": "rbox/review.schema.json",
+      "renderer": "review-box",
+      "kind": "rbox"
+    }
+  ]
+}

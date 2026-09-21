@@ -54,3 +54,17 @@ Generation is **not** local heuristics — it calls a model:
 3. Open [/settings](http://localhost:3000/settings) to verify `GET /api/llm/status`
 
 Without a configured endpoint (or mock), the ✨ buttons show a setup message instead of calling a model.
+
+
+## Browser LLM API key (sample web app)
+
+Open [/settings](http://localhost:3000/settings) to paste an OpenAI-compatible API key.
+It is stored in an **httpOnly cookie** for this origin (never echoed by `GET /api/llm/status`).
+
+Priority: **browser cookie** → `ARTIFACT_STUDIO_LLM_*` env → `ARTIFACT_STUDIO_LLM_MOCK=1`.
+
+Clear the key with the **Clear browser key** button on the settings page.
+
+## Tender sample
+
+Catalog entry **招标文件（测试套题 V20918）** loads `content/artifacts/tender/` — same AST as `samples/tender-document-v20918/`. Demo: [../docs/TENDER_SAMPLE_DEMO.md](../docs/TENDER_SAMPLE_DEMO.md).

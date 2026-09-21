@@ -13,3 +13,8 @@ node_modules/
 web/node_modules/
 web/.next/
 web/out/
+
+# Local secrets — never commit
+.env
+.env.local
+.env.*.local

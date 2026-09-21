@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://artifact.studio/schemas/tender-document.schema.json",
+  "title": "招标文件 A-box",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_id",
+    "doc_type",
+    "title",
+    "tender_id",
+    "buyer",
+    "meta",
+    "chapters",
+    "status"
+  ],
+  "properties": {
+    "artifact_id": {
+      "type": "string"
+    },
+    "doc_type": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "tender_id": {
+      "type": "string"
+    },
+    "issue_date": {
+      "type": "string"
+    },
+    "edited_at": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "review",
+        "published"
+      ]
+    },
+    "buyer": {
+      "type": "object",
+      "required": [
+        "name",
+        "agent"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "agent": {
+          "type": "string"
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "funding": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "qualification_mode": {
+          "type": "string"
+        },
+        "estimate_cny_wan": {
+          "type": "number"
+        },
+        "service_period_announced": {
+          "type": "string"
+        },
+        "service_period_sow": {
+          "type": "string"
+        },
+        "service_locations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bid_deadline": {
+          "type": "string"
+        },
+        "sale_start": {
+          "type": "string"
+        },
+        "sale_end": {
+          "type": "string"
+        },
+        "bid_bond_cny": {
+          "type": "number"
+        },
+        "performance_bond_ratio": {
+          "type": "number"
+        },
+        "vat_rate": {
+          "type": "number"
+        },
+        "accept_consortium": {
+          "type": "boolean"
+        },
+        "allow_subcontract": {
+          "type": "boolean"
+        }
+      }
+    },
+    "chapters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "sections"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "heading",
+                "body_md"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "heading": {
+                  "type": "string"
+                },
+                "body_md": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "annotations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "chapter": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "snapshot": {
+      "type": "object",
+      "description": "A-box snapshot metadata (version + provenance). Optional for older tools.",
+      "additionalProperties": true,
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Snapshot semver"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO-8601 timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO-8601 timestamp"
+        },
+        "contentHash": {
+          "type": "string",
+          "description": "sha256:<hex> of canonical business payload WITHOUT the snapshot field",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "method": {
+              "type": "string"
+            },
+            "sourceSuite": {
+              "type": "string"
+            },
+            "sourcePath": {
+              "type": "string"
+            },
+            "generator": {
+              "type": "string"
+            },
+            "tbox": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string"
+                },
+                "ontology": {
+                  "type": "string"
+                },
+                "schemaVersion": {
+                  "type": "string"
+                }
+              }
+            },
+            "rbox": {
+              "type": "object",
+              "properties": {
+                "review": {
+                  "type": "string"
+                },
+                "reviewVersion": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
