@@ -11,6 +11,8 @@ Copyright © 2026 **Richard Tong**. Licensed under the [Apache License 2.0](./LI
 
 ---
 
+**中文文档:** [README.zh-CN.md](./README.zh-CN.md) · [docs/zh/](./docs/zh/)
+
 ## Routes to a PDF (pick one)
 
 All routes ultimately call **local Typst**. Choose the entry point that matches your workflow:
