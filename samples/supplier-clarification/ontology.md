@@ -1,6 +1,6 @@
 # Supplier Clarification Letter Ontology
 
-Maps to CNOOC Tool 3 / `cnooc-clarification-generator` objects.
+Maps to Tool 3 / `clarification-generator` objects.
 
 | Field | Meaning | Upstream |
 |-------|---------|----------|

@@ -1,6 +1,6 @@
 # 供应商澄清函本体（中文样例）
 
-与 CNOOC Tool3 / `cnooc-clarification-generator` 对齐：
+与 Tool3 / `clarification-generator` 对齐：
 
 | 字段 | 含义 | 上游对象 |
 |------|------|----------|

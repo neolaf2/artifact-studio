@@ -26,4 +26,4 @@ node ~/Local/Manus/artifact-studio/src/cli.js artifact-studio.json supplier-clar
 
 ## Chain link
 
-Fits **Tool 3** in the CNOOC E2E skills (`cnooc-clarification-generator`). Replace sample questions with `problems.json` / clarification items from `cnooc-bid-pipeline`.
+Fits **Tool 3** clarification workflows (`clarification-generator`). Replace sample questions with your `problems.json` / clarification items.

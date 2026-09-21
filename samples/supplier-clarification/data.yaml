@@ -3,17 +3,17 @@ doc_type: 供应商澄清函
 status: draft
 language: zh-CN
 issuer:
-  name: 中国海洋石油集团有限公司采购中心
-  name_en: CNOOC Procurement Center
+  name: 星海能源集团有限公司采购中心
+  name_en: StarSea Energy Group Procurement Center
   department: 清标与评审工作组
-  address: 北京市东城区朝阳门北大街25号
+  address: 上海市浦东新区示例大道88号
 signatory:
   name: （待签）
   title: 采购项目负责人
   email: procurement-demo@example.com
 project:
   name: 智能巡检系统采购项目
-  id: CNOOC-IT-2026-091
+  id: SSE-IT-2026-091
   bid_section: 标段一
 supplier:
   legal_name: 北京示例科技有限公司
