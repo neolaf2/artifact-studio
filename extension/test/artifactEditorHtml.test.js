@@ -44,11 +44,27 @@ test('every required DOM id is present in the generated editor', () => {
 
 test('the raw tab carries the textarea and the container the conflict notice is built into', () => {
   const html = build();
-  // btn-raw-keep / btn-raw-load are created with DOM APIs inside #raw-error.
+  // btn-raw-keep / btn-raw-load are created with DOM APIs inside #raw-conflict.
   assert.match(html, /<textarea id="raw-text" spellcheck="false">/);
   assert.match(html, /<div id="raw-error">/);
   assert.match(html, /btn-raw-keep/);
   assert.match(html, /btn-raw-load/);
+});
+
+test('#raw-error holds one child for validation and one for the conflict notice', () => {
+  const html = build();
+  // Separate containers: a rawState must never remove the conflict buttons.
+  assert.match(
+    html,
+    /<div id="raw-error"><div id="raw-validation"><\/div><div id="raw-conflict"><\/div><\/div>/
+  );
+  const script = html.slice(html.indexOf('<script'));
+  assert.ok(script.includes("byId('raw-validation')"), 'the validation child is bound');
+  assert.ok(script.includes("byId('raw-conflict')"), 'the conflict child is bound');
+  // showRawState owns the validation child only; the notice owns the conflict child only.
+  const showRawState = script.slice(script.indexOf('function showRawState'));
+  const body = showRawState.slice(0, showRawState.indexOf('\n}'));
+  assert.ok(!body.includes('rawConflict'), 'showRawState never touches the conflict child');
 });
 
 test('acquireVsCodeApi is called exactly once', () => {

@@ -90,8 +90,11 @@ function buildEditorHtml(webview, ast, isDirty, extensionUri) {
   #raw-text { flex: 1; min-height: 0; width: 100%; box-sizing: border-box; resize: none; font-family: var(--vscode-editor-font-family, monospace); font-size: var(--vscode-editor-font-size, 12px); background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, transparent); padding: 8px; border-radius: 4px; }
   #raw-error { display: none; margin-top: 6px; font-size: 12px; padding: 6px 8px; border-radius: 4px; background: color-mix(in srgb, var(--vscode-inputValidation-errorBackground) 60%, transparent); }
   #raw-error.shown { display: block; }
-  #raw-error .raw-actions { display: flex; gap: 6px; margin-top: 6px; }
-  #raw-error .raw-actions button { padding: 3px 10px; font-size: 12px; }
+  #raw-validation, #raw-conflict { display: none; }
+  #raw-validation.shown, #raw-conflict.shown { display: block; }
+  #raw-validation.shown + #raw-conflict.shown { margin-top: 8px; border-top: 1px solid var(--vscode-panel-border); padding-top: 8px; }
+  #raw-conflict .raw-actions { display: flex; gap: 6px; margin-top: 6px; }
+  #raw-conflict .raw-actions button { padding: 3px 10px; font-size: 12px; }
   #pane-right { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; background: var(--vscode-editor-background); }
   #pane-right.collapsed { flex: 0 0 34px; }
   #pane-right.collapsed #pdf-container, #pane-right.collapsed #btn-open-pdf { display: none; }
@@ -143,7 +146,7 @@ function buildEditorHtml(webview, ast, isDirty, extensionUri) {
     </div>
     <div class="left-body raw" id="raw-body" style="display:none">
       <textarea id="raw-text" spellcheck="false"></textarea>
-      <div id="raw-error"></div>
+      <div id="raw-error"><div id="raw-validation"></div><div id="raw-conflict"></div></div>
     </div>
   </div>
   <div id="pane-right">
@@ -175,6 +178,8 @@ const els = {
   form: byId('ast-form'),
   raw: byId('raw-text'),
   rawError: byId('raw-error'),
+  rawValidation: byId('raw-validation'),
+  rawConflict: byId('raw-conflict'),
   paneRight: byId('pane-right'),
   paneToggle: byId('pane-toggle'),
   pdfStatus: byId('pdf-status'),
@@ -335,8 +340,7 @@ function enterConflict(text) {
   clearTimeout(rawTimer);
   rawPending = false;
   state.pendingSwitch = false;
-  els.rawError.textContent = '';
-  els.rawError.className = 'shown';
+  els.rawConflict.textContent = '';
   const note = document.createElement('div');
   note.textContent = 'The file changed outside this tab.';
   const row = document.createElement('div');
@@ -357,36 +361,50 @@ function enterConflict(text) {
   load.addEventListener('click', () => {
     els.raw.value = theirText == null ? '' : theirText;
     baseText = els.raw.value;
+    lastSentRaw = null;
     clearConflict();
+    // The document only ever holds text that parses, so the box is valid again.
+    // Let showRawState own the validation child; we never write it from here.
+    showRawState({ ok: true });
   });
   row.appendChild(keep);
   row.appendChild(load);
-  els.rawError.appendChild(note);
-  els.rawError.appendChild(row);
+  els.rawConflict.appendChild(note);
+  els.rawConflict.appendChild(row);
+  els.rawConflict.className = 'shown';
+  syncRawError();
   syncCompileEnabled();
 }
 function clearConflict() {
   state.conflict = false;
   theirText = null;
-  els.rawError.textContent = '';
-  els.rawError.className = '';
+  els.rawConflict.textContent = '';   // only ever this child: the validation
+  els.rawConflict.className = '';     // message is not ours to remove
+  syncRawError();
   syncCompileEnabled();
 }
+/* The #raw-error box is the frame; it shows when either child has content. */
+function syncRawError() {
+  const any = els.rawValidation.className === 'shown' || els.rawConflict.className === 'shown';
+  els.rawError.className = any ? 'shown' : '';
+}
+/* Validation and the conflict notice own separate children of #raw-error, so a
+   rawState landing while a conflict is open can never remove the buttons that
+   resolve it (and vice versa). */
 function showRawState(msg) {
   state.rawValid = msg.ok !== false;
   if (state.rawValid) {
     if (lastSentRaw !== null) baseText = lastSentRaw;
-    if (!state.conflict) {
-      els.rawError.textContent = '';
-      els.rawError.className = '';
-    }
-    if (state.pendingSwitch) switchToForm();
+    els.rawValidation.textContent = '';
+    els.rawValidation.className = '';
+    if (state.pendingSwitch && !state.conflict) switchToForm();
   } else {
     state.pendingSwitch = false;  // M4: stay on the raw tab, where the error is visible
     const line = msg.line == null ? '' : 'line ' + msg.line + ': ';
-    els.rawError.textContent = line + (msg.message || 'Invalid document');
-    els.rawError.className = 'shown';
+    els.rawValidation.textContent = line + (msg.message || 'Invalid document');
+    els.rawValidation.className = 'shown';
   }
+  syncRawError();
   syncCompileEnabled();
 }
 
