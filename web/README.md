@@ -68,3 +68,29 @@ Clear the key with the **Clear browser key** button on the settings page.
 ## Tender sample
 
 Catalog entry **招标文件（测试套题 V20918）** loads `content/artifacts/tender/` — same AST as `samples/tender-document-v20918/`. Demo: [../docs/TENDER_SAMPLE_DEMO.md](../docs/TENDER_SAMPLE_DEMO.md).
+
+
+## Durable save + Overleaf editor
+
+Web editor is Overleaf-style: left form/T/R/A-box tabs, right live HTML preview, dirty chip, **Cmd/Ctrl+S**, and **~1.5s autosave**. See [../docs/OVERLEAF_EDITOR.md](../docs/OVERLEAF_EDITOR.md).
+
+On Vercel, filesystem writes are ephemeral. Configure GitHub write-back:
+
+```bash
+# web/.env.local or Vercel project env
+ARTIFACT_STUDIO_GITHUB_TOKEN=   # fine-grained PAT, Contents:rw on this repo
+ARTIFACT_STUDIO_GITHUB_REPO=neolaf2/artifact-studio
+ARTIFACT_STUDIO_GITHUB_BRANCH=main
+# optional alternative:
+# ARTIFACT_STUDIO_BLOB_READ_WRITE_TOKEN=…
+```
+
+`PUT /api/artifacts/:id` returns `{ ok, persistedTo: "filesystem"|"github"|"blob", path, sha? }`.
+`GET` prefers GitHub Contents when the token is set, else bundled `content/artifacts/`.
+
+Sample A-box mirrors (kept as SoT alongside web content):
+
+| id | mirrors |
+|----|---------|
+| clarification | `samples/supplier-clarification-zh/data.json (+ abox/data.json)` |
+| tender | `samples/tender-document-v20918/data.json`, `…/abox/data.json` |
