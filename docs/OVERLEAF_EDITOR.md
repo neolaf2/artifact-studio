@@ -58,7 +58,7 @@ IDs are slugified from the name (or an explicit `id`). Built-in ids `clarificati
   blocked until it parses.
 - **Right**: minimized to a rail, or the **compiled PDF** — the actual file at the
   recipe's `output` path, rendered with a vendored pdf.js. It shows the previous
-  run's PDF on open and changes only when **▶ Compile** is clicked; there is no
+  run's PDF on open and changes only when **Compile** is clicked; there is no
   auto-compile. Status reads `compiled HH:MM`, plus `· edited since` when the data is
   dirty or newer than the PDF. Text is selectable; Cmd/Ctrl+F searches it.
 - Status bar: **Artifact: Unsaved** / **Artifact: Saved HH:MM**.

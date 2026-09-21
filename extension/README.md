@@ -202,7 +202,7 @@ The editor is an Overleaf-style compile loop, not a live preview:
   HH:MM`, plus `· edited since` when the data is dirty or newer than the PDF. Text is
   selectable, and Cmd/Ctrl+F searches it. The pane's document is never reloaded, so
   swaps never blink.
-- **▶ Compile** — saves, runs Typst once through the project's **main** document, and
+- **Compile** — saves, runs Typst once through the project's **main** document, and
   replaces the output PDF. A Typst error keeps the last good PDF on screen and shows
   the first diagnostic in a strip under the toolbar; click it to open that location.
 - **Open PDF** opens the output file in the OS default viewer. **Render HTML** and

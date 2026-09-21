@@ -1,7 +1,7 @@
 {
   "name": "artifact-studio",
   "displayName": "Artifact Studio",
-  "description": "Overleaf-like AST editor (form + live HTML preview) with HTML and Typst PDF rendering.",
+  "description": "Overleaf-style AST editor: form or raw data on the left, the compiled Typst PDF on the right, one Compile button. HTML and Typst PDF rendering.",
   "version": "0.7.0",
   "publisher": "artifact-studio-local",
   "engines": {
