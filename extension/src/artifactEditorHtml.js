@@ -9,6 +9,7 @@
  * every later update arrives as a `postMessage`. Reassigning `webview.html`
  * would destroy the PDF pane and lose the tab/collapse state.
  */
+const { randomUUID } = require('node:crypto');
 const { schemaFields, escapeHtml } = require('./html');
 
 /** The form body for `#ast-form` — used for the first HTML and for `formHtml`. */
@@ -45,7 +46,8 @@ function buildEditorHtml(webview, ast, isDirty, extensionUri) {
   const ontologyHtml = ontology
     ? `<details class="ontology"><summary>T-box ontology</summary><pre>${escapeHtml(ontology.slice(0, 8000))}</pre></details>`
     : '';
-  const nonce = String(Date.now()) + String(Math.floor(Math.random() * 1e6));
+  // M2: a CSP nonce must be unguessable; a timestamp plus Math.random is not.
+  const nonce = randomUUID().replace(/-/g, '');
   const dirtyLabel = isDirty ? 'Unsaved' : 'Saved';
   const paneCss = mediaUri(webview, extensionUri, 'media', 'pdfPane.css');
   const paneJs = mediaUri(webview, extensionUri, 'media', 'pdfPane.mjs');
@@ -497,7 +499,12 @@ window.addEventListener('message', (event) => {
     if (document.activeElement !== els.raw) {
       els.raw.value = text;          // never fight the cursor; safe to adopt here
       baseText = text;
+      // I2: adopting is exactly what "Load theirs" does, so clear the same
+      // state it does — the document only ever holds text that parses, so a
+      // stale validation error must not strand the tab with Compile disabled.
+      lastSentRaw = null;
       if (state.conflict) clearConflict();
+      showRawState({ ok: true });
     } else if (state.conflict) {
       theirText = text;              // keep the newest version behind the notice
     } else if (baseText !== null && text !== baseText) {

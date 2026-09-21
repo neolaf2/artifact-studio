@@ -137,3 +137,12 @@ test('pdf.js and the pane are loaded from webview resource URIs', () => {
   assert.ok(html.includes('"https://webview.test/ext/media/pdfjs/pdf.worker.min.mjs"'));
   assert.ok(html.includes('href="https://webview.test/ext/media/pdfPane.css"'));
 });
+
+test('adopting an unfocused rawText resets the validation state (I2)', () => {
+  const script = build().slice(build().indexOf('<script'));
+  const handler = script.slice(script.indexOf("msg.type === 'rawText'"));
+  const adopt = handler.slice(0, handler.indexOf('} else if (state.conflict)'));
+  assert.ok(adopt.includes('lastSentRaw = null'), 'the in-flight edit is forgotten');
+  assert.ok(adopt.includes('showRawState({ ok: true })'), 'the stale parse error is cleared');
+  assert.ok(adopt.includes('clearConflict()'), 'an open conflict is still cleared');
+});

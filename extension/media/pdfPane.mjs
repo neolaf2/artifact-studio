@@ -537,12 +537,17 @@ function terminateWorker(worker) {
  * (a same-origin worker, or its built-in main-thread mode).
  */
 async function initWorker(pdfjsLib, workerUrl) {
+  let rawWorker = null;
   try {
-    const rawWorker = await buildModuleWorker(workerUrl);
+    rawWorker = await buildModuleWorker(workerUrl);
     pdfjsLib.GlobalWorkerOptions.workerPort = rawWorker;
     const worker = new pdfjsLib.PDFWorker({ port: rawWorker });
     return { worker, kind: 'worker' };
   } catch {
+    // pdf.js prefers `workerPort` over `workerSrc`, so the fallback must first
+    // let go of the port it is escaping — and not leak that worker thread.
+    pdfjsLib.GlobalWorkerOptions.workerPort = null;
+    if (rawWorker) { try { rawWorker.terminate(); } catch { /* already gone */ } }
     pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
     return { worker: null, kind: 'main-thread' };
   }

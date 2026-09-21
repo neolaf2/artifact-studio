@@ -51,8 +51,9 @@ identically. The JSON tab shows the raw file text. While it parses, edits flow t
 document (debounced); while it does not, the text is held in the tab, the parse error
 is shown with its line, the document is untouched, and **Compile and the switch back
 to Form are blocked** until it parses again — a half-typed brace can never corrupt
-the form or reach Typst. For a `data.yaml` document the raw tab shows YAML and is
-checked when you switch tabs or compile, not per keystroke. "Open in text editor"
+the form or reach Typst. For a `data.yaml` document the raw tab shows YAML; it is
+validated on the same 300 ms debounce as JSON, using the host's YAML parser, and is
+applied verbatim only when it parses. "Open in text editor"
 remains for anyone who wants VS Code's full JSON tooling.
 
 **Right pane — minimized or PDF.** A chevron on the divider collapses it to a rail

@@ -204,7 +204,10 @@ The editor is an Overleaf-style compile loop, not a live preview:
   swaps never blink.
 - **Compile** — saves, runs Typst once through the project's **main** document, and
   replaces the output PDF. A Typst error keeps the last good PDF on screen and shows
-  the first diagnostic in a strip under the toolbar; click it to open that location.
+  the first diagnostic in a strip under the toolbar; click it to open that location
+  (locations outside the project root are ignored). With Watch on, that save is an
+  ordinary saved change, so watch mode also rebuilds the artifact currently selected
+  in the Artifacts view.
 - **Open PDF** opens the output file in the OS default viewer. **Render HTML** and
   **Generate Artifact (LLM)** live under a **More ▾** menu.
 
@@ -230,6 +233,8 @@ Compile always builds the project's **main** Typst document. Resolution order:
 ```
 
 `main` must name a `typst` artifact; a project with no Typst artifact at all can still
-be opened, but the editor disables Compile. **New Project** writes a `main` for every
-scaffolded project, and the palette command **Artifact Studio: Render PDF from AST**
+be opened, but the editor disables Compile. **New Project** copies a template's
+manifest as-is: projects scaffolded from the bundled samples inherit that sample's
+`main`, and projects scaffolded from any other source resolve their main document by
+the fallback order above. The palette command **Artifact Studio: Render PDF from AST**
 builds the same main document.

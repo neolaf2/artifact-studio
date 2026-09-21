@@ -70,3 +70,39 @@ test('checkRawText rejects non-object roots and defers YAML to the host', () => 
   assert.equal(checkRawText('', 'json').ok, false);
   assert.deepEqual(checkRawText('a: 1', 'yaml'), { ok: true, deferred: true });
 });
+
+test('resolveMain accepts a typst artifact that declares no renderer', () => {
+  const hit = resolveMain(undefined, [{ id: 'a', template: 'x.typ' }]);
+  assert.equal(hit && hit.id, 'a');
+  assert.equal(resolveMain('a', [{ id: 'a', template: 'x.typ' }]).id, 'a');
+});
+
+test('checkRawText rejects JSON scalars: the AST root must be an object', () => {
+  assert.equal(checkRawText('null', 'json').ok, false);
+  assert.equal(checkRawText('"str"', 'json').ok, false);
+  assert.equal(checkRawText('123', 'json').ok, false);
+});
+
+test('firstDiagnostic keeps parsing Windows drive-letter paths', () => {
+  assert.deepEqual(
+    firstDiagnostic('C:\\proj\\letter.typ:41:7: error: x'),
+    { file: 'C:\\proj\\letter.typ', line: 41, col: 7, message: 'x' }
+  );
+});
+
+const path = require('node:path');
+const { resolveDiagnosticPath } = require('../src/compileView');
+const ROOT = path.resolve('/tmp/artifact-studio-root');
+
+test('resolveDiagnosticPath resolves a relative diagnostic inside the project root', () => {
+  assert.equal(resolveDiagnosticPath(ROOT, 'views/letter.typ'), path.join(ROOT, 'views', 'letter.typ'));
+});
+
+test('resolveDiagnosticPath refuses absolute paths, escapes and empty input', () => {
+  assert.equal(resolveDiagnosticPath(ROOT, '/etc/passwd'), null);
+  assert.equal(resolveDiagnosticPath(ROOT, '../../x'), null);
+  assert.equal(resolveDiagnosticPath(ROOT, 'a/../../x'), null);
+  assert.equal(resolveDiagnosticPath(ROOT, 'views/../../../x'), null);
+  assert.equal(resolveDiagnosticPath(ROOT, ''), null);
+  assert.equal(resolveDiagnosticPath(ROOT, undefined), null);
+});

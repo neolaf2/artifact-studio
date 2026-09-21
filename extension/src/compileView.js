@@ -5,6 +5,8 @@
  * No `vscode` import: unit-tested under `node --test`.
  */
 
+const { inside } = require('./core');
+
 const isTypst = a => a && (a.renderer || 'typst') === 'typst' && /\.typ$/i.test(a.template || '');
 
 /** Overleaf's "main document": explicit id, then main.typ by name, then the first Typst artifact. */
@@ -33,6 +35,15 @@ function firstDiagnostic(stderr) {
   return { message: lines[0] };
 }
 
+/**
+ * Absolute path of a diagnostic's file IF it lies inside the project root;
+ * otherwise null. `firstDiagnostic` parses compiler stderr, so its `file` is
+ * attacker-influenced data: this is the one place it becomes a filesystem path.
+ */
+function resolveDiagnosticPath(root, file) {
+  try { return inside(root, String(file ?? '')); } catch { return null; }
+}
+
 /** JSON is checked here; YAML needs the host's parser, so it is deferred. */
 function checkRawText(text, format) {
   if (format === 'yaml') return { ok: true, deferred: true };
@@ -54,4 +65,4 @@ function checkRawText(text, format) {
   }
 }
 
-module.exports = { resolveMain, staleness, firstDiagnostic, checkRawText };
+module.exports = { resolveMain, staleness, firstDiagnostic, checkRawText, resolveDiagnosticPath };

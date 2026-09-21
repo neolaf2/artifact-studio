@@ -18,7 +18,7 @@ const { loadAstContext, serializeAst, setPath, resolveCompanionPaths, yamlToJson
 const { escapeHtml } = require('./html');
 const { generateField, generateArtifact } = require('./llmGenerate');
 const { loadRecipe } = require('./core');
-const { resolveMain, staleness, firstDiagnostic, checkRawText } = require('./compileView');
+const { resolveMain, staleness, firstDiagnostic, checkRawText, resolveDiagnosticPath } = require('./compileView');
 
 const VIEW_TYPE = 'artifactStudio.artifactEditor';
 
@@ -199,10 +199,18 @@ class ArtifactEditorProvider {
     });
 
     const saveSub = vscode.workspace.onDidSaveTextDocument(async doc => {
-      if (doc.uri.toString() !== key) return;
-      this._updateSaveStatus(doc);
-      post({ type: 'saveState', dirty: false });
+      const isData = doc.uri.toString() === key;
+      // I3: saving THIS project's artifact-studio.json (e.g. adding "main")
+      // must re-resolve the main document — a disabled Compile button cannot
+      // ask for a refresh itself.
+      const isManifest = !isData && path.basename(doc.uri.fsPath).toLowerCase() === 'artifact-studio.json';
+      if (!isData && !isManifest) return;
+      if (isData) {
+        this._updateSaveStatus(doc);
+        post({ type: 'saveState', dirty: false });
+      }
       const ctx = await mainContext();
+      if (isManifest && (!ctx.recipeFile || path.resolve(doc.uri.fsPath) !== path.resolve(ctx.recipeFile))) return;
       postMain(ctx); // F1
       await this._postStatusOnly(post, document, outputPath(ctx));
     });
@@ -263,8 +271,17 @@ class ArtifactEditorProvider {
       }
     });
 
-    webviewPanel.onDidChangeViewState(e => {
-      if (e.webviewPanel.active) this._updateSaveStatus(document);
+    webviewPanel.onDidChangeViewState(async e => {
+      if (!e.webviewPanel.active) return;
+      this._updateSaveStatus(document);
+      try {
+        // I3: the manifest may have gained a main document while we were hidden.
+        const ctx = await mainContext();
+        postMain(ctx);
+        await this._postStatusOnly(post, document, outputPath(ctx));
+      } catch (error) {
+        this.output?.appendLine(`Artifact editor: ${error.message}`);
+      }
     });
 
     webviewPanel.onDidDispose(() => {
@@ -318,8 +335,16 @@ class ArtifactEditorProvider {
     }
   }
 
+  /**
+   * I1: a diagnostic's file comes from compiler stderr, so it is contained at
+   * the sink: anything outside the project root opens nothing.
+   */
   async _openDiagnostic(baseDir, { file, line, col }) {
-    const target = path.isAbsolute(file) ? file : path.resolve(baseDir, file);
+    const target = resolveDiagnosticPath(baseDir, file);
+    if (!target) {
+      this.output?.appendLine(`Artifact editor: ignoring diagnostic path outside the project: ${file}`);
+      return;
+    }
     const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(target));
     const position = new vscode.Position(Math.max(0, Number(line || 1) - 1), Math.max(0, Number(col || 1) - 1));
     await vscode.window.showTextDocument(doc, { selection: new vscode.Range(position, position) });
@@ -335,8 +360,8 @@ class ArtifactEditorProvider {
       post({ type: 'rawState', ok: false, message: checked.message, line: checked.line ?? null });
       return;
     }
+    let data = checked.value;
     if (checked.deferred) {
-      let data;
       try {
         data = await yamlToJson(String(text ?? ''));
       } catch (error) {
@@ -347,12 +372,18 @@ class ArtifactEditorProvider {
         post({ type: 'rawState', ok: false, message: 'The document root must be a mapping.', line: null });
         return;
       }
-      // keep the author's YAML formatting: replace the text verbatim
+    }
+    // I4: keep the author's formatting for BOTH formats — the text has already
+    // been proven to parse, and re-serializing JSON would reflow the whole file
+    // on one keystroke and desync the tab's baseText. The twin sync still gets
+    // the parsed value.
+    try {
       await this._replaceText(document, String(text ?? ''), data, 'rawEdit');
-      post({ type: 'rawState', ok: true });
+    } catch (error) {
+      // I5: an edit that did not land must never be reported as ok.
+      post({ type: 'rawState', ok: false, message: String(error.message || 'The edit could not be applied.'), line: null });
       return;
     }
-    await this._replaceDocument(document, checked.value, 'rawEdit');
     post({ type: 'rawState', ok: true });
   }
 
@@ -400,7 +431,16 @@ class ArtifactEditorProvider {
       const edit = new vscode.WorkspaceEdit();
       const full = new vscode.Range(0, 0, document.lineCount, 0);
       edit.replace(document.uri, full, text);
-      await vscode.workspace.applyEdit(edit);
+      const applied = await vscode.workspace.applyEdit(edit);
+      if (!applied) {
+        // I5: no change event will fire, so the marker we just pushed would
+        // survive and mis-attribute the NEXT genuine external change as ours.
+        if (origin) {
+          const stale = this._origins.get(key);
+          if (stale && stale[stale.length - 1] === origin) stale.pop();
+        }
+        throw new Error('The edit could not be applied to the document.');
+      }
       // Keep the JSON twin in sync when editing YAML (canonical AST twin)
       if (data !== undefined && /\.ya?ml$/i.test(document.uri.fsPath)) {
         const twin = document.uri.fsPath.replace(/\.ya?ml$/i, '.json');
