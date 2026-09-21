@@ -125,3 +125,10 @@ One-time GitHub repo secrets:
 
 Do not put these in `.env` committed to git.
 
+## Production durable save (Vercel Blob)
+
+On the Vercel **production** deployment, A-box saves use **Vercel Blob** (`BLOB_READ_WRITE_TOKEN` / `ARTIFACT_STUDIO_BLOB_READ_WRITE_TOKEN`).
+
+- **Local / CLI / VS Code extension** are unchanged — they keep writing the workspace filesystem (no Blob token in Development).
+- **GitHub Contents write-back** is optional and off on production unless you set `ARTIFACT_STUDIO_GITHUB_TOKEN`.
+

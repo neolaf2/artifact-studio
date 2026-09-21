@@ -1,10 +1,19 @@
 /** Optional Vercel Blob backend for durable A-box saves. */
+/** Prefer app-specific name; fall back to Vercel Blob store auto-inject. */
+function blobTokenRaw(): string | undefined {
+  return (
+    process.env.ARTIFACT_STUDIO_BLOB_READ_WRITE_TOKEN?.trim() ||
+    process.env.BLOB_READ_WRITE_TOKEN?.trim() ||
+    undefined
+  );
+}
+
 export function blobConfigured(): boolean {
-  return Boolean(process.env.ARTIFACT_STUDIO_BLOB_READ_WRITE_TOKEN?.trim());
+  return Boolean(blobTokenRaw());
 }
 
 function blobToken(): string {
-  return process.env.ARTIFACT_STUDIO_BLOB_READ_WRITE_TOKEN!.trim();
+  return blobTokenRaw()!;
 }
 
 export async function blobGet(id: string): Promise<string | null> {
