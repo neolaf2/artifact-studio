@@ -28,7 +28,8 @@
   },
   "scripts": {
     "test": "node --test",
-    "package": "npx @vscode/vsce package --allow-missing-repository"
+    "package": "npx --yes @vscode/vsce package --no-dependencies",
+    "vscode:prepublish": "npm test"
   },
   "contributes": {
     "commands": [
@@ -219,5 +220,9 @@
   "author": {
     "name": "Richard Tong",
     "url": "https://github.com/neolaf2"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/neolaf2/artifact-studio/issues"
+  },
+  "homepage": "https://github.com/neolaf2/artifact-studio#readme"
 }

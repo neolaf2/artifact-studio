@@ -349,6 +349,21 @@ Skill: [`skills/artifact-llm-generator`](./skills/artifact-llm-generator/) · sh
 
 Both paths generate against the same T-box JSON Schema + ontology and write back into the A-box AST.
 
+## Automated VSIX releases
+
+On every push/PR that touches `extension/**`, GitHub Actions runs extension tests and packages the VSIX.
+
+When `package.json` version on `main` is **new** (no existing `vX.Y.Z` release), the workflow also:
+
+1. Creates a GitHub Release `vX.Y.Z`
+2. Attaches `artifact-studio-X.Y.Z.vsix`
+
+Workflow: [`.github/workflows/extension-ci-release.yml`](./.github/workflows/extension-ci-release.yml)
+
+Manual re-publish: **Actions → Extension CI and VSIX Release → Run workflow** (optionally force release).
+
+Releases: https://github.com/neolaf2/artifact-studio/releases
+
 ## License
 
 Copyright © 2026 **Richard Tong**.

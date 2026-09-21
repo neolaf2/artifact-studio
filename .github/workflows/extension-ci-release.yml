@@ -1,0 +1,152 @@
+name: Extension CI and VSIX Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'extension/**'
+      - '.github/workflows/extension-ci-release.yml'
+  pull_request:
+    paths:
+      - 'extension/**'
+      - '.github/workflows/extension-ci-release.yml'
+  workflow_dispatch:
+    inputs:
+      force_release:
+        description: 'Create/replace GitHub release for the current package.json version even if it already exists'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: extension-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-package:
+    name: Test and package VSIX
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      vsix: ${{ steps.meta.outputs.vsix }}
+      should_release: ${{ steps.meta.outputs.should_release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Run extension tests
+        run: npm test
+
+      - name: Read version and release gate
+        id: meta
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          VSIX="artifact-studio-${VERSION}.vsix"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "vsix=${VSIX}" >> "$GITHUB_OUTPUT"
+          echo "Extension version: ${VERSION}"
+
+          SHOULD_RELEASE=false
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            SHOULD_RELEASE=false
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force_release }}" = "true" ]; then
+            SHOULD_RELEASE=true
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            # Release only when this version has no existing GitHub release yet
+            if gh release view "v${VERSION}" >/dev/null 2>&1; then
+              echo "Release v${VERSION} already exists — packaging only."
+              SHOULD_RELEASE=false
+            else
+              echo "No release for v${VERSION} — will publish after package."
+              SHOULD_RELEASE=true
+            fi
+          fi
+          echo "should_release=${SHOULD_RELEASE}" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Package VSIX
+        run: |
+          npx --yes @vscode/vsce package --no-dependencies
+          test -f "artifact-studio-${{ steps.meta.outputs.version }}.vsix"
+          ls -la *.vsix
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-studio-vsix
+          path: extension/artifact-studio-${{ steps.meta.outputs.version }}.vsix
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub release
+    needs: test-and-package
+    if: needs.test-and-package.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download VSIX
+        uses: actions/download-artifact@v4
+        with:
+          name: artifact-studio-vsix
+          path: dist
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.test-and-package.outputs.version }}
+          VSIX: ${{ needs.test-and-package.outputs.vsix }}
+        run: |
+          set -euo pipefail
+          test -f "dist/${VSIX}"
+          TAG="v${VERSION}"
+          TITLE="Artifact Studio ${TAG}"
+          NOTES="$(cat <<MD
+          ## Artifact Studio ${TAG}
+
+          Automated release after successful extension tests on \`main\`.
+
+          ### Install
+          \`\`\`bash
+          cursor --install-extension ${VSIX}
+          # or
+          code --install-extension ${VSIX}
+          \`\`\`
+
+          ### Changes
+          See commits since the previous release on the \`extension/\` tree.
+          MD
+          )"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Updating existing release $TAG"
+            gh release upload "$TAG" "dist/${VSIX}" --clobber
+            gh release edit "$TAG" --title "$TITLE" --notes "$NOTES"
+          else
+            # Create annotated tag + release with VSIX attached
+            gh release create "$TAG" "dist/${VSIX}" \
+              --title "$TITLE" \
+              --notes "$NOTES" \
+              --target "${{ github.sha }}"
+          fi
+          echo "Published $TAG with $VSIX"

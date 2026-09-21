@@ -347,6 +347,21 @@ npm run dev
 
 两条路径都按同一套 T-box（JSON Schema + 本体）生成，并写回 A-box AST。
 
+## 自动发布 VSIX
+
+每次改动 `extension/**` 的推送/PR 都会跑扩展测试并打包 VSIX。
+
+当 `main` 上 `package.json` 版本为**新版本**（尚无 `vX.Y.Z` Release）时，工作流还会：
+
+1. 创建 GitHub Release `vX.Y.Z`
+2. 挂载 `artifact-studio-X.Y.Z.vsix`
+
+工作流：[`.github/workflows/extension-ci-release.yml`](./.github/workflows/extension-ci-release.yml)
+
+手动重发：**Actions → Extension CI and VSIX Release → Run workflow**（可强制发布）。
+
+发布页：https://github.com/neolaf2/artifact-studio/releases
+
 ## 许可协议
 
 Copyright © 2026 **Richard Tong**.
