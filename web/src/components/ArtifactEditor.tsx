@@ -204,7 +204,8 @@ export function ArtifactEditor({ initial }: Props) {
       a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
-      setStatus(`PDF downloaded (${filename})`);
+      const engine = res.headers.get('X-Artifact-Pdf-Engine') || '';
+      setStatus(engine ? `PDF downloaded (${filename}, ${engine})` : `PDF downloaded (${filename})`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'PDF build failed');
     } finally {
