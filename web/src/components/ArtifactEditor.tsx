@@ -9,14 +9,70 @@ import type { ValidationIssue } from '@/lib/validate';
 
 type Props = { initial: ArtifactBundle };
 
+type EditorTab = 'form' | 'tbox' | 'rbox' | 'json';
+
+type RboxBindingSummary = {
+  snapshotVersion?: string;
+  contentHash?: string;
+};
+
+/** Lightweight YAML extract for binding.abox fields (MVP; no full YAML parser). */
+function parseRboxBinding(yaml: string): RboxBindingSummary {
+  const summary: RboxBindingSummary = {};
+  const versionMatch = yaml.match(
+    /^\s*snapshotVersion:\s*["']?([^\s"']+)["']?\s*$/m,
+  );
+  if (versionMatch) summary.snapshotVersion = versionMatch[1];
+  const hashMatch = yaml.match(
+    /^\s*contentHash:\s*["']?([^\s"']+)["']?\s*$/m,
+  );
+  if (hashMatch) summary.contentHash = hashMatch[1];
+  return summary;
+}
+
 export function ArtifactEditor({ initial }: Props) {
   const [data, setData] = useState<Record<string, unknown>>(initial.data);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [status, setStatus] = useState('');
-  const [tab, setTab] = useState<'form' | 'tbox' | 'json'>('form');
+  const [tab, setTab] = useState<EditorTab>('form');
   const [saving, setSaving] = useState(false);
 
+  const hasRbox = Boolean(initial.rboxYaml && initial.rboxYaml.trim());
+  const snapshot =
+    (data.snapshot &&
+    typeof data.snapshot === 'object' &&
+    !Array.isArray(data.snapshot)
+      ? (data.snapshot as Record<string, unknown>)
+      : undefined) ?? initial.snapshot;
+  const snapshotVersion =
+    typeof snapshot?.version === 'string'
+      ? snapshot.version
+      : initial.snapshot?.version;
+  const snapshotHash =
+    typeof snapshot?.contentHash === 'string'
+      ? snapshot.contentHash
+      : initial.snapshot?.contentHash;
+
+  const rboxBinding = useMemo(
+    () => (hasRbox && initial.rboxYaml ? parseRboxBinding(initial.rboxYaml) : {}),
+    [hasRbox, initial.rboxYaml],
+  );
+
   const previewHtml = useMemo(() => renderClarificationPreview(data), [data]);
+
+  const tabs = useMemo(() => {
+    const base: Array<[EditorTab, string]> = [
+      ['form', 'Schema form'],
+      ['tbox', 'T-box ontology'],
+    ];
+    if (hasRbox) base.push(['rbox', 'R-box review']);
+    base.push(['json', 'A-box JSON']);
+    return base;
+  }, [hasRbox]);
+
+  useEffect(() => {
+    if (tab === 'rbox' && !hasRbox) setTab('form');
+  }, [tab, hasRbox]);
 
   function onFieldChange(path: string, value: unknown) {
     setData((prev) => applyPathChange(prev, path, value));
@@ -48,7 +104,6 @@ export function ArtifactEditor({ initial }: Props) {
       setSaving(false);
     }
   }
-
 
   const [generatingPath, setGeneratingPath] = useState<string | null>(null);
   const [generatingAll, setGeneratingAll] = useState(false);
@@ -168,10 +223,25 @@ export function ArtifactEditor({ initial }: Props) {
           <p className="mt-1 max-w-3xl text-sm text-zinc-600">
             {initial.meta.descriptionZh}
           </p>
-          <p className="mt-1 text-xs text-zinc-500">
-            T-box:{' '}
-            <code className="rounded bg-zinc-100 px-1">{initial.meta.tboxLabel}</code>
-            {' · '}schema-driven A-box edit
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+            <span>
+              T-box:{' '}
+              <code className="rounded bg-zinc-100 px-1">
+                {initial.meta.tboxLabel}
+              </code>
+            </span>
+            {snapshotVersion ? (
+              <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-medium text-emerald-900">
+                A-box snapshot {snapshotVersion}
+              </span>
+            ) : (
+              <span>· schema-driven A-box edit</span>
+            )}
+            {hasRbox ? (
+              <span className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 font-medium text-violet-900">
+                R-box review
+              </span>
+            ) : null}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -209,7 +279,8 @@ export function ArtifactEditor({ initial }: Props) {
 
       {llmStatus && !llmStatus.configured ? (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-          LLM endpoint not configured — generation needs an API key/base URL (or mock mode).{' '}
+          LLM endpoint not configured — generation needs an API key/base URL (or
+          mock mode).{' '}
           <Link href="/settings" className="font-medium underline">
             Configure LLM
           </Link>
@@ -217,7 +288,8 @@ export function ArtifactEditor({ initial }: Props) {
       ) : null}
       {llmStatus?.configured ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
-          LLM: {llmStatus.provider}{llmStatus.mock ? ' (mock)' : ''} — {llmStatus.message}
+          LLM: {llmStatus.provider}
+          {llmStatus.mock ? ' (mock)' : ''} — {llmStatus.message}
         </div>
       ) : null}
       {status ? (
@@ -242,13 +314,7 @@ export function ArtifactEditor({ initial }: Props) {
       <div className="grid flex-1 gap-4 lg:grid-cols-2">
         <section className="flex min-h-[70vh] flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm">
           <div className="flex gap-1 border-b border-zinc-200 px-2 pt-2">
-            {(
-              [
-                ['form', 'Schema form'],
-                ['tbox', 'T-box ontology'],
-                ['json', 'AST JSON'],
-              ] as const
-            ).map(([id, label]) => (
+            {tabs.map(([id, label]) => (
               <button
                 key={id}
                 type="button"
@@ -278,6 +344,32 @@ export function ArtifactEditor({ initial }: Props) {
                 {initial.tboxMarkdown}
               </pre>
             ) : null}
+            {tab === 'rbox' && hasRbox ? (
+              <div className="space-y-3">
+                <div className="rounded-xl border border-violet-100 bg-violet-50/60 px-3 py-2 text-xs text-violet-950">
+                  <p className="font-medium">R-box binding (read-only MVP)</p>
+                  <ul className="mt-1 space-y-0.5 font-mono">
+                    <li>
+                      binding.abox.snapshotVersion:{' '}
+                      {rboxBinding.snapshotVersion || '—'}
+                    </li>
+                    <li className="break-all">
+                      binding.abox.contentHash:{' '}
+                      {rboxBinding.contentHash || '—'}
+                    </li>
+                    {snapshotVersion || snapshotHash ? (
+                      <li className="break-all text-zinc-600">
+                        A-box snapshot.version={snapshotVersion || '—'} ·
+                        contentHash={snapshotHash || '—'}
+                      </li>
+                    ) : null}
+                  </ul>
+                </div>
+                <pre className="max-h-[60vh] overflow-auto whitespace-pre rounded-xl bg-zinc-950 p-4 font-mono text-xs leading-relaxed text-zinc-100">
+                  {initial.rboxYaml}
+                </pre>
+              </div>
+            ) : null}
             {tab === 'json' ? (
               <textarea
                 className="h-[60vh] w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs leading-relaxed"
@@ -297,7 +389,7 @@ export function ArtifactEditor({ initial }: Props) {
 
         <section className="flex min-h-[70vh] flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm">
           <div className="border-b border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-800">
-            Live HTML preview
+            Live HTML preview (view)
           </div>
           <iframe
             title="preview"

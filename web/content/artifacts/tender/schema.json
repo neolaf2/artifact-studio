@@ -176,6 +176,76 @@
     "source": {
       "type": "object",
       "additionalProperties": true
+    },
+    "snapshot": {
+      "type": "object",
+      "description": "A-box snapshot metadata (version + provenance). Optional for older tools.",
+      "additionalProperties": true,
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Snapshot semver"
+        },
+        "artifactId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO-8601 timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO-8601 timestamp"
+        },
+        "contentHash": {
+          "type": "string",
+          "description": "sha256:<hex> of canonical business payload WITHOUT the snapshot field",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "method": {
+              "type": "string"
+            },
+            "sourceSuite": {
+              "type": "string"
+            },
+            "sourcePath": {
+              "type": "string"
+            },
+            "generator": {
+              "type": "string"
+            },
+            "tbox": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string"
+                },
+                "ontology": {
+                  "type": "string"
+                },
+                "schemaVersion": {
+                  "type": "string"
+                }
+              }
+            },
+            "rbox": {
+              "type": "object",
+              "properties": {
+                "review": {
+                  "type": "string"
+                },
+                "reviewVersion": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

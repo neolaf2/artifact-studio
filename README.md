@@ -27,7 +27,8 @@ The combined **`data.json` / `data.yaml` + JSON Schema + ontology (T-box)** is t
 Demo samples:
 
 - Clarification (HTML→PDF): [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
-- **Tender document (VS Code + Web dual route):** [`samples/tender-document-v20918`](./samples/tender-document-v20918/) · [Demo guide](./docs/TENDER_SAMPLE_DEMO.md)
+- **Tender document (VS Code + Web dual route):** [`samples/tender-document-v20918`](./samples/tender-document-v20918/) · [Demo guide](./docs/TENDER_SAMPLE_DEMO.md) · [T/A/R convention](./docs/ARTIFACT_TAR_BOX.md)
+  - **T-box** = schema + ontology · **A-box** = versioned instance (`snapshot`) · **R-box** = `rbox/review.yaml` rules/findings · HTML/Typst = **views** (not R-box)
 
 Legacy line kept for links: [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
 
@@ -328,8 +329,8 @@ Artifact Studio also ships a **Next.js web UI** for the same AST model.
 |------|---------|
 | `web/` | Next.js App Router app |
 | `/` | Artifact catalog |
-| `/artifacts/tender` | 招标文件 V20918 schema form + ontology (same AST as sample) |
-| `/artifacts/clarification` | Schema form (T-box) + ontology + live HTML preview |
+| `/artifacts/tender` | Tender V20918: schema form + **T-box** ontology + **R-box** review tab + **A-box** JSON (aligned snapshots; same AST as sample) |
+| `/artifacts/clarification` | Schema form (T-box) + ontology + live HTML preview (no R-box file → R-box tab hidden) |
 | `/settings` | Configure OpenAI-compatible LLM API key in the browser (httpOnly cookie) |
 | `GET/PUT /api/artifacts/:id` | Load / validate+save A-box JSON |
 
@@ -340,8 +341,9 @@ npm run dev
 # → http://localhost:3000
 ```
 
-Demo pack: `web/content/artifacts/clarification/` (seeded from `samples/supplier-clarification-html-zh`).
+Demo packs: `web/content/artifacts/tender/` (T/A/R + views) and `web/content/artifacts/clarification/`.
 Edits are constrained by the predefined JSON Schema T-box and shown against the ontology markdown.
+Tender also loads `rbox/review.yaml` for the **R-box review** tab and shows an A-box `snapshot.version` chip when present.
 
 ## LLM endpoint configuration
 

@@ -223,5 +223,27 @@
   "source": {
     "path": "测试套题V20918/10-招标文件/23-CNCCC-FW-GK-1347-招标文件.md",
     "suite": "V20918"
+  },
+  "snapshot": {
+    "version": "1.0.0",
+    "artifactId": "TENDER-23-CNCCC-FW-GK-1347-01",
+    "createdAt": "2026-09-21T12:35:20-04:00",
+    "updatedAt": "2026-09-21T12:35:20-04:00",
+    "contentHash": "sha256:c43847c0ae5d7870d9ab3c0ad4e661f00fcb9e35589e8ac604c077dbce1496b3",
+    "provenance": {
+      "method": "manual-decompose",
+      "sourceSuite": "V20918",
+      "sourcePath": "测试套题V20918/10-招标文件/23-CNCCC-FW-GK-1347-招标文件.md",
+      "generator": "artifact-studio/tender-sample",
+      "tbox": {
+        "schema": "tbox/data.schema.json",
+        "ontology": "tbox/ontology.md",
+        "schemaVersion": "1.0.0"
+      },
+      "rbox": {
+        "review": "rbox/review.yaml",
+        "reviewVersion": "1.0.0"
+      }
+    }
   }
 }
