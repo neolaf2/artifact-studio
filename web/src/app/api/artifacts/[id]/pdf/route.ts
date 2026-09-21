@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readDurableData } from '@/lib/durableStore';
-import {
-  renderArtifactPdf,
-  resolvePdfView,
-  typstAvailable,
-} from '@/lib/renderPdf';
+import { renderArtifactPdf, resolvePdfView, typstAvailable } from '@/lib/renderPdf';
 import { artifactPreviewHtml } from '@/lib/renderHtmlPdf';
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -14,12 +10,12 @@ export const maxDuration = 60;
 
 /**
  * POST /api/artifacts/:id/pdf
- * Body optional: { data?: object, preferHtml?: boolean }
+ * Body optional: { data?: object, engine?: 'html' | 'typst' }
  *
- * - Local + Typst: server returns application/pdf (Typst)
- * - Vercel / no Typst: returns JSON { engine: "html-client", html, filename }
- *   so the browser can turn the same preview HTML into a PDF (Chromium binaries
- *   do not reliably ship in Vercel serverless).
+ * Default (local + Vercel): JSON { engine: 'html-client', html, filename }
+ * so the browser builds a PDF from the same preview HTML via html2pdf.js.
+ *
+ * Optional engine:'typst' (local only): server-side Typst when installed.
  */
 export async function POST(req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
@@ -28,16 +24,21 @@ export async function POST(req: Request, ctx: Ctx) {
   }
 
   let data: Record<string, unknown> | undefined;
-  let preferHtml = false;
+  let engine: 'html' | 'typst' = 'html';
   try {
     const body = (await req.json().catch(() => ({}))) as {
       data?: unknown;
+      engine?: unknown;
       preferHtml?: unknown;
     };
     if (body.data && typeof body.data === 'object' && !Array.isArray(body.data)) {
       data = body.data as Record<string, unknown>;
     }
-    preferHtml = Boolean(body.preferHtml);
+    if (body.engine === 'typst' || body.engine === 'html') {
+      engine = body.engine;
+    } else if (body.preferHtml === false) {
+      engine = 'typst';
+    }
   } catch {
     data = undefined;
   }
@@ -55,28 +56,9 @@ export async function POST(req: Request, ctx: Ctx) {
   }
 
   const onVercel = Boolean(process.env.VERCEL);
-  const typst = !onVercel && (await typstAvailable());
 
-  // Vercel (or explicit preferHtml without local Chromium path): client-side HTML→PDF
-  if (onVercel || preferHtml || !typst) {
-    // Still try server Chromium locally when preferHtml and Chrome exists;
-    // on Vercel always hand HTML to the client.
-    if (!onVercel) {
-      const result = await renderArtifactPdf(id, data, { preferHtml: true });
-      if (result.ok) {
-        return new NextResponse(new Uint8Array(result.pdf), {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="${result.filename.replace(/"/g, '')}"`,
-            'X-Artifact-Pdf-Source': result.source,
-            'X-Artifact-Pdf-Engine': result.engine,
-            'Cache-Control': 'no-store',
-          },
-        });
-      }
-    }
-
+  // Default path: HTML preview for the client (works local + Vercel)
+  if (engine === 'html' || onVercel) {
     const html = artifactPreviewHtml(id, data);
     return NextResponse.json({
       engine: 'html-client',
@@ -85,9 +67,19 @@ export async function POST(req: Request, ctx: Ctx) {
     });
   }
 
+  // Optional local Typst
+  if (!(await typstAvailable())) {
+    const html = artifactPreviewHtml(id, data);
+    return NextResponse.json({
+      engine: 'html-client',
+      filename: `${id}.pdf`,
+      html,
+      warning: 'Typst not installed; using HTML preview PDF',
+    });
+  }
+
   const result = await renderArtifactPdf(id, data);
   if (!result.ok) {
-    // Last resort: client HTML
     const html = artifactPreviewHtml(id, data);
     return NextResponse.json({
       engine: 'html-client',
@@ -118,7 +110,8 @@ export async function GET(_req: Request, ctx: Ctx) {
     ok: true,
     typst,
     onVercel,
-    preferredEngine: onVercel ? 'html-client' : typst ? 'typst' : 'html',
+    // Web Download PDF always uses html-client by default (local + Vercel)
+    preferredEngine: 'html-client',
     view: view
       ? {
           typst: view.typstRel,
