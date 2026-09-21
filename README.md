@@ -9,6 +9,7 @@ This repo packages:
 | [`extension/`](./extension/) | Artifact Studio `0.2.0` source + `artifact-studio-0.2.0.vsix` |
 | [`samples/supplier-clarification/`](./samples/supplier-clarification/) | Bilingual supplier clarification sample |
 | [`samples/supplier-clarification-zh/`](./samples/supplier-clarification-zh/) | **Chinese** 澄清函 sample (澄字〔2026〕0147号) |
+| [`skills/`](./skills/) | Typst artifact generation skills (clarification, review report, RFP suite, …) |
 
 ## Prerequisites
 
@@ -63,3 +64,16 @@ Templates read data via Typst `--input data=/…` (see sample `letter.typ`).
 ## License
 
 MIT
+
+
+## Typst skills
+
+Previously tested agent skills that generate artifacts with local Typst (same toolchain as the extension):
+
+- `skills/bid-clarification-letter`
+- `skills/bid-document-intelligent-review-report`
+- `skills/portable-typst-pdf-generator`
+- `skills/rfp-project-document-suite`
+- `skills/typst-showcase`
+
+Details: [`skills/README.md`](./skills/README.md).

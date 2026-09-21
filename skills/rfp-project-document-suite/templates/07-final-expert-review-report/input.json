@@ -1,0 +1,47 @@
+{
+  "document": {
+    "template_id": "07-final-expert-review-report",
+    "document_id": "07-FINAL-EXPERT-REVIEW-REPORT-POC-001",
+    "title": "专家复核最终汇总报告模版",
+    "status": "草案",
+    "version": "V0.1",
+    "issue_date": "2026-09-19",
+    "confidentiality": "内部受控"
+  },
+  "sections": [
+    {
+      "section_id": "S01",
+      "title": "专家复核范围与程序",
+      "paragraphs": [
+        "本报告复核各供应商初审记录、澄清闭环、评分与证据，不替代原始评审记录。"
+      ]
+    },
+    {
+      "section_id": "S02",
+      "title": "复核结论与供应商汇总",
+      "paragraphs": [
+        "每一供应商的最终结果、排序、条件事项和证据引用应独立可追溯。"
+      ]
+    },
+    {
+      "section_id": "S03",
+      "title": "最终推荐与确认",
+      "paragraphs": [
+        "已确认报告必须记录专家组确认方式、确认时间和最终推荐结论。"
+      ]
+    }
+  ],
+  "artifact_data": {
+    "supplier_final_results": [
+      "供应商A：专家复核通过，进入推荐排序",
+      "供应商B：专家复核通过，进入推荐排序"
+    ],
+    "review_of_reviews": "专家组对初审意见、澄清闭环和证据完整性进行复核。",
+    "panel_decisions": [
+      "确认评分与排序口径",
+      "确认条件事项和后续建议"
+    ],
+    "final_recommendation": "待专家组正式确认后形成最终推荐意见。",
+    "panel_confirmation": "专家组确认状态：待确认。"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "request_id": "CLR-2026-0147",
+  "issue_date": "September 19, 2026",
+  "response_due_at": "5:00 p.m. Atlantic Time on September 26, 2026",
+  "bid": {
+    "bid_id": "RFP-2026-091",
+    "title": "Regional Fleet Maintenance Services",
+    "issuer_name": "Northwind Procurement Office"
+  },
+  "approval": {
+    "status": "draft"
+  },
+  "questions": [
+    {
+      "id": "Q-01",
+      "reference": "RFP §4.2",
+      "question": "Please confirm whether the proposed after-hours response model includes on-site dispatch within the stated service area.",
+      "response_format": "Written confirmation"
+    },
+    {
+      "id": "Q-02",
+      "reference": "Pricing Schedule B",
+      "question": "Please reconcile the variance between the annual preventive-maintenance total and the sum of the monthly line items.",
+      "response_format": "Revised schedule or explanation"
+    }
+  ],
+  "attachments": [
+    "Pricing Schedule B"
+  ]
+}

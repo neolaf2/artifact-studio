@@ -1,0 +1,15 @@
+{
+  "document": {
+    "title": "Application Report",
+    "subtitle": "A reusable Markdown and data-driven PDF",
+    "kicker": "APPLICATION BRIEF",
+    "author": "Application",
+    "date": "2026-09-19"
+  },
+  "brand": {
+    "accent": "#1a5fb4"
+  },
+  "layout": {
+    "paper": "a4"
+  }
+}

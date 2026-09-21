@@ -1,0 +1,49 @@
+{
+  "document": {
+    "template_id": "08-bid-clearance-summary-report",
+    "document_id": "08-BID-CLEARANCE-SUMMARY-REPORT-POC-001",
+    "title": "投标文件清标汇总报告模版",
+    "status": "草案",
+    "version": "V0.1",
+    "issue_date": "2026-09-19",
+    "confidentiality": "内部受控"
+  },
+  "sections": [
+    {
+      "section_id": "S01",
+      "title": "清标范围与供应商清单",
+      "paragraphs": [
+        "本模版将单一供应商清标记录汇总为项目级清标总览。"
+      ]
+    },
+    {
+      "section_id": "S02",
+      "title": "跨供应商清标对比",
+      "paragraphs": [
+        "所有比较均须基于相同招标要求、冻结版本和判定口径。"
+      ]
+    },
+    {
+      "section_id": "S03",
+      "title": "澄清矩阵与汇总结论",
+      "paragraphs": [
+        "澄清事项需保持供应商、发现、责任和回复状态的可追溯关系。"
+      ]
+    }
+  ],
+  "artifact_data": {
+    "supplier_clearance_summaries": [
+      "供应商A：完整性通过，待澄清 2 项",
+      "供应商B：完整性通过，待澄清 1 项"
+    ],
+    "cross_supplier_clearance_comparison": "对比仅列示同一招标要求下的响应、证据和清标状态差异。",
+    "common_findings": [
+      "所有供应商均需确认报价税率口径"
+    ],
+    "clarification_matrix": [
+      "供应商A：授权文件适用范围",
+      "供应商B：报价汇总公式"
+    ],
+    "summary_clearance_conclusion": "清标汇总结论：在全部待澄清事项关闭前，不进入最终评审结论。"
+  }
+}

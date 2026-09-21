@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Clarification request input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request_id", "issue_date", "response_due_at", "bid", "approval", "questions", "attachments"],
+  "properties": {
+    "request_id": {"type": "string", "minLength": 1},
+    "issue_date": {"type": "string", "minLength": 1},
+    "response_due_at": {"type": "string", "minLength": 1},
+    "bid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bid_id", "title", "issuer_name"],
+      "properties": {
+        "bid_id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "issuer_name": {"type": "string", "minLength": 1}
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {"type": "string", "enum": ["draft", "approved"]}
+      }
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "reference", "question", "response_format"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "reference": {"type": "string", "minLength": 1},
+          "question": {"type": "string", "minLength": 1},
+          "response_format": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "attachments": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "issuer": {
+    "name": "Northwind Procurement Office"
+  },
+  "brand": {
+    "accent": "#1a5fb4"
+  },
+  "signatory": {
+    "name": "Alex Morgan",
+    "title": "Senior Procurement Manager",
+    "email": "procurement@example.com"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "entry": "main.typ",
+  "metadata": {
+    "author": "Avery Chen",
+    "subtitle": "A mathematical note on confidence-weighted prioritization",
+    "title": "Small Signals, Better Decisions"
+  },
+  "mode": "report",
+  "theme": "report-theme.typ"
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "generator": "bid-document-intelligent-review-report",
+  "entry": "main.typ",
+  "authoritative_inputs": [
+    "input/project.json",
+    "input/review.json"
+  ],
+  "prose_inputs": [
+    "summary.md",
+    "conclusion.md"
+  ]
+}

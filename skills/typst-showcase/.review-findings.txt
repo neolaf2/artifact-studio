@@ -1,0 +1,6 @@
+Visual review findings (2026-09-19)
+
+Strategy report: Contact sheet covers all four pages. Cover, contents, headings, metric cards, callout, tables, and two-column scorecard render cleanly with consistent blue hierarchy. No apparent overlap, clipping, blank pages, or table overflow.
+
+Mathematical note: Contact sheet covers all five pages. Cover and contents are legible; numbered equations, comparison table, definition cards, syntax-highlighted code, caution box, and continuation page render cleanly. No apparent overlap, clipping, or page-flow defect.
+Résumé: One-page contact sheet is clean and legible at normal scale. Header, contact links, section rules, experience hierarchy, and dense content all stay within the page with no apparent overlap or clipping. The selected template's upstream scienceicons dependency emits 29 whitespace warnings under Typst 0.15.1; the generated PDF itself verified successfully.

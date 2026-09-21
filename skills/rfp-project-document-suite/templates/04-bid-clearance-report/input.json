@@ -1,0 +1,48 @@
+{
+  "document": {
+    "template_id": "04-bid-clearance-report",
+    "document_id": "04-BID-CLEARANCE-REPORT-POC-001",
+    "title": "单一供应商投标文件清标报告模版",
+    "status": "草案",
+    "version": "V0.1",
+    "issue_date": "2026-09-19",
+    "confidentiality": "内部受控"
+  },
+  "sections": [
+    {
+      "section_id": "S01",
+      "title": "供应商与清标依据",
+      "paragraphs": [
+        "本报告仅覆盖单一供应商的投标文件、证据材料和已确认澄清记录。"
+      ]
+    },
+    {
+      "section_id": "S02",
+      "title": "响应与证据追踪",
+      "paragraphs": [
+        "每项实质性要求都应关联供应商响应、证据定位和判定结论。"
+      ]
+    },
+    {
+      "section_id": "S03",
+      "title": "清标结论与处理建议",
+      "paragraphs": [
+        "不满足、未响应或待核实事项必须标明严重级别、可澄清性和建议动作。"
+      ]
+    }
+  ],
+  "artifact_data": {
+    "supplier": "【示例】海岳装备服务有限公司",
+    "requirement_traceability": [
+      "资格证明：已定位",
+      "技术响应：已定位",
+      "报价表：已定位"
+    ],
+    "clearance_findings": [
+      "授权文件有效期需人工复核",
+      "报价汇总公式需复算确认"
+    ],
+    "pricing_check": "报价项、税率、数量、合价和总价应按招标口径复核。",
+    "clearance_conclusion": "待澄清；未关闭的重大不符合项不得进入通过结论。"
+  }
+}

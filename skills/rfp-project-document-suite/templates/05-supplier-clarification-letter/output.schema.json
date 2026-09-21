@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "供应商澄清函模版输出清单",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project_id",
+    "requester_entity",
+    "template_id",
+    "document_id",
+    "outputs",
+    "content_review",
+    "format_check"
+  ],
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requester_entity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "template_id": {
+      "const": "05-supplier-clarification-letter"
+    },
+    "document_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "string"
+      }
+    },
+    "content_review": {
+      "type": "string",
+      "minLength": 1
+    },
+    "format_check": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

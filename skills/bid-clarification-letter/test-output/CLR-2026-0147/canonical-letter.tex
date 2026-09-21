@@ -1,0 +1,141 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+]{article}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\usepackage{caption}
+\captionsetup[table]{skip=6pt}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={Clarification Request CLR-2026-0147},
+  pdfauthor={Northwind Procurement Office},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Clarification Request CLR-2026-0147}
+\author{Northwind Procurement Office}
+\date{September 19, 2026}
+
+\begin{document}
+\maketitle
+
+\textbf{DRAFT --- PENDING CLEARANCE}
+
+Acme Industrial Systems Ltd.\\
+Jordan Lee, Director of Proposals\\
+125 Harbour Road\\
+Halifax, NS B3H 1Y2\\
+Canada
+
+\textbf{Subject: Clarification Request CLR-2026-0147 --- Regional Fleet
+Maintenance Services}
+
+Dear Jordan Lee,
+
+Northwind Procurement Office is reviewing the response submitted by Acme
+Industrial Systems Ltd.~for RFP-2026-091, Regional Fleet Maintenance
+Services.
+
+To support the ongoing review, please provide the requested written
+clarifications by the response deadline stated below. This request is
+limited to the identified items and does not amend the solicitation.
+
+Please provide a written response by \textbf{5:00 p.m. Atlantic Time on
+September 26, 2026}. Please identify the request ID and relevant
+question ID in each response.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+ID
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Source reference
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Clarification requested
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Requested response
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Q-01 & RFP §4.2 & Please confirm whether the proposed after-hours
+response model includes on-site dispatch within the stated service area.
+& Written confirmation \\
+Q-02 & Pricing Schedule B & Please reconcile the variance between the
+annual preventive-maintenance total and the sum of the monthly line
+items. & Revised schedule or explanation \\
+\end{longtable}
+}
+
+Please submit your response through the established procurement
+communication channel and identify CLR-2026-0147 and the applicable
+question ID for each response. Direct procedural questions to the
+contact listed below.
+
+Sincerely,\\
+Alex Morgan\\
+Senior Procurement Manager\\
+procurement@example.com
+
+\textbf{Attachments:} Pricing Schedule B
+
+\end{document}

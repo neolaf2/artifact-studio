@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "generator": "bid-clarification-letter",
+  "entry": "main.typ",
+  "authoritative_inputs": [
+    "input/supplier.json",
+    "input/clarification-request.json"
+  ],
+  "prose_inputs": [
+    "opening.md",
+    "closing.md"
+  ],
+  "issuer": "Northwind Procurement Office"
+}

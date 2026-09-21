@@ -1,0 +1,46 @@
+{
+  "document": {
+    "template_id": "02-tender-review-report",
+    "document_id": "02-TENDER-REVIEW-REPORT-POC-001",
+    "title": "招标文件审核报告模版",
+    "status": "草案",
+    "version": "V0.1",
+    "issue_date": "2026-09-19",
+    "confidentiality": "内部受控"
+  },
+  "sections": [
+    {
+      "section_id": "S01",
+      "title": "审核结论与发布建议",
+      "paragraphs": [
+        "报告将审核发现、风险等级、责任归属、整改建议和发布条件作为可追溯记录。"
+      ]
+    },
+    {
+      "section_id": "S02",
+      "title": "重大风险与整改要求",
+      "paragraphs": [
+        "每项发现必须关联文件定位、审核依据和可验证的整改动作。"
+      ]
+    },
+    {
+      "section_id": "S03",
+      "title": "复核与归档",
+      "paragraphs": [
+        "整改完成后应由相应责任部门复核，并保留版本与证据索引。"
+      ]
+    }
+  ],
+  "artifact_data": {
+    "audit_scope": "审核资格条件、技术需求、商务条款、评审办法和附件之间的一致性。",
+    "findings": [
+      "资格条件中的授权要求需要完成竞争性复核",
+      "报价表与技术规格书的计量单位需要统一"
+    ],
+    "release_recommendation": "不满足发布条件；完成高风险问题整改并经复核后方可发布。",
+    "review_basis": [
+      "适用采购制度",
+      "已冻结的招标文件版本"
+    ]
+  }
+}

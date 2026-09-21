@@ -1,0 +1,16 @@
+{
+  "supplier_id": "SUP-004218",
+  "legal_name": "Acme Industrial Systems Ltd.",
+  "address": {
+    "line_1": "125 Harbour Road",
+    "city": "Halifax",
+    "region": "NS",
+    "postal_code": "B3H 1Y2",
+    "country": "Canada"
+  },
+  "primary_contact": {
+    "name": "Jordan Lee",
+    "title": "Director of Proposals",
+    "email": "jordan.lee@example.com"
+  }
+}

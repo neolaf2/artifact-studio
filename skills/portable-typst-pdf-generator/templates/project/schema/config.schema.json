@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Application PDF configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["document", "brand", "layout"],
+  "properties": {
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "subtitle", "kicker", "author", "date"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "subtitle": {"type": "string"},
+        "kicker": {"type": "string", "minLength": 1},
+        "author": {"type": "string", "minLength": 1},
+        "date": {"type": "string", "description": "ISO date or an empty string for the build date."}
+      }
+    },
+    "brand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accent"],
+      "properties": {
+        "accent": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paper"],
+      "properties": {
+        "paper": {"type": "string", "enum": ["a4", "us-letter"]}
+      }
+    }
+  }
+}

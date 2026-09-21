@@ -5,3 +5,6 @@ node_modules/
 *.vsix.bak
 **/output/preview/**
 **/.artifact-build-*/
+**/.venv/
+**/venv/
+**/__pycache__/

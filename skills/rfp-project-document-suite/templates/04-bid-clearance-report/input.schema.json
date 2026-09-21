@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "单一供应商投标文件清标报告模版输入数据",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document",
+    "sections",
+    "artifact_data"
+  ],
+  "properties": {
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "template_id",
+        "document_id",
+        "title",
+        "status",
+        "version",
+        "issue_date",
+        "confidentiality"
+      ],
+      "properties": {
+        "template_id": {
+          "const": "04-bid-clearance-report"
+        },
+        "document_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "草案",
+            "待审核",
+            "待确认",
+            "已确认",
+            "已归档"
+          ]
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issue_date": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidentiality": {
+          "type": "string",
+          "enum": [
+            "内部受控",
+            "受限",
+            "公开"
+          ]
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "section_id",
+          "title",
+          "paragraphs"
+        ],
+        "properties": {
+          "section_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "paragraphs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "artifact_data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supplier",
+        "requirement_traceability",
+        "clearance_findings",
+        "pricing_check",
+        "clearance_conclusion"
+      ],
+      "properties": {
+        "supplier": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ]
+        },
+        "requirement_traceability": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ]
+        },
+        "clearance_findings": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ]
+        },
+        "pricing_check": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ]
+        },
+        "clearance_conclusion": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "not": {
+    "anyOf": [
+      {
+        "required": [
+          "font"
+        ]
+      },
+      {
+        "required": [
+          "font_size"
+        ]
+      },
+      {
+        "required": [
+          "color"
+        ]
+      },
+      {
+        "required": [
+          "brand"
+        ]
+      },
+      {
+        "required": [
+          "accent"
+        ]
+      },
+      {
+        "required": [
+          "layout"
+        ]
+      },
+      {
+        "required": [
+          "theme"
+        ]
+      },
+      {
+        "required": [
+          "margin"
+        ]
+      },
+      {
+        "required": [
+          "page"
+        ]
+      },
+      {
+        "required": [
+          "paper"
+        ]
+      },
+      {
+        "required": [
+          "header"
+        ]
+      },
+      {
+        "required": [
+          "footer"
+        ]
+      },
+      {
+        "required": [
+          "columns"
+        ]
+      },
+      {
+        "required": [
+          "spacing"
+        ]
+      },
+      {
+        "required": [
+          "style"
+        ]
+      },
+      {
+        "required": [
+          "format"
+        ]
+      }
+    ]
+  }
+}

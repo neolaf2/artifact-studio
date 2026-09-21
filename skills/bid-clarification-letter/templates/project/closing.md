@@ -1,0 +1,1 @@
+Please submit your response through the established procurement communication channel and identify CLR-2026-0147 and the applicable question ID for each response. Direct procedural questions to the contact listed below.

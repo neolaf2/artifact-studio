@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "pdf": "/Users/rich/Local/manus/bid-clarification-letter/test-output/CLR-2026-0147/main.pdf",
+  "mode": "standard",
+  "page_count": 1,
+  "selected_pages": [
+    1
+  ],
+  "rendered_pages": [
+    "/Users/rich/Local/manus/bid-clarification-letter/test-output/CLR-2026-0147/main-review/pages/page-0001.png"
+  ],
+  "contact_sheets": [
+    "/Users/rich/Local/manus/bid-clarification-letter/test-output/CLR-2026-0147/main-review/sheets/sheet-01.jpg"
+  ],
+  "settings": {
+    "dpi": 110,
+    "columns": 3,
+    "max_sheet_pages": 12,
+    "thumbnail_width": 320
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "项目基础信息",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["report_name", "report_type", "project_name", "project_id", "lot", "procurement_category", "report_no", "report_version", "review_batch", "document_version", "review_date"],
+  "properties": {
+    "report_name": {"type": "string", "minLength": 1},
+    "report_type": {"type": "string", "minLength": 1},
+    "project_name": {"type": "string", "minLength": 1},
+    "project_id": {"type": "string", "minLength": 1},
+    "lot": {"type": "string", "minLength": 1},
+    "procurement_category": {"type": "string", "minLength": 1},
+    "report_no": {"type": "string", "minLength": 1},
+    "report_version": {"type": "string", "minLength": 1},
+    "review_batch": {"type": "string", "minLength": 1},
+    "document_version": {"type": "string", "minLength": 1},
+    "review_date": {"type": "string", "minLength": 1}
+  }
+}

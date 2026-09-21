@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "pdf": "/home/ubuntu/typst-showcase/strategy-report/main.pdf",
+  "mode": "standard",
+  "page_count": 4,
+  "selected_pages": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "rendered_pages": [
+    "/home/ubuntu/typst-showcase/strategy-report/main-review/pages/page-0001.png",
+    "/home/ubuntu/typst-showcase/strategy-report/main-review/pages/page-0002.png",
+    "/home/ubuntu/typst-showcase/strategy-report/main-review/pages/page-0003.png",
+    "/home/ubuntu/typst-showcase/strategy-report/main-review/pages/page-0004.png"
+  ],
+  "contact_sheets": [
+    "/home/ubuntu/typst-showcase/strategy-report/main-review/sheets/sheet-01.jpg"
+  ],
+  "settings": {
+    "dpi": 110,
+    "columns": 3,
+    "max_sheet_pages": 12,
+    "thumbnail_width": 320
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "metrics": [
+    {
+      "value": "3×",
+      "label": "faster iteration",
+      "note": "A reusable project structure reduces formatting work."
+    },
+    {
+      "value": "1",
+      "label": "data contract",
+      "note": "Facts and records remain separate from narrative prose."
+    },
+    {
+      "value": "100%",
+      "label": "local assets",
+      "note": "Final PDFs remain reproducible without remote image fetches."
+    }
+  ],
+  "records": [
+    {
+      "title": "Markdown narrative",
+      "summary": "Use Markdown for the explanatory text that an LLM or editor can revise safely. The template converts it into the application layout at compile time.",
+      "image": "",
+      "alt": "",
+      "tags": ["content", "editable"]
+    },
+    {
+      "title": "Structured application data",
+      "summary": "Use JSON or CSV for metrics, records, status values, and asset identifiers. Change the schema and components together when adapting this project to an application.",
+      "image": "",
+      "alt": "",
+      "tags": ["data", "reproducible"]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "skill_name": "bid-document-intelligent-review-report",
+  "application_title": "招标文件智能审核综合报告",
+  "source_template": "portable-typst-pdf-generator"
+}

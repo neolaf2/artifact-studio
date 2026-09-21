@@ -1,0 +1,36 @@
+---
+name: {{SKILL_NAME}}
+description: Generate, customize, and validate {{APPLICATION_TITLE}} PDFs from LLM-authored Markdown, structured JSON or CSV data, and local assets using Typst. Use when creating or updating this application's repeatable PDF documents.
+---
+
+# {{APPLICATION_TITLE}}
+
+Generate application-specific, reproducible PDFs from a three-part source contract: `content.md` for narrative prose, `data.json` or CSV for facts and records, and `assets/` for local media. `theme.typ` owns all global layout and component styling.
+
+## Workflow
+
+1. Run `scripts/check_environment.py --strict` before the first build. Review `references/local-dependencies.md` if a dependency is missing. Run `scripts/install.sh --execute` only after authorization to change the local machine.
+2. Read `references/input-contract.md` and the project schemas before generating Markdown or JSON. Use `references/llm-authoring.md` to constrain LLM output.
+3. Run Python helpers with `scripts/run_python.sh <script> ...`; it uses the local virtual environment if present. Create a project with `scripts/run_python.sh scripts/bootstrap_project.py --output-dir <project> --title <title> --author <author>`.
+4. Customize `templates/project/config.schema.json`, `data.schema.json`, `main.typ`, and `theme.typ` together for this application. Keep global style rules in `theme.typ`.
+5. Generate or update `content.md`, `data.json`, and local assets. Never use remote image URLs or paths outside `assets/`.
+6. Validate, compile, verify, and review:
+
+```bash
+scripts/run_python.sh scripts/validate_project.py <project>
+scripts/run_python.sh scripts/generate_pdf.py <project>/main.typ --strict
+scripts/run_python.sh scripts/verify_pdf.py <project>/main.pdf --profile text-document --strict
+scripts/run_python.sh scripts/render_review.py <project>/main.pdf
+```
+
+## LLM constraints
+
+Generate valid UTF-8 Markdown and JSON only. Keep narrative prose in Markdown; keep facts and record structures in JSON/CSV. Do not emit raw Typst into Markdown unless explicitly authorized and trusted. Do not write literal section numbers, placeholders, remote asset URLs, or data outside the schema. Keep image paths project-root relative under `/assets/` and supply an `alt` string for every image.
+
+## Customization boundary
+
+Customize component functions and global styles in `theme.typ`; customize data rendering in `main.typ`; customize schema only with its matching data projections. Preserve the compile, verification, and visual-review scripts. Do not replace the project structure with ad hoc files.
+
+## Delivery
+
+Deliver the generated PDF and preserve the complete source project, including inputs, templates, schemas, local assets, diagnostics, verification JSON, and review artifacts.

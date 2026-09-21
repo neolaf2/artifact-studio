@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Supplier input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["supplier_id", "legal_name", "address", "primary_contact"],
+  "properties": {
+    "supplier_id": {"type": "string", "minLength": 1},
+    "legal_name": {"type": "string", "minLength": 1},
+    "address": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["line_1", "city", "region", "postal_code", "country"],
+      "properties": {
+        "line_1": {"type": "string", "minLength": 1},
+        "city": {"type": "string", "minLength": 1},
+        "region": {"type": "string", "minLength": 1},
+        "postal_code": {"type": "string", "minLength": 1},
+        "country": {"type": "string", "minLength": 1}
+      }
+    },
+    "primary_contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "title", "email"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "email": {"type": "string", "minLength": 3}
+      }
+    }
+  }
+}

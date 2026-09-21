@@ -1,0 +1,46 @@
+{
+  "document": {
+    "template_id": "10-supplier-review-of-reviews-report",
+    "document_id": "10-SUPPLIER-REVIEW-OF-REVIEWS-REPORT-POC-001",
+    "title": "单一供应商专家复核报告模版",
+    "status": "草案",
+    "version": "V0.1",
+    "issue_date": "2026-09-19",
+    "confidentiality": "内部受控"
+  },
+  "sections": [
+    {
+      "section_id": "S01",
+      "title": "供应商复核范围",
+      "paragraphs": [
+        "本报告复核单一供应商的初审、澄清、证据和专家意见。"
+      ]
+    },
+    {
+      "section_id": "S02",
+      "title": "初审与澄清闭环复核",
+      "paragraphs": [
+        "复核应保留原始初审结论、澄清回复和专家判断之间的追溯关系。"
+      ]
+    },
+    {
+      "section_id": "S03",
+      "title": "单一供应商结论",
+      "paragraphs": [
+        "本结论为项目级最终汇总报告的输入，不单独替代专家组最终决定。"
+      ]
+    }
+  ],
+  "artifact_data": {
+    "supplier": "【示例】海岳装备服务有限公司",
+    "initial_review_reference": "引用该供应商的智能初审建议报告及已冻结版本。",
+    "clarification_closure": [
+      "授权文件澄清：待专家复核",
+      "报价公式澄清：待专家复核"
+    ],
+    "expert_review_findings": [
+      "初审发现与澄清回复的事实关联需要确认"
+    ],
+    "supplier_final_conclusion": "单一供应商专家复核结论：待专家组确认。"
+  }
+}

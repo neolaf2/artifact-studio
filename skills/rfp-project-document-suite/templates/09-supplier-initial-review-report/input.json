@@ -1,0 +1,47 @@
+{
+  "document": {
+    "template_id": "09-supplier-initial-review-report",
+    "document_id": "09-SUPPLIER-INITIAL-REVIEW-REPORT-POC-001",
+    "title": "单一供应商智能初审建议报告模版",
+    "status": "草案",
+    "version": "V0.1",
+    "issue_date": "2026-09-19",
+    "confidentiality": "内部受控"
+  },
+  "sections": [
+    {
+      "section_id": "S01",
+      "title": "供应商与初审范围",
+      "paragraphs": [
+        "本报告仅覆盖一名供应商在当前冻结版本中的响应文件和证据材料。"
+      ]
+    },
+    {
+      "section_id": "S02",
+      "title": "初审发现与风险",
+      "paragraphs": [
+        "每项初审发现须关联文件定位、证据、风险级别和可执行建议。"
+      ]
+    },
+    {
+      "section_id": "S03",
+      "title": "建议与后续处理",
+      "paragraphs": [
+        "初审建议不替代专家组最终评审结论。"
+      ]
+    }
+  ],
+  "artifact_data": {
+    "supplier": "【示例】海岳装备服务有限公司",
+    "initial_review_findings": [
+      "授权文件适用范围需确认",
+      "报价汇总公式需复核"
+    ],
+    "risk_assessment": "存在待澄清的中等风险事项；尚未形成最终评审结论。",
+    "recommendations": [
+      "发出供应商澄清函",
+      "复核授权和报价证据"
+    ],
+    "initial_review_conclusion": "单一供应商初审结论：待澄清与证据复核。"
+  }
+}

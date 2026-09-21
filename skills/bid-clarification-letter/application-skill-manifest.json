@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "skill_name": "bid-clarification-letter",
+  "application_title": "Bid Proposal Clarification Letter",
+  "source_template": "portable-typst-pdf-generator"
+}

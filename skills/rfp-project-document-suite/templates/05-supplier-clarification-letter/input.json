@@ -1,0 +1,44 @@
+{
+  "document": {
+    "template_id": "05-supplier-clarification-letter",
+    "document_id": "05-SUPPLIER-CLARIFICATION-LETTER-POC-001",
+    "title": "供应商澄清函模版",
+    "status": "草案",
+    "version": "V0.1",
+    "issue_date": "2026-09-19",
+    "confidentiality": "内部受控"
+  },
+  "sections": [
+    {
+      "section_id": "S01",
+      "title": "澄清背景与依据",
+      "paragraphs": [
+        "澄清仅用于解释、确认、补正或提供既有事实证明，不得要求改变投标实质内容。"
+      ]
+    },
+    {
+      "section_id": "S02",
+      "title": "澄清事项与回复要求",
+      "paragraphs": [
+        "每项澄清应关联投标文件定位或证据索引，并明确回复材料和期限。"
+      ]
+    },
+    {
+      "section_id": "S03",
+      "title": "送达与签发",
+      "paragraphs": [
+        "函件须记录签发主体、联系人、回复渠道和送达凭证。"
+      ]
+    }
+  ],
+  "artifact_data": {
+    "supplier": "【示例】海岳装备服务有限公司",
+    "clarification_items": [
+      "请说明授权文件的签发主体、有效期及与本项目的适用关系。",
+      "请确认报价汇总表中的公式和税率口径。"
+    ],
+    "response_deadline": "2026-10-24 17:00（中国标准时间）",
+    "delivery_channel": "通过采购项目指定电子沟通渠道提交。",
+    "signatory": "某采购人采购管理部门"
+  }
+}

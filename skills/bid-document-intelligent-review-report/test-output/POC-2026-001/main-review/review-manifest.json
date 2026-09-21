@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "pdf": "/Users/rich/Local/manus/bid-document-intelligent-review-report/test-output/POC-2026-001/main.pdf",
+  "mode": "standard",
+  "page_count": 5,
+  "selected_pages": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "rendered_pages": [
+    "/Users/rich/Local/manus/bid-document-intelligent-review-report/test-output/POC-2026-001/main-review/pages/page-0001.png",
+    "/Users/rich/Local/manus/bid-document-intelligent-review-report/test-output/POC-2026-001/main-review/pages/page-0002.png",
+    "/Users/rich/Local/manus/bid-document-intelligent-review-report/test-output/POC-2026-001/main-review/pages/page-0003.png",
+    "/Users/rich/Local/manus/bid-document-intelligent-review-report/test-output/POC-2026-001/main-review/pages/page-0004.png",
+    "/Users/rich/Local/manus/bid-document-intelligent-review-report/test-output/POC-2026-001/main-review/pages/page-0005.png"
+  ],
+  "contact_sheets": [
+    "/Users/rich/Local/manus/bid-document-intelligent-review-report/test-output/POC-2026-001/main-review/sheets/sheet-01.jpg"
+  ],
+  "settings": {
+    "dpi": 110,
+    "columns": 3,
+    "max_sheet_pages": 12,
+    "thumbnail_width": 320
+  }
+}

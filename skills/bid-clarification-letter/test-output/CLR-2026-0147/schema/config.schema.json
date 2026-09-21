@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Clarification letter configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["issuer", "brand", "signatory"],
+  "properties": {
+    "issuer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {"name": {"type": "string", "minLength": 1}}
+    },
+    "brand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accent"],
+      "properties": {"accent": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}}
+    },
+    "signatory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "title", "email"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "email": {"type": "string", "minLength": 3}
+      }
+    }
+  }
+}

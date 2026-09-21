@@ -1,0 +1,49 @@
+{
+  "document": {
+    "template_id": "03-supplier-bid-document",
+    "document_id": "03-SUPPLIER-BID-DOCUMENT-POC-001",
+    "title": "供应商投标文件模版",
+    "status": "草案",
+    "version": "V0.1",
+    "issue_date": "2026-09-19",
+    "confidentiality": "内部受控"
+  },
+  "sections": [
+    {
+      "section_id": "S01",
+      "title": "供应商与授权信息",
+      "paragraphs": [
+        "本投标文件对应单一供应商，并应提供资质、授权、声明和附件索引。"
+      ]
+    },
+    {
+      "section_id": "S02",
+      "title": "技术与实施响应",
+      "paragraphs": [
+        "对RFP需求逐项响应，说明实施安排、交付物、团队和验收承诺。"
+      ]
+    },
+    {
+      "section_id": "S03",
+      "title": "商务报价与偏离说明",
+      "paragraphs": [
+        "报价口径、税率、支付条件、有效期和偏离事项必须可追溯。"
+      ]
+    }
+  ],
+  "artifact_data": {
+    "supplier": "【示例】海岳装备服务有限公司",
+    "requirement_responses": [
+      "REQ-001：完全响应",
+      "REQ-002：完全响应"
+    ],
+    "implementation_plan": [
+      "完成设计确认",
+      "完成供货、安装调试与验收支持"
+    ],
+    "commercial_offer": "含税总报价以正式报价表为准，币种为人民币。",
+    "deviations": [
+      "无实质性偏离；如有偏离，应按条款逐项说明。"
+    ]
+  }
+}

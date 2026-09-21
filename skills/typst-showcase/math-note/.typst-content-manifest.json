@@ -1,0 +1,13 @@
+{
+  "task_kind": "new-document",
+  "output": "pdf",
+  "signals": ["academic-note"],
+  "hard_constraints": [],
+  "content_features": {
+    "code_blocks": 1,
+    "defined_terms": 2,
+    "portrait_images": 0,
+    "equations": 3,
+    "tables": 1
+  }
+}

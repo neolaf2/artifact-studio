@@ -1,0 +1,10 @@
+{
+  "entry": "main.typ",
+  "metadata": {
+    "author": "Northstar Studio",
+    "subtitle": "A strategy brief on resilient product teams",
+    "title": "Field Notes 01"
+  },
+  "mode": "report",
+  "theme": "report-theme.typ"
+}

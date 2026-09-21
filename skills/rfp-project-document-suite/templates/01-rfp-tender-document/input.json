@@ -1,0 +1,53 @@
+{
+  "document": {
+    "template_id": "01-rfp-tender-document",
+    "document_id": "01-RFP-TENDER-DOCUMENT-POC-001",
+    "title": "RFP招标文件模版",
+    "status": "草案",
+    "version": "V0.1",
+    "issue_date": "2026-09-19",
+    "confidentiality": "内部受控"
+  },
+  "sections": [
+    {
+      "section_id": "S01",
+      "title": "项目概况与采购范围",
+      "paragraphs": [
+        "本模版用于发布结构化RFP招标文件。采购范围、标段、响应要求和评审规则均须以项目输入数据为准。"
+      ]
+    },
+    {
+      "section_id": "S02",
+      "title": "供应商资格与响应要求",
+      "paragraphs": [
+        "供应商应按资格条件、技术要求、商务条款和附件清单编制响应文件。"
+      ]
+    },
+    {
+      "section_id": "S03",
+      "title": "评审与投标安排",
+      "paragraphs": [
+        "评审标准、时间节点、澄清渠道和递交要求应在发布前完成审核确认。"
+      ]
+    }
+  ],
+  "artifact_data": {
+    "procurement_scope": "为某海上平台关键设备采购及配套服务征集供应商响应。",
+    "lots": [
+      "第一标段：关键设备供货与安装调试服务"
+    ],
+    "schedule": [
+      "提问截止：2026-10-08 17:00（中国标准时间）",
+      "投标截止：2026-10-20 09:30（中国标准时间）"
+    ],
+    "supplier_eligibility": [
+      "具备独立承担民事责任能力",
+      "具备相应供货与服务保障能力"
+    ],
+    "evaluation_criteria": [
+      "技术方案 45 分",
+      "商务与履约能力 25 分",
+      "价格 30 分"
+    ]
+  }
+}
