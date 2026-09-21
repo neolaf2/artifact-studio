@@ -237,6 +237,58 @@ export async function createArtifactFromTemplate(
 
   await copyDirRecursive(sourceDir, dest);
 
+  // Ensure Typst view files exist (generic PDF). Prefer template pack; else sample.
+  const viewsJsonDest = path.join(dest, 'views.json');
+  if (!(await pathExists(viewsJsonDest))) {
+    const sampleRel =
+      tmpl.templateId === 'clarification'
+        ? 'samples/supplier-clarification-zh'
+        : tmpl.templateId === 'tender'
+          ? 'samples/tender-document-v20918'
+          : null;
+    if (sampleRel) {
+      const sampleRoot = path.resolve(process.cwd(), '..', sampleRel);
+      const sampleViews = path.join(sampleRoot, 'views');
+      if (await pathExists(path.join(sourceDir, 'views.json'))) {
+        await fs.copyFile(path.join(sourceDir, 'views.json'), viewsJsonDest);
+      } else if (tmpl.templateId === 'clarification') {
+        await fs.writeFile(
+          viewsJsonDest,
+          JSON.stringify(
+            { typst: 'views/letter.typ', dataInput: true, filename: 'clarification.pdf' },
+            null,
+            2,
+          ) + '\n',
+          'utf8',
+        );
+        const destViews = path.join(dest, 'views');
+        await fs.mkdir(destViews, { recursive: true });
+        const letter = path.join(sampleRoot, 'views', 'letter.typ');
+        if (await pathExists(letter)) {
+          await fs.copyFile(letter, path.join(destViews, 'letter.typ'));
+        }
+      } else if (tmpl.templateId === 'tender') {
+        await fs.writeFile(
+          viewsJsonDest,
+          JSON.stringify(
+            { typst: 'views/document.typ', dataInput: false, filename: 'tender.pdf' },
+            null,
+            2,
+          ) + '\n',
+          'utf8',
+        );
+        const destViews = path.join(dest, 'views');
+        await fs.mkdir(destViews, { recursive: true });
+        const doc = path.join(sampleRoot, 'tender.typ');
+        if (await pathExists(doc)) {
+          await fs.copyFile(doc, path.join(destViews, 'document.typ'));
+        }
+      }
+      void sampleViews;
+    }
+  }
+
+
   let data: Record<string, unknown> | null = null;
   if (tmpl.aboxDefaultRel) {
     const abs = path.join(process.cwd(), '..', tmpl.aboxDefaultRel);
