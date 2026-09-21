@@ -9,92 +9,90 @@ Copyright © 2026 **Richard Tong**. Licensed under the [Apache License 2.0](./LI
 
 ---
 
-## What it is
-
-Artifact Studio is a small VS Code / Cursor extension plus a set of **ready-to-run samples** for procurement and knowledge-work documents (clarification letters, review reports, RFP packs, and more). Builds run on your machine with:
-
-| Tool | Role |
-|------|------|
-| **Typst** | Primary PDF compiler |
-| **Pandoc** (optional) | Markdown ↔ DOCX and related exports |
-| **Artifact Studio extension** | Recipe UI, build/preview, watch, CLI |
-
-No remote Typst service and no Marketplace dependency for day-to-day use — install from the included VSIX or press **F5** in the extension folder.
-
 ## Repository layout
 
 ```text
 artifact-studio/
-├── extension/          # VS Code/Cursor extension (v0.2.0) + VSIX
-├── samples/            # Recipes and Typst artifact projects
-│   ├── supplier-clarification/
-│   ├── supplier-clarification-zh/
-│   ├── bid-clarification-letter/
-│   ├── bid-document-intelligent-review-report/
-│   ├── portable-typst-pdf-generator/
-│   ├── rfp-project-document-suite/
-│   └── typst-showcase/
-├── LICENSE             # Apache License 2.0
-├── NOTICE              # Copyright notice (Richard Tong)
+├── extension/   # VS Code / Cursor extension (v0.2.0) + VSIX
+├── cli/         # Node CLI — build recipes from the terminal / agents
+├── samples/     # Artifact Studio recipe demos (manifest + data + .typ)
+├── skills/      # Agent skills (SKILL.md + Typst project layouts)
+├── LICENSE      # Apache License 2.0
+├── NOTICE       # Copyright 2026 Richard Tong
 └── README.md
 ```
 
-Full sample index: [`samples/README.md`](./samples/README.md).
+| Folder | Role |
+|--------|------|
+| [`extension/`](./extension/) | Editor UI, Artifacts view, Build / Preview / Watch |
+| [`cli/`](./cli/) | `artifact-studio` command-line builder |
+| [`samples/`](./samples/) | Small recipe samples for the extension + CLI |
+| [`skills/`](./skills/) | Fuller Typst generation skills used by agents |
 
 ## Prerequisites
 
-- macOS / Linux / Windows with [Typst](https://typst.app/) on `PATH`  
-  `brew install typst` (macOS)
-- Optional: [Pandoc](https://pandoc.org/) for Word export  
-  `brew install pandoc`
-- [VS Code](https://code.visualstudio.com/) 1.95+ or [Cursor](https://cursor.com/)
-- Node.js (only required to package the VSIX)
+- [Typst](https://typst.app/) on `PATH` (`brew install typst`)
+- Optional: [Pandoc](https://pandoc.org/) (`brew install pandoc`)
+- VS Code 1.95+ or Cursor
+- Node.js 18+ (CLI / packaging)
 
-Chinese samples expect CJK fonts available to Typst (e.g. PingFang SC, Noto Sans CJK SC).
+Chinese samples expect CJK fonts (e.g. PingFang SC, Noto Sans CJK SC).
 
 ## Install the extension
 
-### From the release VSIX
-
 ```bash
-# Download from GitHub Releases, or use the copy in-repo:
 cursor --install-extension extension/artifact-studio-0.2.0.vsix
 code --install-extension extension/artifact-studio-0.2.0.vsix
 ```
 
-Release page: https://github.com/neolaf2/artifact-studio/releases
-
-### Development host
-
-```bash
-git clone https://github.com/neolaf2/artifact-studio.git
-cd artifact-studio/extension
-# Open this folder in Cursor/VS Code, then press F5 → "Run Artifact Studio"
-```
-
-### Rebuild the VSIX
+Or open `extension/` and press **F5** (`Run Artifact Studio`).  
+Releases: https://github.com/neolaf2/artifact-studio/releases
 
 ```bash
-cd extension
-npm run package   # uses npx @vscode/vsce
+cd extension && npm run package
 ```
 
-## Quick start — Chinese clarification letter
+## CLI
+
+```bash
+# Build a sample recipe
+node cli/artifact-studio.js samples/supplier-clarification-zh/artifact-studio.json clarification-zh
+
+# Optional: link the bin
+cd cli && npm link
+artifact-studio /path/to/artifact-studio.json [artifact-id]
+```
+
+See [`cli/README.md`](./cli/README.md).
+
+## Samples (recipes)
+
+| Sample | Description |
+|--------|-------------|
+| [`samples/supplier-clarification`](./samples/supplier-clarification/) | Bilingual clarification letter |
+| [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/) | Chinese 澄清函 (澄字〔2026〕0147号) |
 
 ```bash
 cd samples/supplier-clarification-zh
-node ../../extension/src/cli.js artifact-studio.json clarification-zh
+node ../../cli/artifact-studio.js artifact-studio.json clarification-zh
 # → output/澄清函-示例.pdf
-
-# Optional Word export
-pandoc output/澄清函-正文.md -o output/澄清函-示例.docx
 ```
 
-Or open `samples/supplier-clarification-zh` in Cursor and run **Artifact Studio: Build and Preview**.
+In the editor: open the sample folder → **Artifact Studio: Build and Preview**.
+
+## Skills (agent Typst projects)
+
+| Skill | Description |
+|-------|-------------|
+| [`skills/bid-clarification-letter`](./skills/bid-clarification-letter/) | Clarification letter + tested output |
+| [`skills/bid-document-intelligent-review-report`](./skills/bid-document-intelligent-review-report/) | Intelligent review report |
+| [`skills/portable-typst-pdf-generator`](./skills/portable-typst-pdf-generator/) | Portable Typst→PDF bootstrap |
+| [`skills/rfp-project-document-suite`](./skills/rfp-project-document-suite/) | 10-document RFP suite |
+| [`skills/typst-showcase`](./skills/typst-showcase/) | Layout demos |
+
+Index: [`skills/README.md`](./skills/README.md).
 
 ## Recipe contract
-
-`artifact-studio.json` (version 1) lists artifacts. Each recipe points at a Typst template, a data file, and a PDF output path:
 
 ```json
 {
@@ -110,51 +108,22 @@ Or open `samples/supplier-clarification-zh` in Cursor and run **Artifact Studio:
 }
 ```
 
-- **Data:** `.json`, `.yaml`, or `.yml`
-- **Template:** `.typ` — loads data via Typst `--input data=/…` (see sample `letter.typ`)
-- Paths are relative to the recipe directory (Typst project root)
-
-## Samples overview
-
-| Sample | Kind | Notes |
-|--------|------|--------|
-| [`supplier-clarification`](./samples/supplier-clarification/) | Extension recipe | Bilingual clarification letter |
-| [`supplier-clarification-zh`](./samples/supplier-clarification-zh/) | Extension recipe | Chinese 澄清函 (澄字〔2026〕0147号) |
-| [`bid-clarification-letter`](./samples/bid-clarification-letter/) | Typst skill sample | Full project + tested `CLR-2026-0147` output |
-| [`bid-document-intelligent-review-report`](./samples/bid-document-intelligent-review-report/) | Typst skill sample | Intelligent review report |
-| [`portable-typst-pdf-generator`](./samples/portable-typst-pdf-generator/) | Typst skill sample | Portable Typst→PDF bootstrap |
-| [`rfp-project-document-suite`](./samples/rfp-project-document-suite/) | Typst skill sample | 10-document RFP suite |
-| [`typst-showcase`](./samples/typst-showcase/) | Demos | Resume / strategy / math layouts |
-
-## Extension commands (palette)
-
-- **Artifact Studio: Build Artifact**
-- **Artifact Studio: Build and Preview**
-- **Artifact Studio: Toggle Watch**
-- **Artifact Studio: New Example Project**
-- **Artifact Studio: Check Local Environment**
-- Optional AI helpers for Markdown draft / JSON fill (uses the editor Language Model API when available)
+- **Data:** `.json` / `.yaml` / `.yml`
+- **Template:** `.typ` (reads `--input data=/…`)
+- Paths are relative to the recipe directory
 
 ## Design principles
 
-1. **Local compile** — Typst on the user’s machine; no compiler download or remote build farm.
-2. **Data / template / output recipes** — explicit manifests, not ad-hoc CLI flags alone.
-3. **Agent-friendly CLI** — `extension/src/cli.js` returns JSON results for automation.
-4. **Procurement-ready samples** — clarification, review, and RFP-shaped documents for real workflows.
+1. **Local compile** — Typst on the user’s machine  
+2. **Explicit recipes** — data / template / output manifests  
+3. **Agent-friendly CLI** — JSON result on stdout  
+4. **Skills + samples** — agent projects and extension demos stay separate  
 
 ## License
 
 Copyright © 2026 **Richard Tong**.
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
-
-```text
-http://www.apache.org/licenses/LICENSE-2.0
-```
-
-## Contributing
-
-Issues and PRs welcome on GitHub. For sample documents, prefer adding a self-contained folder under `samples/` with `README.md`, templates, and a reproducible build command.
 
 ## Author
 

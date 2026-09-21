@@ -1,0 +1,21 @@
+{
+  "name": "artifact-studio-cli",
+  "version": "0.2.0",
+  "description": "CLI for Artifact Studio — build Typst PDF recipes from artifact-studio.json",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Richard Tong",
+    "url": "https://github.com/neolaf2"
+  },
+  "bin": {
+    "artifact-studio": "./artifact-studio.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neolaf2/artifact-studio.git",
+    "directory": "cli"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
