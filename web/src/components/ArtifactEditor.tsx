@@ -32,20 +32,39 @@ function readSnapshotHash(snapshot: Record<string, unknown> | undefined): string
 
 
 
+
+
 async function downloadPdfFromHtmlClient(html: string, filename: string) {
-  const html2pdf = (await import('html2pdf.js')).default;
+  const mod = await import('html2pdf.js');
+  // CJS/ESM interop — runtime default may be the function itself
+  const html2pdfFn = (mod as unknown as { default?: unknown }).default ?? mod;
+  if (typeof html2pdfFn !== 'function') {
+    throw new Error('html2pdf.js did not load');
+  }
   const opt = {
-    margin: 10,
+    margin: [10, 10, 10, 10],
     filename,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
+    html2canvas: { scale: 2, useCORS: true, logging: false },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-  } as const;
+    pagebreak: { mode: ['css', 'legacy'] },
+  };
   const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-10000px';
+  wrapper.style.top = '0';
+  wrapper.style.width = '800px';
+  wrapper.style.background = '#fff';
   wrapper.innerHTML = html;
-  // Prefer the .sheet card if present
-  const target = (wrapper.querySelector('.sheet') as HTMLElement) || wrapper;
-  await html2pdf().set(opt).from(target).save();
+  document.body.appendChild(wrapper);
+  try {
+    const target = (wrapper.querySelector('.sheet') as HTMLElement) || wrapper;
+    await (html2pdfFn as (opts?: unknown) => {
+      set: (o: unknown) => { from: (el: HTMLElement) => { save: () => Promise<void> } };
+    })().set(opt).from(target).save();
+  } finally {
+    wrapper.remove();
+  }
 }
 
 export function ArtifactEditor({ initial }: Props) {
@@ -207,7 +226,7 @@ export function ArtifactEditor({ initial }: Props) {
       const res = await fetch(`/api/artifacts/${bundle.meta.id}/pdf`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ data }),
+        body: JSON.stringify({ data, engine: 'html' }),
       });
       const ctype = res.headers.get('content-type') || '';
       if (ctype.includes('application/json')) {
