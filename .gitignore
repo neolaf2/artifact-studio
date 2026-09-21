@@ -1,0 +1,7 @@
+.DS_Store
+**/.DS_Store
+node_modules/
+.vscode/*.log
+*.vsix.bak
+**/output/preview/**
+**/.artifact-build-*/

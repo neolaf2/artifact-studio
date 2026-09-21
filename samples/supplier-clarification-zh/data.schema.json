@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SupplierClarificationLetter",
+  "type": "object",
+  "required": ["title", "issuer", "project", "supplier", "reference", "issue_date", "response_due", "opening", "closing", "questions"],
+  "properties": {
+    "title": { "type": "string" },
+    "doc_type": { "type": "string" },
+    "status": { "type": "string", "enum": ["draft", "approved", "sent"] },
+    "language": { "type": "string" },
+    "issuer": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "name_en": { "type": "string" },
+        "department": { "type": "string" },
+        "address": { "type": "string" }
+      }
+    },
+    "signatory": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "email": { "type": "string" }
+      }
+    },
+    "project": {
+      "type": "object",
+      "required": ["name", "id"],
+      "properties": {
+        "name": { "type": "string" },
+        "id": { "type": "string" },
+        "bid_section": { "type": "string" }
+      }
+    },
+    "supplier": {
+      "type": "object",
+      "required": ["legal_name"],
+      "properties": {
+        "legal_name": { "type": "string" },
+        "supplier_id": { "type": "string" },
+        "contact_name": { "type": "string" },
+        "contact_title": { "type": "string" },
+        "address": { "type": "string" }
+      }
+    },
+    "reference": { "type": "string" },
+    "issue_date": { "type": "string" },
+    "response_due": { "type": "string" },
+    "opening": { "type": "string" },
+    "closing": { "type": "string" },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "item", "finding", "question"],
+        "properties": {
+          "id": { "type": "string" },
+          "requirement_id": { "type": "string" },
+          "problem_id": { "type": "string" },
+          "item": { "type": "string" },
+          "reference": { "type": "string" },
+          "finding": { "type": "string" },
+          "question": { "type": "string" },
+          "materials": { "type": "array", "items": { "type": "string" } },
+          "response_format": { "type": "string" }
+        }
+      }
+    },
+    "attachments": { "type": "array", "items": { "type": "string" } }
+  }
+}

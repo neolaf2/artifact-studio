@@ -1,0 +1,137 @@
+{
+  "name": "artifact-studio",
+  "displayName": "Artifact Studio",
+  "description": "Generate PDF artifacts from JSON/YAML data and local Typst templates.",
+  "version": "0.2.0",
+  "publisher": "artifact-studio-local",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/artifact-studio.json",
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": false
+  },
+  "scripts": {
+    "test": "node --test",
+    "package": "npx @vscode/vsce package --allow-missing-repository"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "artifactStudio.build",
+        "title": "Artifact Studio: Build Artifact"
+      },
+      {
+        "command": "artifactStudio.preview",
+        "title": "Artifact Studio: Build and Preview"
+      },
+      {
+        "command": "artifactStudio.select",
+        "title": "Artifact Studio: Select Artifact"
+      },
+      {
+        "command": "artifactStudio.refresh",
+        "title": "Artifact Studio: Refresh Artifacts"
+      },
+      {
+        "command": "artifactStudio.openOutput",
+        "title": "Artifact Studio: Open Generated PDF"
+      },
+      {
+        "command": "artifactStudio.toggleWatch",
+        "title": "Artifact Studio: Toggle Watch"
+      },
+      {
+        "command": "artifactStudio.newProject",
+        "title": "Artifact Studio: New Example Project"
+      },
+      {
+        "command": "artifactStudio.checkEnvironment",
+        "title": "Artifact Studio: Check Local Environment"
+      },
+      {
+        "command": "artifactStudio.draftMarkdown",
+        "title": "Artifact Studio: Generate or Refine Markdown with AI"
+      },
+      {
+        "command": "artifactStudio.markdownToJson",
+        "title": "Artifact Studio: Convert Markdown to Template JSON with AI"
+      },
+      {
+        "command": "artifactStudio.exportMarkdown",
+        "title": "Artifact Studio: Export Markdown with Pandoc"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "artifactStudio.artifacts",
+          "name": "Artifacts"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "artifactStudio.refresh",
+          "when": "view == artifactStudio.artifacts",
+          "group": "navigation"
+        },
+        {
+          "command": "artifactStudio.preview",
+          "when": "view == artifactStudio.artifacts",
+          "group": "navigation"
+        },
+        {
+          "command": "artifactStudio.toggleWatch",
+          "when": "view == artifactStudio.artifacts",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Artifact Studio",
+      "properties": {
+        "artifactStudio.typstPath": {
+          "type": "string",
+          "default": "typst",
+          "scope": "machine",
+          "description": "Local Typst executable. Typst must already be installed."
+        },
+        "artifactStudio.pandocPath": {
+          "type": "string",
+          "default": "pandoc",
+          "scope": "machine",
+          "description": "Path to the existing local pandoc executable."
+        },
+        "artifactStudio.markdownlintPath": {
+          "type": "string",
+          "default": "markdownlint",
+          "scope": "machine",
+          "description": "Path to the existing local markdownlint executable."
+        }
+      }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "artifact-studio.json",
+        "url": "./recipe.schema.json"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neolaf2/artifact-studio.git"
+  },
+  "license": "MIT"
+}

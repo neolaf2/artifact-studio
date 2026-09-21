@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "artifacts": [
+    {
+      "id": "clarification-zh",
+      "template": "letter.typ",
+      "data": "data.yaml",
+      "output": "output/澄清函-示例.pdf",
+      "ontology": "ontology.md",
+      "dataSchema": "data.schema.json"
+    }
+  ]
+}

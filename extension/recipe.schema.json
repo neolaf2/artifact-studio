@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "version",
+    "artifacts"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "template",
+          "data",
+          "output"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          },
+          "template": {
+            "type": "string",
+            "pattern": "\\.typ$"
+          },
+          "data": {
+            "type": "string",
+            "pattern": "\\.(json|yaml|yml)$"
+          },
+          "output": {
+            "type": "string",
+            "pattern": "\\.pdf$"
+          },
+          "ontology": {
+            "type": "string",
+            "description": "Ontology reference file for AI authoring."
+          },
+          "dataSchema": {
+            "type": "string",
+            "description": "JSON Schema reference file for AI authoring."
+          }
+        }
+      }
+    }
+  }
+}

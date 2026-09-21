@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "artifacts": [
+    {
+      "id": "supplier-clarification",
+      "template": "letter.typ",
+      "data": "data.yaml",
+      "output": "output/supplier-clarification.pdf",
+      "ontology": "ontology.md",
+      "dataSchema": "data.schema.json"
+    },
+    {
+      "id": "supplier-clarification-json",
+      "template": "letter.typ",
+      "data": "data.json",
+      "output": "output/supplier-clarification-json.pdf",
+      "ontology": "ontology.md",
+      "dataSchema": "data.schema.json"
+    }
+  ]
+}
