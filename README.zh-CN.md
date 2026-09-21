@@ -57,7 +57,7 @@ artifact-studio/
 ├── cli/         # 终端 / Agent 用配方构建器
 ├── samples/     # Artifact Studio 配方示例（清单 + 数据 + .typ）
 ├── skills/      # Agent 技能包（SKILL.md + 工程布局）
-├── docs/zh/     # mid文文档
+├── docs/zh/     # 中文文档
 ├── LICENSE
 ├── NOTICE
 ├── README.md        # English
