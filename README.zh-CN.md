@@ -53,6 +53,7 @@ Copyright © 2026 **Richard Tong**. 授权协议：[Apache License 2.0](./LICENS
 
 ```text
 artifact-studio/
+├── scripts/     # macOS / Linux installers (install.sh)
 ├── extension/   # VS Code / Cursor 扩展（v0.2.0）+ VSIX
 ├── cli/         # 终端 / Agent 用配方构建器
 ├── samples/     # Artifact Studio 配方示例（清单 + 数据 + .typ）
@@ -73,6 +74,18 @@ artifact-studio/
 | [`docs/zh/`](./docs/zh/) | 中文使用文档 |
 
 ---
+
+## 安装
+
+全部安装路径见 **[docs/zh/安装指南.md](./docs/zh/安装指南.md)**（一键脚本、工具链、扩展、CLI、技能、Typst、Pandoc）。
+
+```bash
+./scripts/install.sh                 # 仅规划
+./scripts/install.sh --execute --all # 依赖 + VSIX + CLI
+./scripts/install.sh --check
+```
+
+English: [docs/INSTALL.md](./docs/INSTALL.md)
 
 ## 环境要求
 

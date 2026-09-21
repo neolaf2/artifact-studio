@@ -51,6 +51,7 @@ All routes ultimately call **local Typst**. Choose the entry point that matches 
 
 ```text
 artifact-studio/
+├── scripts/     # macOS / Linux installers (install.sh)
 ├── extension/   # VS Code / Cursor extension (v0.2.0) + VSIX
 ├── cli/         # Terminal / agent recipe builder
 ├── samples/     # Small Artifact Studio recipes (manifest + data + .typ)
@@ -68,6 +69,18 @@ artifact-studio/
 | [`skills/`](./skills/) | Skill demos for route 3 |
 
 ---
+
+## Install
+
+See **[docs/INSTALL.md](./docs/INSTALL.md)** for every route (script, toolchain, extension, CLI, skills, Typst, Pandoc).
+
+```bash
+./scripts/install.sh                 # plan
+./scripts/install.sh --execute --all # deps + VSIX + CLI
+./scripts/install.sh --check
+```
+
+中文安装说明：[docs/zh/安装指南.md](./docs/zh/安装指南.md)
 
 ## Prerequisites
 
