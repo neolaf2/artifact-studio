@@ -10,7 +10,7 @@
   "categories": [
     "Other"
   ],
-  "main": "./src/extension.js",
+  "main": "./src/main.js",
   "activationEvents": [
     "workspaceContains:**/artifact-studio.json",
     "onStartupFinished",
