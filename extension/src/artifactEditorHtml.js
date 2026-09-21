@@ -249,7 +249,11 @@ els.paneToggle.addEventListener('click', () => {
   persist();
   applyCollapsed();
 });
-window.addEventListener('resize', () => { if (!state.collapsed) pane.refit(); });
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (!state.collapsed) pane.refit(); }, 150);
+});
 
 /* ---------- tabs ---------- */
 function applyTab() {

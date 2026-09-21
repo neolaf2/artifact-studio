@@ -1,36 +1,44 @@
 'use strict';
 /**
- * CustomTextEditorProvider — Overleaf-like form/JSON + live HTML preview.
- * Edits flow through WorkspaceEdit on the TextDocument (undo/save/dirty).
- * Cmd/Ctrl+S maps to VS Code save; respects files.autoSave.
+ * CustomTextEditorProvider — Overleaf-like form/raw-text editing on the left,
+ * the real compiled PDF on the right.
+ *
+ * `webview.html` is assigned EXACTLY ONCE per editor (plus a fatal-error
+ * fallback when the very first load fails). Every later update is a
+ * `postMessage`: reassigning the HTML would destroy the PDF pane and reset
+ * the tab/collapse state.
+ *
+ * Edits flow through WorkspaceEdit on the TextDocument (undo/save/dirty), and
+ * the document only ever receives text that parses.
  */
 const vscode = require('vscode');
 const path = require('node:path');
 const fs = require('node:fs/promises');
-const { loadAstContext, serializeAst, setPath } = require('./ast');
-const { schemaFields, escapeHtml } = require('./html');
+const { loadAstContext, serializeAst, setPath, resolveCompanionPaths, yamlToJson } = require('./ast');
+const { escapeHtml } = require('./html');
 const { generateField, generateArtifact } = require('./llmGenerate');
+const { loadRecipe } = require('./core');
+const { resolveMain, staleness, firstDiagnostic, checkRawText } = require('./compileView');
 
 const VIEW_TYPE = 'artifactStudio.artifactEditor';
 
-const { buildLivePreviewHtml } = require('./artifactPreview');
-
-
 class ArtifactEditorProvider {
-  static register(context, { diagnostics, output, onAstSaved } = {}) {
-    const provider = new ArtifactEditorProvider(context, diagnostics, output, onAstSaved);
+  static register(context, { diagnostics, output, onAstSaved, onCompile } = {}) {
+    const provider = new ArtifactEditorProvider(context, diagnostics, output, onAstSaved, onCompile);
     return vscode.window.registerCustomEditorProvider(VIEW_TYPE, provider, {
-      webviewOptions: { retainContextWhenHidden: true },
+      webviewOptions: { retainContextWhenHidden: true, enableFindWidget: true },
       supportsMultipleEditorsPerDocument: false
     });
   }
 
-  constructor(context, diagnostics, output, onAstSaved) {
+  constructor(context, diagnostics, output, onAstSaved, onCompile) {
     this.context = context;
     this.diagnostics = diagnostics;
     this.output = output;
     this.onAstSaved = onAstSaved;
+    this.onCompile = onCompile;
     this._updating = new Set();
+    this._origins = new Map(); // uri -> 'edit' | 'rawEdit'; consumed by the change handler
     this._saveStatus = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     this._saveStatus.name = 'Artifact Studio save state';
     context.subscriptions.push(this._saveStatus);
@@ -60,14 +68,86 @@ class ArtifactEditorProvider {
       localResourceRoots: [vscode.Uri.file(path.dirname(document.uri.fsPath)), this.context.extensionUri]
     };
 
+    const key = document.uri.toString();
+    const webview = webviewPanel.webview;
+    const post = message => webview.postMessage(message);
+    const format = /\.ya?ml$/i.test(document.uri.fsPath) ? 'yaml' : 'json';
+    let htmlAssigned = false;   // the real editor UI, assigned at most once
+    let fatalShown = false;     // the first-load fallback, assigned at most once
+
+    /** The main document + its manifest, recomputed on demand (files may change). */
+    const mainContext = async () => {
+      const companions = await resolveCompanionPaths(document.uri);
+      if (!companions.recipe) {
+        return { recipeFile: null, main: null, reason: 'No artifact-studio.json next to this data file.' };
+      }
+      try {
+        const loaded = await loadRecipe(companions.recipe);
+        const main = resolveMain(loaded.main, loaded.artifacts);
+        if (!main) {
+          return { recipeFile: companions.recipe, root: loaded.root, main: null, reason: `No Typst main document in ${companions.recipe}` };
+        }
+        return { recipeFile: companions.recipe, root: loaded.root, main };
+      } catch (error) {
+        return { recipeFile: companions.recipe, main: null, reason: error.message };
+      }
+    };
+
+    const outputPath = ctx => (ctx.main ? path.resolve(ctx.root || path.dirname(ctx.recipeFile), ctx.main.output) : null);
+
+    const postMain = ctx => post(ctx.main
+      ? { type: 'main', id: ctx.main.id, template: ctx.main.template, output: outputPath(ctx) }
+      : { type: 'main', id: null, template: null, output: null, reason: ctx.reason });
+
+    /** The output folder is the source of truth: no cache, no state file. */
+    const postPdf = async ctx => {
+      const file = outputPath(ctx);
+      let stat = null;
+      if (file) {
+        try { stat = await fs.stat(file); } catch { stat = null; }
+      }
+      if (!stat) {
+        post({ type: 'pdf', bytes: null, compiledAt: null });
+        post({ type: 'status', stale: false });
+        return;
+      }
+      const bytes = new Uint8Array(await fs.readFile(file));
+      post({ type: 'pdf', bytes, compiledAt: stat.mtimeMs });
+      let dataMtimeMs = 0;
+      try { dataMtimeMs = (await fs.stat(document.uri.fsPath)).mtimeMs; } catch { /* unsaved twin */ }
+      post({ type: 'status', stale: staleness({ dirty: document.isDirty, dataMtimeMs, pdfMtimeMs: stat.mtimeMs }).stale });
+    };
+
+    const postForm = async () => {
+      const { renderFields, renderIssues } = require('./artifactEditorHtml');
+      const ast = await loadAstContext(document);
+      this._setDiagnostics(document, ast.issues);
+      post({ type: 'formHtml', html: renderFields(ast), issuesHtml: renderIssues(ast) });
+      return ast;
+    };
+
+    const postRawText = () => post({ type: 'rawText', text: document.getText(), format });
+
+    /** Only the FIRST call assigns `webview.html`; later calls send messages. */
     const refresh = async () => {
       try {
         const ast = await loadAstContext(document);
         this._setDiagnostics(document, ast.issues);
         this._updateSaveStatus(document);
-        webviewPanel.webview.html = this._html(webviewPanel.webview, ast, document.isDirty);
+        if (!htmlAssigned) {
+          webviewPanel.webview.html = this._html(webview, ast, document.isDirty);
+          htmlAssigned = true;
+          return;
+        }
+        const { renderFields, renderIssues } = require('./artifactEditorHtml');
+        post({ type: 'formHtml', html: renderFields(ast), issuesHtml: renderIssues(ast) });
+        postRawText();
+        post({ type: 'saveState', dirty: document.isDirty });
       } catch (error) {
-        webviewPanel.webview.html = `<html><body><pre>${escapeHtml(error.message)}</pre></body></html>`;
+        if (!htmlAssigned && !fatalShown) {
+          webviewPanel.webview.html = `<html><body><pre>${escapeHtml(error.message)}</pre></body></html>`;
+          fatalShown = true;
+        }
         this.output?.appendLine(`Artifact editor: ${error.message}`);
       }
     };
@@ -75,31 +155,33 @@ class ArtifactEditorProvider {
     await refresh();
     this._updateSaveStatus(document);
 
-    const changeSub = vscode.workspace.onDidChangeTextDocument(e => {
-      if (e.document.uri.toString() !== document.uri.toString()) return;
-      if (this._updating.has(document.uri.toString())) return;
+    const changeSub = vscode.workspace.onDidChangeTextDocument(async e => {
+      if (e.document.uri.toString() !== key) return;
+      const origin = this._origins.get(key) || null;
+      this._origins.delete(key);
+      if (this._updating.has(key)) return; // our own WorkspaceEdit; the handler that made it answers
       this._updateSaveStatus(document);
-      // Push preview update without full form rebuild when possible
       try {
-        const data = JSON.parse(e.document.getText());
-        webviewPanel.webview.postMessage({
-          type: 'previewData',
-          html: buildLivePreviewHtml(data),
-          dirty: e.document.isDirty
-        });
-      } catch {
-        refresh();
+        if (origin !== 'edit') await postForm(); // never rebuild the form under the user's cursor
+        postRawText();                           // the webview ignores this while the textarea has focus
+        post({ type: 'saveState', dirty: e.document.isDirty });
+        const ctx = await mainContext();
+        await this._postStatusOnly(post, document, ctx, outputPath(ctx));
+      } catch (error) {
+        this.output?.appendLine(`Artifact editor: ${error.message}`);
       }
     });
 
-    const saveSub = vscode.workspace.onDidSaveTextDocument(doc => {
-      if (doc.uri.toString() !== document.uri.toString()) return;
+    const saveSub = vscode.workspace.onDidSaveTextDocument(async doc => {
+      if (doc.uri.toString() !== key) return;
       this._updateSaveStatus(doc);
-      webviewPanel.webview.postMessage({ type: 'saveState', dirty: false });
+      post({ type: 'saveState', dirty: false });
+      const ctx = await mainContext();
+      await this._postStatusOnly(post, document, ctx, outputPath(ctx));
     });
 
     const dirtySub = vscode.workspace.onDidChangeTextDocument(() => {
-      if (vscode.window.activeTextEditor?.document.uri.toString() === document.uri.toString()) {
+      if (vscode.window.activeTextEditor?.document.uri.toString() === key) {
         this._updateSaveStatus(document);
       }
     });
@@ -107,34 +189,51 @@ class ArtifactEditorProvider {
     webviewPanel.webview.onDidReceiveMessage(async message => {
       try {
         if (message?.type === 'edit' && message.path != null) {
-          await this._applyPathEdit(document, message.path, message.value);
-          // Live preview refresh after edit
-          try {
-            const ast = await loadAstContext(document);
-            webviewPanel.webview.postMessage({
-              type: 'previewData',
-              html: buildLivePreviewHtml(ast.data),
-              dirty: document.isDirty
-            });
-          } catch { /* ignore */ }
+          this._origins.set(key, 'edit');
+          if (!await this._applyPathEdit(document, message.path, message.value)) this._origins.delete(key);
           this._updateSaveStatus(document);
+          postRawText();
+          post({ type: 'saveState', dirty: document.isDirty });
+          await this._postStatusFor(post, document, mainContext, outputPath);
+        } else if (message?.type === 'rawEdit') {
+          await this._applyRawEdit(document, post, message.text, format, key);
+          this._updateSaveStatus(document);
+          post({ type: 'saveState', dirty: document.isDirty });
+          await this._postStatusFor(post, document, mainContext, outputPath);
+        } else if (message?.type === 'requestForm') {
+          await postForm();
         } else if (message?.type === 'replace' && message.data) {
           await this._replaceDocument(document, message.data);
           this._updateSaveStatus(document);
         } else if (message?.type === 'saveDocument') {
           await document.save();
           this._updateSaveStatus(document);
-          webviewPanel.webview.postMessage({ type: 'saveState', dirty: document.isDirty });
+          post({ type: 'saveState', dirty: document.isDirty });
         } else if (message?.type === 'renderHtml') {
           if (this.onAstSaved) await this.onAstSaved(document, 'html-display');
-        } else if (message?.type === 'renderPdf') {
-          if (this.onAstSaved) await this.onAstSaved(document, 'typst');
+        } else if (message?.type === 'compile') {
+          await this._compile(document, post, mainContext, postPdf);
+        } else if (message?.type === 'openPdf') {
+          const ctx = await mainContext();
+          const file = outputPath(ctx);
+          if (file) await vscode.env.openExternal(vscode.Uri.file(file));
+        } else if (message?.type === 'openDiagnostic' && message.file) {
+          const ctx = await mainContext();
+          const base = ctx.root || (ctx.recipeFile ? path.dirname(ctx.recipeFile) : path.dirname(document.uri.fsPath));
+          await this._openDiagnostic(base, message);
+        } else if (message?.type === 'openAsText') {
+          await vscode.commands.executeCommand('vscode.openWith', document.uri, 'default');
         } else if (message?.type === 'generateField') {
           await this._generateField(document, webviewPanel, message.path, message.instruction);
         } else if (message?.type === 'generateArtifact') {
           await this._generateArtifact(document, webviewPanel, message.instruction);
         } else if (message?.type === 'ready') {
-          await refresh();
+          await postForm();
+          postRawText();
+          post({ type: 'saveState', dirty: document.isDirty });
+          const ctx = await mainContext();
+          postMain(ctx);
+          await postPdf(ctx);
         }
       } catch (error) {
         vscode.window.showErrorMessage(error.message);
@@ -149,8 +248,83 @@ class ArtifactEditorProvider {
       changeSub.dispose();
       saveSub.dispose();
       dirtySub.dispose();
+      this._origins.delete(key);
       this._saveStatus.hide();
     });
+  }
+
+  async _postStatusFor(post, document, mainContext, outputPath) {
+    const ctx = await mainContext();
+    await this._postStatusOnly(post, document, ctx, outputPath(ctx));
+  }
+
+  async _postStatusOnly(post, document, ctx, file) {
+    if (!file) return;
+    let pdfMtimeMs = null;
+    try { pdfMtimeMs = (await fs.stat(file)).mtimeMs; } catch { pdfMtimeMs = null; }
+    if (pdfMtimeMs === null) return;
+    let dataMtimeMs = 0;
+    try { dataMtimeMs = (await fs.stat(document.uri.fsPath)).mtimeMs; } catch { /* ignore */ }
+    post({ type: 'status', stale: staleness({ dirty: document.isDirty, dataMtimeMs, pdfMtimeMs }).stale });
+  }
+
+  /** Compile the project's MAIN document. Errors land in the editor's strip, not a toast. */
+  async _compile(document, post, mainContext, postPdf) {
+    post({ type: 'compileState', running: true });
+    post({ type: 'compileError', message: null });
+    try {
+      await document.save();
+      const ctx = await mainContext();
+      if (!ctx.main) throw new Error(ctx.reason || 'No main document to compile.');
+      if (!this.onCompile) throw new Error('Compiling is not available in this session.');
+      await this.onCompile(document, ctx.main, ctx.recipeFile);
+      await postPdf(ctx);
+    } catch (error) {
+      const diagnostic = firstDiagnostic(error.message) || { message: String(error.message || 'Compile failed') };
+      post({ type: 'compileError', ...diagnostic });
+    } finally {
+      post({ type: 'compileState', running: false });
+    }
+  }
+
+  async _openDiagnostic(baseDir, { file, line, col }) {
+    const target = path.isAbsolute(file) ? file : path.resolve(baseDir, file);
+    const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(target));
+    const position = new vscode.Position(Math.max(0, Number(line || 1) - 1), Math.max(0, Number(col || 1) - 1));
+    await vscode.window.showTextDocument(doc, { selection: new vscode.Range(position, position) });
+  }
+
+  /**
+   * The document only ever receives text that parses; invalid text stays in
+   * the webview's textarea.
+   */
+  async _applyRawEdit(document, post, text, format, key) {
+    const checked = checkRawText(text, format);
+    if (!checked.ok) {
+      post({ type: 'rawState', ok: false, message: checked.message, line: checked.line ?? null });
+      return;
+    }
+    if (checked.deferred) {
+      let data;
+      try {
+        data = await yamlToJson(String(text ?? ''));
+      } catch (error) {
+        post({ type: 'rawState', ok: false, message: String(error.message || 'Invalid YAML'), line: null });
+        return;
+      }
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        post({ type: 'rawState', ok: false, message: 'The document root must be a mapping.', line: null });
+        return;
+      }
+      this._origins.set(key, 'rawEdit');
+      // keep the author's YAML formatting: replace the text verbatim
+      if (!await this._replaceText(document, String(text ?? ''), data)) this._origins.delete(key);
+      post({ type: 'rawState', ok: true });
+      return;
+    }
+    this._origins.set(key, 'rawEdit');
+    if (!await this._replaceDocument(document, checked.value)) this._origins.delete(key);
+    post({ type: 'rawState', ok: true });
   }
 
   _setDiagnostics(document, issues) {
@@ -165,34 +339,46 @@ class ArtifactEditorProvider {
   async _applyPathEdit(document, dottedPath, value) {
     const ast = await loadAstContext(document);
     setPath(ast.data, dottedPath, value);
-    await this._replaceDocument(document, ast.data);
+    return this._replaceDocument(document, ast.data);
   }
 
   async _replaceDocument(document, data) {
     const next = await serializeAst(data, document.uri.fsPath);
-    if (next === document.getText()) return;
-    const key = document.uri.toString();
-    this._updating.add(key);
-    const edit = new vscode.WorkspaceEdit();
-    const full = new vscode.Range(0, 0, document.lineCount, 0);
-    edit.replace(document.uri, full, next);
-    await vscode.workspace.applyEdit(edit);
-    // Keep JSON twin in sync when editing YAML (canonical AST twin)
-    if (/\.ya?ml$/i.test(document.uri.fsPath)) {
-      const twin = document.uri.fsPath.replace(/\.ya?ml$/i, '.json');
-      try {
-        await fs.writeFile(twin, JSON.stringify(data, null, 2) + '\n', 'utf8');
-      } catch { /* optional */ }
-    }
-    this._updating.delete(key);
+    const changed = await this._replaceText(document, next, data);
 
     // Respect files.autoSave: if set to afterDelay/onFocusChange, VS Code handles it.
-    // Also trigger extension-side save when autoSave is off but user wants sticky buffer —
-    // leave explicit save to Cmd+S / Save button.
+    // Explicit save stays on Cmd+S / the Save button.
     const autoSave = vscode.workspace.getConfiguration('files').get('autoSave');
     if (autoSave && autoSave !== 'off') {
       // Let VS Code autosave the TextDocument; status bar tracks dirty.
     }
+    return changed;
+  }
+
+  /**
+   * Replace the document TEXT verbatim (used by raw YAML edits, which keep
+   * formatting). Returns whether the document actually changed.
+   */
+  async _replaceText(document, text, data) {
+    if (text === document.getText()) return false;
+    const key = document.uri.toString();
+    this._updating.add(key);
+    try {
+      const edit = new vscode.WorkspaceEdit();
+      const full = new vscode.Range(0, 0, document.lineCount, 0);
+      edit.replace(document.uri, full, text);
+      await vscode.workspace.applyEdit(edit);
+      // Keep the JSON twin in sync when editing YAML (canonical AST twin)
+      if (data !== undefined && /\.ya?ml$/i.test(document.uri.fsPath)) {
+        const twin = document.uri.fsPath.replace(/\.ya?ml$/i, '.json');
+        try {
+          await fs.writeFile(twin, JSON.stringify(data, null, 2) + '\n', 'utf8');
+        } catch { /* optional */ }
+      }
+    } finally {
+      this._updating.delete(key);
+    }
+    return true;
   }
 
   async _generateField(document, webviewPanel, fieldPath, instruction) {
@@ -219,11 +405,7 @@ class ArtifactEditorProvider {
         await this._replaceDocument(document, ast.data);
         vscode.window.showInformationMessage(`Generated field ${fieldPath}`);
         webviewPanel.webview.postMessage({ type: 'generateDone', path: fieldPath });
-        webviewPanel.webview.postMessage({
-          type: 'previewData',
-          html: buildLivePreviewHtml(ast.data),
-          dirty: document.isDirty
-        });
+        await this._postGenerated(document, webviewPanel);
       },
     );
   }
@@ -255,13 +437,23 @@ class ArtifactEditorProvider {
         await this._replaceDocument(document, result.data);
         vscode.window.showInformationMessage('Generated full artifact AST');
         webviewPanel.webview.postMessage({ type: 'generateDone', path: '' });
-        webviewPanel.webview.postMessage({
-          type: 'previewData',
-          html: buildLivePreviewHtml(result.data),
-          dirty: document.isDirty
-        });
+        await this._postGenerated(document, webviewPanel);
       },
     );
+  }
+
+  /** After an LLM write the whole document changed: refresh the form and the raw text. */
+  async _postGenerated(document, webviewPanel) {
+    const { renderFields, renderIssues } = require('./artifactEditorHtml');
+    const next = await loadAstContext(document);
+    this._setDiagnostics(document, next.issues);
+    webviewPanel.webview.postMessage({ type: 'formHtml', html: renderFields(next), issuesHtml: renderIssues(next) });
+    webviewPanel.webview.postMessage({
+      type: 'rawText',
+      text: document.getText(),
+      format: /\.ya?ml$/i.test(document.uri.fsPath) ? 'yaml' : 'json'
+    });
+    webviewPanel.webview.postMessage({ type: 'saveState', dirty: document.isDirty });
   }
 
   _html(webview, ast, isDirty) {
@@ -270,4 +462,4 @@ class ArtifactEditorProvider {
   }
 }
 
-module.exports = { ArtifactEditorProvider, VIEW_TYPE, buildLivePreviewHtml };
+module.exports = { ArtifactEditorProvider, VIEW_TYPE };
