@@ -7,7 +7,7 @@ const { loadRecipe, build } = require('./core');
 const { buildHtml, loadDataFile } = require('./html');
 const { ArtifactEditorProvider, VIEW_TYPE } = require('./artifactEditor');
 const { loadAstContext, resolveCompanionPaths } = require('./ast');
-const { declaredModel, mergeClosures, affectedArtifacts } = require('./projectModel');
+const { declaredModel, mergeClosures } = require('./projectModel');
 const { treeNodes } = require('./projectTree');
 
 function activate(context) {
@@ -79,18 +79,23 @@ function activate(context) {
         item.tooltip = node.description;
       } else if (node.kind === 'artifact') {
         item.iconPath = new vscode.ThemeIcon(
-          node.description.startsWith('html-editor') ? 'edit' :
-          node.description.startsWith('html-display') ? 'browser' :
-          node.description.startsWith('review-box') ? 'checklist' : 'file-pdf');
-        if (!node.description.startsWith('review-box')) {
+          node.renderer === 'html-editor' ? 'edit' :
+          node.renderer === 'html-display' ? 'browser' :
+          node.renderer === 'review-box' ? 'checklist' : 'file-pdf');
+        if (node.renderer !== 'review-box') {
           item.command = {
             command: 'artifactStudio.build',
             title: 'Build Artifact',
-            arguments: [{ file: node.manifestPath, id: node.artifactId }]
+            arguments: [{ file: node.manifestPath, id: node.artifactId, output: node.output, renderer: node.renderer }]
           };
         }
       } else if (node.kind === 'file') {
-        item.iconPath = new vscode.ThemeIcon('file');
+        const abs = path.join(path.dirname(node.manifestPath), node.path);
+        item.resourceUri = vscode.Uri.file(abs);
+        item.iconPath = vscode.ThemeIcon.File;
+        item.command = /(^|\/)data\.(json|ya?ml)$/i.test(node.path)
+          ? { command: 'artifactStudio.openAstEditor', title: 'Open AST Editor', arguments: [vscode.Uri.file(abs)] }
+          : { command: 'vscode.open', title: 'Open', arguments: [vscode.Uri.file(abs)] };
       } else {
         item.iconPath = new vscode.ThemeIcon('folder');
       }
@@ -400,14 +405,10 @@ function activate(context) {
     const root = path.dirname(selected.file);
     if (!uri.fsPath.startsWith(root + path.sep)) return;
     if (!/\.(typ|html?|css|json|ya?ml|png|jpe?g|svg|bib|csv)$/i.test(uri.fsPath)) return;
-    const known = {};
-    for (const [key, closure] of closures) {
-      const sep = key.lastIndexOf('::');
-      if (key.slice(0, sep) === selected.file && closure.inputs.length) known[key.slice(sep + 2)] = closure;
-    }
-    if (Object.keys(known).length) {
+    const entry = closures.get(`${selected.file}::${selected.id}`);
+    if (entry && entry.inputs.length) {
       const rel = path.relative(root, uri.fsPath).split(path.sep).join('/');
-      if (!affectedArtifacts(known, rel).includes(selected.id)) return;
+      if (!entry.inputs.includes(rel)) return;
     }
     clearTimeout(timer);
     timer = setTimeout(() => { enqueue(undefined, { preview: true }).catch(() => {}); }, 400);

@@ -14,15 +14,14 @@ const MANIFEST = {
   },
   artifacts: [
     { id: 'pdf', template: 'tender.typ', data: 'abox/data.json', output: 'output/tender.pdf', renderer: 'typst' },
-    { id: 'review', template: 'rbox/review.yaml', data: 'abox/data.json', renderer: 'review-box' }
+    { id: 'review', template: 'rbox/review.yaml', data: 'abox/data.json', theme: 'theme.css', renderer: 'review-box' }
   ]
 };
 
 function build() {
   const declared = declaredModel(MANIFEST);
   const merged = mergeClosures(declared, {
-    pdf: { inputs: ['tender.typ', 'theme.css'], outputs: [] },
-    review: { inputs: ['rbox/review.yaml', 'theme.css'], outputs: [] }
+    pdf: { inputs: ['tender.typ', 'theme.css'], outputs: [] }
   });
   return treeNodes(declared, merged, '/proj/artifact-studio.json');
 }
@@ -35,12 +34,24 @@ test('project-level groups appear in role order', () => {
 test('a file in two closures lands under Shared', () => {
   const shared = build().find(n => n.label === 'Shared');
   assert.deepEqual(shared.children.map(c => c.path), ['theme.css']);
+  assert.equal(shared.children[0].label, 'theme.css');
+  assert.equal(shared.children[0].manifestPath, '/proj/artifact-studio.json');
 });
 
 test('every artifact appears under Artifacts with its renderer', () => {
   const group = build().find(n => n.label === 'Artifacts');
   assert.deepEqual(group.children.map(c => c.artifactId), ['pdf', 'review']);
   assert.equal(group.children.find(c => c.artifactId === 'review').description, 'review-box · validates, renders nothing');
+});
+
+test('artifact nodes carry renderer and output for the build command', () => {
+  const group = build().find(n => n.label === 'Artifacts');
+  const pdf = group.children.find(c => c.artifactId === 'pdf');
+  assert.equal(pdf.renderer, 'typst');
+  assert.equal(pdf.output, 'output/tender.pdf');
+  const review = group.children.find(c => c.artifactId === 'review');
+  assert.equal(review.renderer, 'review-box');
+  assert.equal(review.output, undefined);
 });
 
 test('a declared file read by nobody becomes a warning node', () => {
@@ -68,4 +79,5 @@ test('discovered assets appear under the artifact that reads them', () => {
   const review = group.children.find(c => c.artifactId === 'review');
   assert.ok(pdf.children.some(c => c.path === 'assets/logo.png'), 'pdf reads the logo');
   assert.ok(!review.children.some(c => c.path === 'assets/logo.png'), 'review does not');
+  assert.equal(pdf.children.find(c => c.path === 'assets/logo.png').label, 'assets/logo.png');
 });

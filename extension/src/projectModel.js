@@ -53,54 +53,53 @@ function declaredModel(manifest) {
 /**
  * Merge the declared layer with per-artifact closures.
  *
- * Classification is project-wide:
- *   in >= 2 closures            -> 'shared'
- *   in 1 closure, declared role -> that role
- *   in 1 closure, no role       -> 'asset'
- *   declared, in 0 closures     -> role kept, and listed in `unused`
+ * Classification is project-wide, in precedence order:
+ *   tbox/abox/rbox declared role > shared (>=2 users) > view declared role > asset
+ *
+ * The reverse index is seeded from every declared artifact entry (an artifact
+ * always "uses" the files it names) before folding in discovered closures, so
+ * a non-Typst artifact's own template/data is never reported unused.
  *
  * `unused` is empty when no closure is known yet, so a project that has not
  * been built does not accuse every file of being unused.
  */
 function mergeClosures(declared, closuresById) {
   const byId = closuresById && typeof closuresById === 'object' ? closuresById : {};
-  const ids = Object.keys(byId);
+  const discoveredIds = Object.keys(byId);
+  const norm = p => String(p).split('\\').join('/');
   const dependents = new Map();
-  for (const id of ids) {
-    for (const input of byId[id].inputs || []) {
-      const p = String(input).split('\\').join('/');
-      if (!dependents.has(p)) dependents.set(p, []);
-      if (!dependents.get(p).includes(id)) dependents.get(p).push(id);
-    }
-  }
+  const use = (p, id) => {
+    const key = norm(p);
+    if (!dependents.has(key)) dependents.set(key, []);
+    if (!dependents.get(key).includes(id)) dependents.get(key).push(id);
+  };
 
+  // Declared layer: every file an artifact entry names is used by that artifact.
+  for (const a of declared.artifacts) {
+    for (const p of [a.template, a.data, a.theme, a.ontology, a.dataSchema]) if (p) use(p, a.id);
+  }
+  // Discovered layer: everything the compiler reported reading.
+  for (const id of discoveredIds) for (const input of byId[id].inputs || []) use(input, id);
+
+  const BOX = new Set(['tbox', 'abox', 'rbox']);
   const files = new Map();
   const add = (p, role, artifacts) => files.set(p, { path: p, role, artifacts });
 
   for (const [p, users] of dependents) {
     const declaredRole = declared.roles.get(p);
-    const role = users.length >= 2 ? 'shared' : (declaredRole || 'asset');
+    const role = BOX.has(declaredRole) ? declaredRole
+      : users.length >= 2 ? 'shared'
+      : (declaredRole || 'asset');
     add(p, role, [...users]);
   }
-  for (const [p, role] of declared.roles) {
-    if (!files.has(p)) add(p, role, []);
-  }
+  for (const [p, role] of declared.roles) if (!files.has(p)) add(p, role, []);
 
-  const unused = ids.length === 0
+  // Only accuse files of being unused once at least one compile has reported a closure.
+  const unused = discoveredIds.length === 0
     ? []
     : [...declared.roles.keys()].filter(p => !dependents.has(p)).sort();
 
   return { files, unused, dependents };
 }
 
-/**
- * Artifact ids whose closure contains `changedRelPath` (project-relative).
- * `closuresById` has the same shape `mergeClosures` accepts: { [id]: { inputs, outputs } }.
- */
-function affectedArtifacts(closuresById, changedRelPath) {
-  const byId = closuresById && typeof closuresById === 'object' ? closuresById : {};
-  const p = String(changedRelPath).split('\\').join('/');
-  return Object.keys(byId).filter(id => (byId[id].inputs || []).includes(p));
-}
-
-module.exports = { declaredModel, mergeClosures, affectedArtifacts };
+module.exports = { declaredModel, mergeClosures };

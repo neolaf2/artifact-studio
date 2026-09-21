@@ -33,14 +33,16 @@ async function loadRecipe(file, id) {
       try { inside(root, item[key]); }
       catch (error) { throw new Error(`artifact "${item.id}": ${key}: ${error.message}`); }
     }
-    if (item.ontology) inside(root, item.ontology);
-    if (item.dataSchema) inside(root, item.dataSchema);
-    if (item.theme) inside(root, item.theme);
+    for (const key of ['ontology', 'dataSchema', 'theme']) {
+      if (!item[key]) continue;
+      try { inside(root, item[key]); }
+      catch (error) { throw new Error(`artifact "${item.id}": ${key}: ${error.message}`); }
+    }
     if (item.output !== undefined && (item.output === item.data || item.output === item.template)) {
       throw new Error(`artifact "${item.id}": output must not overwrite source.`);
     }
     item.renderer = renderer;
-    if (!/\.(json|ya?ml)$/i.test(item.data)) throw new Error('Expected .json/.yaml/.yml data.');
+    if (!/\.(json|ya?ml)$/i.test(item.data)) throw new Error(`artifact "${item.id}": data must be .json/.yaml/.yml.`);
     if (renderer === 'typst') {
       if (!/\.typ$/i.test(item.template) || !/\.pdf$/i.test(item.output)) throw new Error('Typst artifacts need a .typ template and .pdf output.');
     } else if (renderer === 'html-display' || renderer === 'html-editor') {
@@ -91,6 +93,7 @@ function run(executable, args, cwd, log = () => {}) {
 async function readClosure(depsFile) {
   try {
     const parsed = JSON.parse(await fs.readFile(depsFile, 'utf8'));
+    // inputs are relative to the compile cwd, which run() pins to the project root; outputs are the compiler's temp paths.
     const norm = list => (Array.isArray(list) ? list : []).map(p => String(p).split(path.sep).join('/'));
     return { inputs: norm(parsed.inputs), outputs: norm(parsed.outputs) };
   } catch {
@@ -116,9 +119,14 @@ async function build(file, id, options = {}) {
   try {
     const tempPDF = path.join(staging, 'output.pdf');
     const depsFile = path.join(staging, 'deps.json');
-    await run(executable, ['compile', '--root', root, '--diagnostic-format', 'short',
-      '--input', `data=${dataPath}`, '--deps', depsFile, '--deps-format', 'json',
-      template, tempPDF], root, options.log);
+    const depsArgs = ['--deps', depsFile, '--deps-format', 'json'];
+    try {
+      await run(executable, [...common.slice(0, -1), ...depsArgs, template, tempPDF], root, options.log);
+    } catch (error) {
+      if (!/unexpected argument.*--deps/i.test(String(error.message))) throw error;
+      // Typst < 0.15 has no --deps; the closure is optional, the build is not.
+      await run(executable, [...common, tempPDF], root, options.log);
+    }
     const closure = await readClosure(depsFile);
     await fs.copyFile(tempPDF, output);
     let pages = [];

@@ -2,7 +2,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { declaredModel } = require('../src/projectModel');
-const { affectedArtifacts } = require('../src/projectModel');
 
 const MANIFEST = {
   version: 1,
@@ -77,20 +76,18 @@ test('a declared role survives discovery in one closure', () => {
 
 test('unused is computed across ALL closures, not per artifact', () => {
   const { unused } = mergeClosures(DECLARED, {
-    pdf: { inputs: ['tender.typ'], outputs: [] },
-    review: { inputs: ['rbox/review.yaml'], outputs: [] }
+    pdf: { inputs: ['tender.typ'], outputs: [] }
   });
   assert.ok(unused.includes('tbox/ontology.md'), 'declared, read by nobody');
   assert.ok(!unused.includes('tender.typ'), 'read by pdf');
-  assert.ok(!unused.includes('rbox/review.yaml'), 'read by review — must not be unused while pdf is selected');
+  assert.ok(!unused.includes('rbox/review.yaml'), 'review declares it as template');
 });
 
 test('reverse index maps a file to every dependent artifact', () => {
   const { dependents } = mergeClosures(DECLARED, {
-    pdf: { inputs: ['tender.typ', 'theme.css'], outputs: [] },
-    review: { inputs: ['theme.css'], outputs: [] }
+    pdf: { inputs: ['tender.typ'], outputs: [] }
   });
-  assert.deepEqual(dependents.get('theme.css').sort(), ['pdf', 'review']);
+  assert.deepEqual(dependents.get('abox/data.json'), ['review']);
   assert.deepEqual(dependents.get('tender.typ'), ['pdf']);
 });
 
@@ -100,26 +97,20 @@ test('with no closures yet, nothing is reported unused', () => {
   assert.ok(files.size > 0, 'declared files still render');
 });
 
-test('a shared file affects every dependent artifact', () => {
-  const closures = {
-    pdf: { inputs: ['tender.typ', 'theme.css'], outputs: [] },
-    review: { inputs: ['theme.css'], outputs: [] }
-  };
-  assert.deepEqual(affectedArtifacts(closures, 'theme.css').sort(), ['pdf', 'review']);
-  assert.deepEqual(affectedArtifacts(closures, 'tender.typ'), ['pdf']);
+test('a file an artifact declares is never unused, even with no closure of its own', () => {
+  const { unused, files } = mergeClosures(DECLARED, { pdf: { inputs: ['tender.typ'], outputs: [] } });
+  assert.ok(!unused.includes('rbox/review.yaml'), 'declared as review template');
+  assert.ok(!unused.includes('abox/data.json'), 'declared as review data');
+  assert.equal(files.get('abox/data.json').role, 'abox', 'box role wins over shared');
 });
 
-test('an unknown file affects nothing', () => {
-  const closures = { pdf: { inputs: ['tender.typ'], outputs: [] } };
-  assert.deepEqual(affectedArtifacts(closures, 'node_modules/x/y.js'), []);
+test('mergeClosures does not mutate its inputs', () => {
+  const closures = { pdf: { inputs: ['tender.typ', 'theme.css'], outputs: [] } };
+  const declaredCopy = { artifacts: JSON.parse(JSON.stringify(DECLARED.artifacts)), roles: new Map(DECLARED.roles) };
+  const closuresCopy = JSON.parse(JSON.stringify(closures));
+  mergeClosures(DECLARED, closures);
+  assert.deepEqual(DECLARED.artifacts, declaredCopy.artifacts);
+  assert.deepEqual([...DECLARED.roles], [...declaredCopy.roles]);
+  assert.deepEqual(closures, closuresCopy);
 });
 
-test('windows separators in the changed path are normalised', () => {
-  const closures = { pdf: { inputs: ['rbox/review.yaml'], outputs: [] } };
-  assert.deepEqual(affectedArtifacts(closures, 'rbox\\review.yaml'), ['pdf']);
-});
-
-test('affectedArtifacts tolerates a missing or empty closures object', () => {
-  assert.deepEqual(affectedArtifacts({}, 'tender.typ'), []);
-  assert.deepEqual(affectedArtifacts(undefined, 'tender.typ'), []);
-});

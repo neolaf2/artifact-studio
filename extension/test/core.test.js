@@ -101,6 +101,35 @@ test('build returns the dependency closure reported by the compiler', async t =>
   assert.deepEqual(result.closure.inputs, ['data.yaml', 'letter.typ', 'assets/logo.png']);
 });
 
+test('build falls back to a plain compile when the compiler rejects --deps', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'artifact-olddeps-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const compiler = path.join(root, 'fake-typst');
+  await fs.writeFile(compiler,
+    '#!/usr/bin/env node\n' +
+    'const fs=require("node:fs");const args=process.argv.slice(2);\n' +
+    'if(args.includes("--deps")){console.error("error: unexpected argument \'--deps\' found");process.exit(2);}\n' +
+    'const out=args.at(-1);fs.writeFileSync(out.replace("{p}","1"),"%PDF-test");\n',
+    { mode: 0o755 });
+  const manifest = path.join(root, 'artifact-studio.json');
+  await fs.writeFile(manifest, JSON.stringify({ version: 1, artifacts: [{ id: 'letter', template: 'letter.typ', data: 'data.yaml', output: 'output/letter.pdf' }] }));
+  await fs.writeFile(path.join(root, 'letter.typ'), '');
+  await fs.writeFile(path.join(root, 'data.yaml'), 'title: Test');
+  const result = await build(manifest, 'letter', { executable: compiler });
+  assert.equal(await fs.readFile(result.output, 'utf8'), '%PDF-test');
+  assert.deepEqual(result.closure, { inputs: [], outputs: [] });
+});
+
+test('review-box artifacts must not declare an output and need a yaml template', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'artifact-rbox-bad-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const write = cfg => fs.writeFile(path.join(root, 'artifact-studio.json'), JSON.stringify({ version: 1, artifacts: [cfg] }));
+  await write({ id: 'r', template: 'rbox/review.yaml', data: 'data.json', renderer: 'review-box', output: 'out/x.pdf' });
+  await assert.rejects(loadRecipe(path.join(root, 'artifact-studio.json')), /artifact "r".*must not declare an output/s);
+  await write({ id: 'r', template: 'rbox/review.typ', data: 'data.json', renderer: 'review-box' });
+  await assert.rejects(loadRecipe(path.join(root, 'artifact-studio.json')), /artifact "r".*\.yaml/s);
+});
+
 test('build tolerates a compiler that writes no deps file', async t => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'artifact-nodeps-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));

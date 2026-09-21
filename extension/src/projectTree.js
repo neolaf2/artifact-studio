@@ -20,7 +20,7 @@ function treeNodes(declared, merged, manifestPath) {
     const children = [...merged.files.values()]
       .filter(f => f.role === role)
       .sort((a, b) => a.path.localeCompare(b.path))
-      .map(f => ({ kind: 'file', label: f.path.split('/').pop(), path: f.path, role: f.role }));
+      .map(f => ({ kind: 'file', label: f.path, path: f.path, manifestPath, role: f.role }));
     if (children.length) nodes.push({ kind: 'group', label, role, children });
   }
 
@@ -35,10 +35,12 @@ function treeNodes(declared, merged, manifestPath) {
       kind: 'artifact',
       label: a.id,
       artifactId: a.id,
+      renderer: a.renderer || 'typst',
+      ...(a.output !== undefined ? { output: a.output } : {}),
       description: `${a.renderer || 'typst'} · ${RENDERER_NOTE[a.renderer] || a.output || ''}`.trim(),
       manifestPath,
       children: [...declaredFiles, ...assets]
-        .map(p => ({ kind: 'file', label: p.split('/').pop(), path: p }))
+        .map(p => ({ kind: 'file', label: p, path: p, manifestPath }))
     };
   });
   if (artifacts.length) nodes.push({ kind: 'group', label: 'Artifacts', children: artifacts });
