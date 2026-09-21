@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "main": "tender-pdf",
   "ast": {
     "tbox": {
       "schema": "tbox/data.schema.json",

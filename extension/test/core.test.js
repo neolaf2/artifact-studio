@@ -149,3 +149,37 @@ test('build tolerates a compiler that writes no deps file', async t => {
   const result = await build(manifest, 'letter', { executable: compiler });
   assert.deepEqual(result.closure, { inputs: [], outputs: [] });
 });
+
+test('loadRecipe returns a valid main designation', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'artifact-main-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const manifest = path.join(root, 'artifact-studio.json');
+  await fs.writeFile(manifest, JSON.stringify({
+    version: 1, main: 'pdf',
+    artifacts: [{ id: 'pdf', template: 'main.typ', data: 'data.json', output: 'out/x.pdf' }]
+  }));
+  assert.equal((await loadRecipe(manifest)).main, 'pdf');
+});
+
+test('loadRecipe rejects a main that is missing or not a typst artifact', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'artifact-badmain-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const manifest = path.join(root, 'artifact-studio.json');
+  const artifacts = [
+    { id: 'pdf', template: 'main.typ', data: 'data.json', output: 'out/x.pdf' },
+    { id: 'web', template: 'form.html', data: 'data.json', output: 'out/x.html' }
+  ];
+  await fs.writeFile(manifest, JSON.stringify({ version: 1, main: 'nope', artifacts }));
+  await assert.rejects(loadRecipe(manifest), /main: no artifact with id "nope"/);
+  await fs.writeFile(manifest, JSON.stringify({ version: 1, main: 'web', artifacts }));
+  await assert.rejects(loadRecipe(manifest), /main: artifact "web" is html-display/);
+});
+
+test('both shipped samples declare a main that resolves to a typst artifact', async () => {
+  const { resolveMain } = require('../src/compileView');
+  for (const dir of ['supplier-clarification-zh', 'tender-document-v20918']) {
+    const loaded = await loadRecipe(path.join(__dirname, `../../samples/${dir}/artifact-studio.json`));
+    assert.equal(typeof loaded.main, 'string', `${dir} declares main`);
+    assert.equal(resolveMain(loaded.main, loaded.artifacts).renderer, 'typst');
+  }
+});

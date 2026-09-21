@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "main": "clarification-pdf",
   "ast": {
     "tbox": {
       "schema": "tbox/data.schema.json",
