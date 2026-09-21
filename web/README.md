@@ -106,3 +106,22 @@ Sample A-box mirrors (kept as SoT alongside web content):
 |----|---------|
 | clarification | `samples/supplier-clarification-zh/data.json (+ abox/data.json)` |
 | tender | `samples/tender-document-v20918/data.json`, `…/abox/data.json` |
+
+## Auto-deploy (GitHub Actions → Vercel)
+
+Workflow: [`.github/workflows/deploy-vercel.yml`](../.github/workflows/deploy-vercel.yml).
+
+- **Production:** push to `main` that touches `web/**` (or **Actions → Deploy Web to Vercel → Run workflow**)
+- **Preview:** pull requests that touch `web/**`
+- **Product secrets stay on Vercel** (LLM keys, durable-save GitHub token, etc.). The Action only builds and deploys.
+
+One-time GitHub repo secrets:
+
+| Secret | Value |
+|--------|--------|
+| `VERCEL_TOKEN` | Create at https://vercel.com/account/tokens |
+| `VERCEL_ORG_ID` | `team_6ukcUUfwObUt61OoQjXp2XSK` |
+| `VERCEL_PROJECT_ID` | `prj_2mDveFfv8Zl2pZTGBIdAZgXheRYQ` |
+
+Do not put these in `.env` committed to git.
+
