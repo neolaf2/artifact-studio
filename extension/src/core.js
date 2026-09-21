@@ -54,9 +54,14 @@ async function loadRecipe(file, id) {
       throw new Error(`artifact "${item.id}": unsupported renderer: ${renderer}`);
     }
   }
+  if (config.main !== undefined) {
+    const target = typeof config.main === 'string' ? config.artifacts.find(x => x.id === config.main) : undefined;
+    if (!target) throw new Error(`main: no artifact with id "${config.main}".`);
+    if (target.renderer !== 'typst') throw new Error(`main: artifact "${config.main}" is ${target.renderer}, but main must be a typst artifact.`);
+  }
   const recipe = id ? config.artifacts.find(x => x.id === id) : config.artifacts[0];
   if (!recipe) throw new Error(`Unknown artifact: ${id}`);
-  return { root, recipe, artifacts: config.artifacts };
+  return { root, recipe, artifacts: config.artifacts, main: config.main };
 }
 
 async function checkPath(root, relative, writing = false) {

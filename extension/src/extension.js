@@ -7,6 +7,7 @@ const { loadRecipe, build } = require('./core');
 const { buildHtml, loadDataFile } = require('./html');
 const { ArtifactEditorProvider, VIEW_TYPE } = require('./artifactEditor');
 const { loadAstContext, resolveCompanionPaths } = require('./ast');
+const { resolveMain } = require('./compileView');
 const { declaredModel, mergeClosures } = require('./projectModel');
 const { treeNodes } = require('./projectTree');
 
@@ -191,9 +192,14 @@ function activate(context) {
     htmlPanel.webview.html = html;
   }
 
-  async function doBuild(item, { preview = false, htmlMode = null } = {}) {
+  // `editor: true` builds for the AST editor's Compile button: no PNG preview,
+  // no toast, no Output pop — the editor's own error strip is the signal.
+  async function doBuild(item, { preview = false, htmlMode = null, editor = false } = {}) {
     if (!vscode.workspace.isTrusted) throw new Error('Trust this workspace before running local builds.');
-    const target = await choose(item);
+    // M5: an editor compile builds exactly what the editor resolved and must not
+    // retarget watch mode / "Open Generated Output" by assigning `selected`.
+    if (editor && !(item?.file && item?.id)) throw new Error('The editor did not resolve a main document to build.');
+    const target = editor ? item : await choose(item);
     if (!target) return;
     if (!await vscode.workspace.saveAll(false)) throw new Error('Save the source files before building.');
     status.text = '$(sync~spin) Building artifact';
@@ -210,14 +216,17 @@ function activate(context) {
       } else {
         result = await build(target.file, target.id, {
           executable: cfg.get('typstPath', 'typst'),
-          previewDir: preview || pdfPanel ? path.join(context.globalStorageUri.fsPath, 'previews') : undefined,
+          previewDir: !editor && (preview || pdfPanel) ? path.join(context.globalStorageUri.fsPath, 'previews') : undefined,
           log: s => output.append(s)
         });
         if (result.closure) closures.set(`${target.file}::${result.id}`, result.closure);
-        const previous = last;
-        last = result;
-        if (preview || pdfPanel) showPdfPreview(result);
-        if (previous?.pages?.length) await fs.rm(path.dirname(previous.pages[0]), { recursive: true, force: true });
+        if (!editor) {
+          // Leave `last` and the PNG panel's page files untouched for editor builds.
+          const previous = last;
+          last = result;
+          if (preview || pdfPanel) showPdfPreview(result);
+          if (previous?.pages?.length) await fs.rm(path.dirname(previous.pages[0]), { recursive: true, force: true });
+        }
       }
       output.appendLine(`Saved ${result.output}`);
       return result;
@@ -233,7 +242,7 @@ function activate(context) {
       }
       for (const [file, entries] of grouped) diagnostics.set(vscode.Uri.file(file), entries);
       output.appendLine(error.message);
-      if (pdfPanel) pdfPanel.title = 'Artifact Preview — stale (build failed)';
+      if (!editor && pdfPanel) pdfPanel.title = 'Artifact Preview — stale (build failed)';
       throw error;
     } finally {
       status.text = watching ? '$(eye) Artifact Studio: Watch' : '$(files) Artifact Studio';
@@ -242,7 +251,11 @@ function activate(context) {
 
   function enqueue(item, opts) {
     const task = queue.then(() => doBuild(item, opts));
-    queue = task.catch(error => { output.show(true); vscode.window.showErrorMessage(error.message); });
+    queue = task.catch(error => {
+      if (opts?.editor) return; // the editor reports it in its own strip
+      output.show(true);
+      vscode.window.showErrorMessage(error.message);
+    });
     return task;
   }
 
@@ -297,12 +310,13 @@ function activate(context) {
   async function buildFromDataDocument(document, kind) {
     const companions = await resolveCompanionPaths(document.uri);
     if (!companions.recipe) throw new Error('No artifact-studio.json next to this data file.');
-    const { artifacts } = await loadRecipe(companions.recipe);
+    const { artifacts, main } = await loadRecipe(companions.recipe);
     let target;
     if (kind === 'html-display' || kind === 'html') {
       target = artifacts.find(a => a.renderer === 'html-display') || artifacts.find(a => (a.renderer || '').startsWith('html'));
     } else {
-      target = artifacts.find(a => a.renderer === 'typst' || !a.renderer);
+      // The palette command builds the same main document as the editor's Compile button.
+      target = resolveMain(main, artifacts);
     }
     if (!target) throw new Error(`No ${kind} artifact in recipe.`);
     return enqueue({ file: companions.recipe, id: target.id, output: target.output, renderer: target.renderer }, { preview: true });
@@ -321,7 +335,11 @@ function activate(context) {
           vscode.window.showErrorMessage(error.message);
           output.show(true);
         }
-      }
+      },
+      onCompile: (document, main, recipeFile) => enqueue(
+        { file: recipeFile, id: main.id, output: main.output, renderer: 'typst' },
+        { preview: false, editor: true }
+      )
     })
   );
 
