@@ -50,4 +50,47 @@ function declaredModel(manifest) {
   return { artifacts, roles };
 }
 
-module.exports = { declaredModel };
+/**
+ * Merge the declared layer with per-artifact closures.
+ *
+ * Classification is project-wide:
+ *   in >= 2 closures            -> 'shared'
+ *   in 1 closure, declared role -> that role
+ *   in 1 closure, no role       -> 'asset'
+ *   declared, in 0 closures     -> role kept, and listed in `unused`
+ *
+ * `unused` is empty when no closure is known yet, so a project that has not
+ * been built does not accuse every file of being unused.
+ */
+function mergeClosures(declared, closuresById) {
+  const byId = closuresById && typeof closuresById === 'object' ? closuresById : {};
+  const ids = Object.keys(byId);
+  const dependents = new Map();
+  for (const id of ids) {
+    for (const input of byId[id].inputs || []) {
+      const p = String(input).split('\\').join('/');
+      if (!dependents.has(p)) dependents.set(p, []);
+      if (!dependents.get(p).includes(id)) dependents.get(p).push(id);
+    }
+  }
+
+  const files = new Map();
+  const add = (p, role, artifacts) => files.set(p, { path: p, role, artifacts });
+
+  for (const [p, users] of dependents) {
+    const declaredRole = declared.roles.get(p);
+    const role = users.length >= 2 ? 'shared' : (declaredRole || 'asset');
+    add(p, role, [...users]);
+  }
+  for (const [p, role] of declared.roles) {
+    if (!files.has(p)) add(p, role, []);
+  }
+
+  const unused = ids.length === 0
+    ? []
+    : [...declared.roles.keys()].filter(p => !dependents.has(p)).sort();
+
+  return { files, unused, dependents };
+}
+
+module.exports = { declaredModel, mergeClosures };
