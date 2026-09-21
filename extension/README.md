@@ -79,8 +79,10 @@ Data is passed as a file, not interpolated into Typst source. Normal strings rem
 | Project example | Creates a new clarification-letter example without overwriting an existing one |
 | CLI | Shares the extension's build core and returns a JSON result |
 | **Project tree** | T-box / A-box / R-box / Shared groups plus every artifact, backed by the dependency closure Typst reports for each build. |
+| **AST editor compile loop** | Form/JSON left pane, minimizable compiled-PDF right pane rendered with vendored pdf.js; Compile builds the project's main document and replaces the output PDF |
+| **Main document** | Manifest `"main": "<artifact-id>"` (else the `typst` artifact named `main.typ`, else the first `typst` artifact) names the document the AST editor's Compile button and **Render PDF from AST** build |
 
-The preview is a raster page preview, not an embedded PDF reader. Text selection, annotations, source-to-preview synchronization, and PDF search are not implemented. Adding those would be a subsequent iteration.
+The standalone **Build and Preview** panel above is a raster page preview, not an embedded PDF reader: text selection, annotations, source-to-preview synchronization, and PDF search are not implemented there. (The AST editor's compiled-PDF pane is different: it renders the actual PDF with pdf.js, so its text is selectable and searchable — see **Compile loop (0.7+)** above.)
 
 Watch mode rebuilds on saved filesystem changes, not every keystroke. After the first successful build it watches only the files the compiler reported reading for the selected artifact; before that, or on a Typst without `--deps`, it watches common template/data/image/bibliography extensions. Builds are serialized within the extension. Preview generation is a second Typst compilation, so avoid changing inputs during a build when exact PDF/preview correspondence matters. Output is copied from a successful temporary PDF; this preserves the last good output on compiler failure but is not a transactional artifact archive.
 
@@ -183,4 +185,51 @@ See `samples/supplier-clarification-html-zh` and skill `skills/portable-html-for
 ## Artifact AST Editor (0.4+)
 
 Open `data.json` / `data.yaml` next to `schema/data.schema.json` (and optional `ontology.md`).
-Edits apply via WorkspaceEdit. Toolbar / commands render HTML and Typst PDF from the same AST.
+Edits apply via WorkspaceEdit.
+
+### Compile loop (0.7+)
+
+The editor is an Overleaf-style compile loop, not a live preview:
+
+- **Left pane** — the editable schema **Form**, switchable to **JSON/YAML**, the raw
+  data file text, also editable. While the raw text does not parse, the error and its
+  line are shown in the tab, the document is left untouched, and both **Compile** and
+  switching back to Form are blocked until it parses again.
+- **Right pane** — either minimized to a thin rail, or showing the **compiled PDF**:
+  the actual file at the recipe's `output` path, rendered with a vendored pdf.js. On
+  open it shows whatever the last run produced, with no Typst run. It changes only
+  when **Compile** is clicked — there is no auto-compile. Status reads `compiled
+  HH:MM`, plus `· edited since` when the data is dirty or newer than the PDF. Text is
+  selectable, and Cmd/Ctrl+F searches it. The pane's document is never reloaded, so
+  swaps never blink.
+- **▶ Compile** — saves, runs Typst once through the project's **main** document, and
+  replaces the output PDF. A Typst error keeps the last good PDF on screen and shows
+  the first diagnostic in a strip under the toolbar; click it to open that location.
+- **Open PDF** opens the output file in the OS default viewer. **Render HTML** and
+  **Generate Artifact (LLM)** live under a **More ▾** menu.
+
+pdf.js **6.3.289** (Apache-2.0) is vendored under `extension/media/pdfjs/` and
+re-vendored with `scripts/vendor-pdfjs.sh`.
+
+### Main document
+
+Compile always builds the project's **main** Typst document. Resolution order:
+
+1. the manifest's `"main": "<artifact-id>"`;
+2. else the `typst` artifact whose template file is named `main.typ`;
+3. else the first `typst` artifact.
+
+```json
+{
+  "version": 1,
+  "main": "clarification-pdf",
+  "artifacts": [
+    { "id": "clarification-pdf", "template": "views/letter.typ", "data": "abox/data.yaml", "output": "outputs/final/clarification.pdf", "renderer": "typst" }
+  ]
+}
+```
+
+`main` must name a `typst` artifact; a project with no Typst artifact at all can still
+be opened, but the editor disables Compile. **New Project** writes a `main` for every
+scaffolded project, and the palette command **Artifact Studio: Render PDF from AST**
+builds the same main document.

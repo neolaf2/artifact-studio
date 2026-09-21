@@ -35,3 +35,6 @@ The Artifacts view renders the union. Classification is project-wide:
 
 `review-box` artifacts declare `template` and `data` but **no `output`**: they
 validate rather than render.
+
+The manifest's top-level `"main": "<artifact-id>"` names the `typst` artifact that
+the VS Code extension's AST editor builds when its **Compile** button is clicked.

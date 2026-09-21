@@ -3,7 +3,9 @@
 Artifact Studio’s web app and VS Code extension follow an **Overleaf-style** workflow:
 
 1. Start from a **project home** (Open an existing project, or **New project**).
-2. Edit in a **split view** (source / form on the left, live preview on the right).
+2. Edit in a **split view** (source / form on the left; a live HTML preview on the
+   right in the web app, or the compiled PDF — built on demand by Compile — in the
+   VS Code extension).
 3. **Save that sticks** (local disk, or GitHub / Blob on Vercel).
 
 Chinese summary: [zh/OVERLEAF_EDITOR.md](./zh/OVERLEAF_EDITOR.md).
@@ -37,7 +39,7 @@ IDs are slugified from the name (or an explicit `id`). Built-in ids `clarificati
 
 ---
 
-## 2. Editor: split edit + live preview
+## 2. Editor: split edit + preview
 
 ### Web (`/artifacts/[id]`)
 
@@ -50,9 +52,21 @@ IDs are slugified from the name (or an explicit `id`). Built-in ids `clarificati
 
 ### VS Code custom editor
 
-- Side-by-side form + live HTML preview.
+- **Left**: the editable schema **Form**, switchable to the raw **JSON/YAML** data
+  text, also editable. Invalid raw text is held in the tab — with its error and
+  line — and never reaches the document; Compile and the switch back to Form are
+  blocked until it parses.
+- **Right**: minimized to a rail, or the **compiled PDF** — the actual file at the
+  recipe's `output` path, rendered with a vendored pdf.js. It shows the previous
+  run's PDF on open and changes only when **▶ Compile** is clicked; there is no
+  auto-compile. Status reads `compiled HH:MM`, plus `· edited since` when the data is
+  dirty or newer than the PDF. Text is selectable; Cmd/Ctrl+F searches it.
 - Status bar: **Artifact: Unsaved** / **Artifact: Saved HH:MM**.
-- Cmd/Ctrl+S → document save; respects `files.autoSave`; preview refreshes on edit.
+- Cmd/Ctrl+S → document save; respects `files.autoSave`. **Compile** saves, runs
+  Typst once through the project's **main** document, and replaces the output PDF —
+  a Typst error keeps the last good PDF and shows the first diagnostic in a strip
+  under the toolbar. **Render HTML** and **Generate Artifact (LLM)** live under a
+  **More ▾** menu; **Open PDF** opens the output file.
 
 ---
 
