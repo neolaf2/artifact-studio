@@ -4,7 +4,7 @@
 
 用结构化数据 + Typst 模板在本机生成 PDF（无需云端编译）。可按场景选择：**VS Code / Cursor 图形界面**、**命令行 CLI**、**Agent Skills**，或直接使用 **Typst / Pandoc**。
 
-Copyright © 2026 **Richard Tong（童）**. 授权协议：[Apache License 2.0](./LICENSE)。
+Copyright © 2026 **Richard Tong**. 授权协议：[Apache License 2.0](./LICENSE)。
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 [![Release](https://img.shields.io/github/v/release/neolaf2/artifact-studio)](https://github.com/neolaf2/artifact-studio/releases)
