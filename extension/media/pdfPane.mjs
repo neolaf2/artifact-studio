@@ -250,18 +250,33 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
    * latest request -- swap it in. Returns whether it committed. Throws only
    * for genuine failures (a corrupt/broken render); a stale/superseded
    * attempt resolves to `false` without throwing.
+   *
+   * The (empty, hidden) layer is created and appended to `container` -- and
+   * tracked as `buildingLayer` -- before its pages are fetched/sized, so a
+   * newer show()/refit() can always find and abandon it immediately via
+   * `abandonBuildingLayer()`; two pending layers can still never coexist.
+   * Appending it first (rather than after `populateLayer()`) also lets page
+   * width be measured on the layer's own, real, laid-out `clientWidth`.
    */
   async function mountAndSwap(pdf, myGen) {
-    const layer = await buildLayer(pdf);
-
-    if (destroyed || myGen !== generation) {
-      teardownLayer(layer);
-      return false;
-    }
-
+    const layer = createEmptyLayer(pdf);
     buildingLayer = layer;
     container.appendChild(layer.root);
     emit({ phase: 'rendering', pages: pdf.numPages });
+
+    try {
+      await populateLayer(pdf, layer);
+    } catch (err) {
+      if (buildingLayer === layer) buildingLayer = null;
+      teardownLayer(layer);
+      throw err;
+    }
+
+    if (destroyed || myGen !== generation) {
+      if (buildingLayer === layer) buildingLayer = null;
+      teardownLayer(layer);
+      return false;
+    }
 
     const eager = computeEagerEntries(layer);
     try {
@@ -296,17 +311,40 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
     }
   }
 
-  /** Builds the DOM for a new layer (sized page placeholders, no rendering yet). */
-  async function buildLayer(pdf) {
-    const contentWidth = Math.max(1, container.clientWidth || container.getBoundingClientRect().width || 1);
-    const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
-
-    const pageNumbers = Array.from({ length: pdf.numPages }, (_, i) => i + 1);
-    const pages = await Promise.all(pageNumbers.map((n) => pdf.getPage(n)));
-
+  /** Creates the (empty, hidden, unattached-content) shell for a new layer. */
+  function createEmptyLayer(pdf) {
     const root = document.createElement('div');
     root.className = 'pdfpane-layer';
     root.style.visibility = 'hidden';
+    return {
+      root,
+      pdf,
+      scale: 1,
+      dpr: (typeof window !== 'undefined' && window.devicePixelRatio) || 1,
+      pageEntries: [],
+      contentHeight: 0,
+      observer: null,
+      destroyed: false,
+      targetScrollTop: 0,
+    };
+  }
+
+  /**
+   * Fetches every page and fills `layer.root` with sized page placeholders
+   * (no rendering yet). `layer.root` must already be attached to `container`
+   * (hidden via `visibility`, not `display`) so its `clientWidth` reflects
+   * real, laid-out geometry -- specifically, the space actually available
+   * to pages *inside the scrolling layer* once its (CSS `scrollbar-gutter:
+   * stable`) vertical scrollbar gutter is reserved. Measuring the outer
+   * `container` instead -- or measuring before the layer has real layout --
+   * sizes pages for a width the layer won't actually have once it scrolls,
+   * producing a permanent horizontal scrollbar.
+   */
+  async function populateLayer(pdf, layer) {
+    const pageNumbers = Array.from({ length: pdf.numPages }, (_, i) => i + 1);
+    const pages = await Promise.all(pageNumbers.map((n) => pdf.getPage(n)));
+
+    const contentWidth = Math.max(1, layer.root.clientWidth || container.clientWidth || 1);
 
     const baseWidth = pages[0].getViewport({ scale: 1 }).width;
     const scale = baseWidth > 0 ? contentWidth / baseWidth : 1;
@@ -325,7 +363,7 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
       pageDiv.style.marginTop = `${PAGE_GAP}px`;
       pageDiv.style.setProperty('--scale-factor', String(scale));
       pageDiv.style.setProperty('--total-scale-factor', String(scale));
-      root.appendChild(pageDiv);
+      layer.root.appendChild(pageDiv);
 
       runningTop += PAGE_GAP;
       pageEntries.push({
@@ -342,17 +380,9 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
       runningTop += viewport.height;
     }
 
-    return {
-      root,
-      pdf,
-      scale,
-      dpr,
-      pageEntries,
-      contentHeight: runningTop + PAGE_GAP,
-      observer: null,
-      destroyed: false,
-      targetScrollTop: 0,
-    };
+    layer.scale = scale;
+    layer.pageEntries = pageEntries;
+    layer.contentHeight = runningTop + PAGE_GAP;
   }
 
   /** Pages intersecting the container's viewport at the (clamped) old scroll offset. */

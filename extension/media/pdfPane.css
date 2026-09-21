@@ -11,7 +11,14 @@
 .pdfpane-layer {
   position: absolute;
   inset: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Reserve the vertical scrollbar's gutter even before content overflows,
+     so the layer's clientWidth is stable and pdfPane.mjs can size pages to
+     it up front instead of guessing a width the scrollbar will later eat
+     into. overflow-x: hidden above is a belt-and-braces guard against a
+     stray 1px rounding error ever producing a horizontal scrollbar. */
+  scrollbar-gutter: stable;
   background: var(--vscode-editor-background, #1e1e1e);
 }
 
