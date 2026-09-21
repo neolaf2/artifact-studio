@@ -266,7 +266,7 @@ class ArtifactEditorProvider {
 
   _html(webview, ast, isDirty) {
     const { buildEditorHtml } = require('./artifactEditorHtml');
-    return buildEditorHtml(webview, ast, isDirty);
+    return buildEditorHtml(webview, ast, isDirty, this.context.extensionUri);
   }
 }
 
