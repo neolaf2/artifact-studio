@@ -2,7 +2,7 @@
   "name": "artifact-studio",
   "displayName": "Artifact Studio",
   "description": "Overleaf-like AST editor (form + live HTML preview) with HTML and Typst PDF rendering.",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "publisher": "artifact-studio-local",
   "engines": {
     "vscode": "^1.95.0"
@@ -20,7 +20,9 @@
     "onCommand:artifactStudio.generateField",
     "onCommand:artifactStudio.generateArtifact",
     "onCommand:artifactStudio.setLlmApiKey",
-    "onCommand:artifactStudio.showLlmStatus"
+    "onCommand:artifactStudio.showLlmStatus",
+    "onCommand:artifactStudio.openProject",
+    "onCommand:artifactStudio.createProject"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -64,6 +66,14 @@
         "title": "Artifact Studio: New Example Project"
       },
       {
+        "command": "artifactStudio.createProject",
+        "title": "Artifact Studio: New Project"
+      },
+      {
+        "command": "artifactStudio.openProject",
+        "title": "Artifact Studio: Open Project"
+      },
+      {
         "command": "artifactStudio.checkEnvironment",
         "title": "Artifact Studio: Check Local Environment"
       },
@@ -101,7 +111,7 @@
       },
       {
         "command": "artifactStudio.e2eClarificationDemo",
-        "title": "Artifact Studio: E2E Clarification Demo (edit → HTML → PDF)"
+        "title": "Artifact Studio: E2E Clarification Demo (edit -> HTML -> PDF)"
       },
       {
         "command": "artifactStudio.generateField",
@@ -225,7 +235,7 @@
         "artifactStudio.llm.apiKey": {
           "type": "string",
           "default": "",
-          "description": "Optional fallback API key (prefer “Artifact Studio: Set LLM API Key” which uses SecretStorage)."
+          "description": "Optional fallback API key (prefer Artifact Studio: Set LLM API Key which uses SecretStorage)."
         }
       }
     },
