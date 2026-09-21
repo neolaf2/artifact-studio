@@ -1,54 +1,47 @@
-/**
- * OpenAI-compatible chat completion client for Artifact Studio web.
- * Env:
- *   ARTIFACT_STUDIO_LLM_API_KEY   (or OPENAI_API_KEY)
- *   ARTIFACT_STUDIO_LLM_BASE_URL  (default https://api.openai.com/v1)
- *   ARTIFACT_STUDIO_LLM_MODEL     (default gpt-4o-mini)
- *   ARTIFACT_STUDIO_LLM_MOCK=1    offline deterministic mock
- */
+import { getLlmConfigStatus } from './config';
 
+/**
+ * OpenAI-compatible chat completion for Artifact Studio web.
+ * Requires a configured endpoint (env) or ARTIFACT_STUDIO_LLM_MOCK=1.
+ */
 export async function completeJsonPrompt(prompt: string): Promise<string> {
-  if (process.env.ARTIFACT_STUDIO_LLM_MOCK === '1') {
+  const status = getLlmConfigStatus();
+  if (!status.configured) {
+    throw new Error(status.message);
+  }
+
+  if (status.mock) {
     if (/FIELD_PATH:/.test(prompt)) {
       const m = prompt.match(/FIELD_PATH:\s*(\S+)/);
       const path = m?.[1] || 'field';
       if (path.endsWith('title') || path === 'title') {
-        return JSON.stringify('澄清函（LLM 草稿）');
+        return JSON.stringify('澄清函（LLM mock）');
       }
       if (path.includes('opening')) {
         return JSON.stringify(
-          '（LLM 草稿）贵司投标文件中的下列事项需澄清，请按要求书面回复并附证明材料。',
+          '（LLM mock）贵司投标文件中的下列事项需澄清，请按要求书面回复并附证明材料。',
         );
       }
-      return JSON.stringify(`（LLM 草稿）${path}`);
+      return JSON.stringify(`（LLM mock）${path}`);
     }
     return JSON.stringify({
-      title: '澄清函（LLM 全量草稿）',
+      title: '澄清函（LLM mock 全量）',
       status: 'draft',
       _artifactStudioMock: true,
     });
   }
 
   const apiKey =
-    process.env.ARTIFACT_STUDIO_LLM_API_KEY || process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      'Missing ARTIFACT_STUDIO_LLM_API_KEY (or OPENAI_API_KEY). Set ARTIFACT_STUDIO_LLM_MOCK=1 for offline mock generation.',
-    );
-  }
-  const base = (
-    process.env.ARTIFACT_STUDIO_LLM_BASE_URL || 'https://api.openai.com/v1'
-  ).replace(/\/$/, '');
-  const model = process.env.ARTIFACT_STUDIO_LLM_MODEL || 'gpt-4o-mini';
-  const res = await fetch(`${base}/chat/completions`, {
+    process.env.ARTIFACT_STUDIO_LLM_API_KEY || process.env.OPENAI_API_KEY || '';
+  const res = await fetch(`${status.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model,
-      temperature: 0.2,
+      model: status.model,
+      temperature: Number(process.env.ARTIFACT_STUDIO_LLM_TEMPERATURE || 0.2),
       messages: [
         {
           role: 'system',

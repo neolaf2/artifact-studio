@@ -336,7 +336,32 @@ npm run dev
 Demo pack: `web/content/artifacts/clarification/` (seeded from `samples/supplier-clarification-html-zh`).
 Edits are constrained by the predefined JSON Schema T-box and shown against the ontology markdown.
 
-## LLM A-box generation (field + whole artifact)
+## LLM endpoint configuration
+
+LLM field/artifact generation needs a **real model host**:
+
+### VS Code / Cursor extension
+1. **OpenAI-compatible HTTP endpoint** (recommended for any server):
+   - Command Palette → **Artifact Studio: Set LLM API Key** (SecretStorage)
+   - Settings: `artifactStudio.llm.provider` = `auto` or `openai-compatible`
+   - `artifactStudio.llm.baseUrl` (e.g. `https://api.openai.com/v1`)
+   - `artifactStudio.llm.model` (e.g. `gpt-4o-mini`)
+2. **Or** VS Code Language Model API (`vscode-lm`) — e.g. Copilot signed in; set provider to `vscode-lm` / `auto`.
+
+Check: **Artifact Studio: Show LLM Status**.
+
+### Next.js web
+Configure server env in `web/.env.local`:
+
+```bash
+ARTIFACT_STUDIO_LLM_API_KEY=sk-...
+ARTIFACT_STUDIO_LLM_BASE_URL=https://api.openai.com/v1
+ARTIFACT_STUDIO_LLM_MODEL=gpt-4o-mini
+```
+
+Or `ARTIFACT_STUDIO_LLM_MOCK=1` for offline stubs only.
+
+UI: [/settings](./web) status page · `GET /api/llm/status` · generate via `POST /api/artifacts/:id/generate`.
 
 ## LLM A-box generation (field + whole artifact)
 

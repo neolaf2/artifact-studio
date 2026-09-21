@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { SchemaForm, applyPathChange } from '@/components/SchemaForm';
 import { renderClarificationPreview } from '@/lib/preview';
 import type { ArtifactBundle } from '@/lib/types';
@@ -51,8 +52,32 @@ export function ArtifactEditor({ initial }: Props) {
 
   const [generatingPath, setGeneratingPath] = useState<string | null>(null);
   const [generatingAll, setGeneratingAll] = useState(false);
+  const [llmStatus, setLlmStatus] = useState<{
+    configured: boolean;
+    mock: boolean;
+    message: string;
+    provider: string;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/llm/status')
+      .then((r) => r.json())
+      .then(setLlmStatus)
+      .catch(() =>
+        setLlmStatus({
+          configured: false,
+          mock: false,
+          provider: 'none',
+          message: 'Could not load LLM status',
+        }),
+      );
+  }, []);
 
   async function onGenerateField(fieldPath: string) {
+    if (llmStatus && !llmStatus.configured) {
+      setStatus(llmStatus.message);
+      return;
+    }
     const instruction =
       window.prompt(
         `LLM instructions for field "${fieldPath}" (optional)`,
@@ -88,6 +113,10 @@ export function ArtifactEditor({ initial }: Props) {
   }
 
   async function onGenerateArtifact() {
+    if (llmStatus && !llmStatus.configured) {
+      setStatus(llmStatus.message);
+      return;
+    }
     const instruction =
       window.prompt(
         'LLM instructions for full artifact generation (optional)',
@@ -169,9 +198,28 @@ export function ArtifactEditor({ initial }: Props) {
           >
             {saving ? 'Saving…' : 'Validate & save'}
           </button>
+          <Link
+            href="/settings"
+            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm hover:bg-zinc-50"
+          >
+            LLM settings
+          </Link>
         </div>
       </header>
 
+      {llmStatus && !llmStatus.configured ? (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          LLM endpoint not configured — generation needs an API key/base URL (or mock mode).{' '}
+          <Link href="/settings" className="font-medium underline">
+            Configure LLM
+          </Link>
+        </div>
+      ) : null}
+      {llmStatus?.configured ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+          LLM: {llmStatus.provider}{llmStatus.mock ? ' (mock)' : ''} — {llmStatus.message}
+        </div>
+      ) : null}
       {status ? (
         <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">
           {status}

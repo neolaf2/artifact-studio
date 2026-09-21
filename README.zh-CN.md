@@ -334,7 +334,31 @@ npm run dev
 演示内容包：`web/content/artifacts/clarification/`（由 `samples/supplier-clarification-html-zh` 播种）。
 编辑受预定义 JSON Schema（T-box）约束，并对照本体说明展示。
 
-## LLM A-box 生成（单字段 + 整份产物）
+## LLM 端点配置
+
+字段/整份产物的 LLM 生成需要**真实模型宿主**：
+
+### VS Code / Cursor 扩展
+1. **OpenAI 兼容 HTTP 端点**（推荐）：
+   - 命令面板 → **Artifact Studio: Set LLM API Key**（写入 SecretStorage）
+   - 设置：`artifactStudio.llm.provider` = `auto` 或 `openai-compatible`
+   - `artifactStudio.llm.baseUrl`、`artifactStudio.llm.model`
+2. **或** VS Code Language Model API（`vscode-lm`，如已登录 Copilot）
+
+检查：**Artifact Studio: Show LLM Status**。
+
+### Next.js Web
+在 `web/.env.local` 配置：
+
+```bash
+ARTIFACT_STUDIO_LLM_API_KEY=sk-...
+ARTIFACT_STUDIO_LLM_BASE_URL=https://api.openai.com/v1
+ARTIFACT_STUDIO_LLM_MODEL=gpt-4o-mini
+```
+
+离线可用 `ARTIFACT_STUDIO_LLM_MOCK=1`（仅桩数据）。
+
+界面：`/settings` · `GET /api/llm/status` · `POST /api/artifacts/:id/generate`。
 
 ## LLM A-box 生成（单字段 + 整份产物）
 

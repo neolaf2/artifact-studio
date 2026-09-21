@@ -43,3 +43,14 @@ npm run dev
 - UI: **✨ LLM** on each schema field, **✨ Generate artifact** in the toolbar
 - API: `POST /api/artifacts/:id/generate` with `{ mode: "field"|"artifact", path?, instruction?, data? }`
 - Skill: `skills/artifact-llm-generator`
+
+
+## LLM endpoint (required for generation)
+
+Generation is **not** local heuristics — it calls a model:
+
+1. Copy `.env.example` → `.env.local` and set `ARTIFACT_STUDIO_LLM_API_KEY` + optional `BASE_URL` / `MODEL`
+2. Or set `ARTIFACT_STUDIO_LLM_MOCK=1` for offline stubs
+3. Open [/settings](http://localhost:3000/settings) to verify `GET /api/llm/status`
+
+Without a configured endpoint (or mock), the ✨ buttons show a setup message instead of calling a model.

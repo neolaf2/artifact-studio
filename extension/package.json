@@ -2,7 +2,7 @@
   "name": "artifact-studio",
   "displayName": "Artifact Studio",
   "description": "Custom AST editor (data.json + schema + ontology) with HTML and Typst PDF rendering.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "publisher": "artifact-studio-local",
   "engines": {
     "vscode": "^1.95.0"
@@ -18,7 +18,9 @@
     "onCommand:artifactStudio.openAstEditor",
     "onCommand:artifactStudio.e2eClarificationDemo",
     "onCommand:artifactStudio.generateField",
-    "onCommand:artifactStudio.generateArtifact"
+    "onCommand:artifactStudio.generateArtifact",
+    "onCommand:artifactStudio.setLlmApiKey",
+    "onCommand:artifactStudio.showLlmStatus"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -108,6 +110,14 @@
       {
         "command": "artifactStudio.generateArtifact",
         "title": "Artifact Studio: Generate Full Artifact with LLM"
+      },
+      {
+        "command": "artifactStudio.setLlmApiKey",
+        "title": "Artifact Studio: Set LLM API Key"
+      },
+      {
+        "command": "artifactStudio.showLlmStatus",
+        "title": "Artifact Studio: Show LLM Status"
       }
     ],
     "views": {
@@ -184,6 +194,38 @@
           "type": "string",
           "default": "clarification-letter",
           "description": "Default artifact kind label sent to the LLM generator skill."
+        },
+        "artifactStudio.llm.provider": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "openai-compatible",
+            "vscode-lm"
+          ],
+          "default": "auto",
+          "description": "LLM host for field/artifact generation. auto = OpenAI-compatible endpoint when configured, else VS Code LM (e.g. Copilot)."
+        },
+        "artifactStudio.llm.baseUrl": {
+          "type": "string",
+          "default": "https://api.openai.com/v1",
+          "description": "OpenAI-compatible API base URL (must expose POST /chat/completions)."
+        },
+        "artifactStudio.llm.model": {
+          "type": "string",
+          "default": "gpt-4o-mini",
+          "description": "Model id for the OpenAI-compatible endpoint."
+        },
+        "artifactStudio.llm.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Sampling temperature for OpenAI-compatible generation."
+        },
+        "artifactStudio.llm.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Optional fallback API key (prefer \u201cArtifact Studio: Set LLM API Key\u201d which uses SecretStorage)."
         }
       }
     },

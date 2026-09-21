@@ -1,5 +1,6 @@
 'use strict';
 const vscode = require('vscode');
+const llmGenerate = require('./llmGenerate');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { loadRecipe, build } = require('./core');
@@ -8,6 +9,7 @@ const { ArtifactEditorProvider, VIEW_TYPE } = require('./artifactEditor');
 const { loadAstContext, resolveCompanionPaths } = require('./ast');
 
 function activate(context) {
+  llmGenerate.bindSecrets(context.secrets);
   const output = vscode.window.createOutputChannel('Artifact Studio');
   const diagnostics = vscode.languages.createDiagnosticCollection('artifact-studio');
   const changed = new vscode.EventEmitter();
@@ -328,7 +330,24 @@ function activate(context) {
     vscode.window.showInformationMessage('Click “Generate Artifact (LLM)” in the AST editor toolbar.');
   });
 
-require('./authoring-ui').registerAuthoring(context, register, choose, output);
+
+  register('setLlmApiKey', async () => {
+    await llmGenerate.promptAndStoreApiKey();
+  });
+  register('showLlmStatus', async () => {
+    const status = await llmGenerate.describeLlmStatus();
+    const lines = [
+      `Preferred provider: ${status.preferredProvider}`,
+      `Resolved provider: ${status.resolvedProvider}`,
+      `OpenAI-compatible: configured=${status.openaiCompatible.configured} model=${status.openaiCompatible.model || '—'} baseUrl=${status.openaiCompatible.baseUrl || '—'} hasKey=${status.openaiCompatible.hasApiKey}`,
+      `VS Code LM models: ${status.vscodeLm.modelCount}`,
+    ];
+    output.appendLine(lines.join('\n'));
+    output.show(true);
+    vscode.window.showInformationMessage(lines.join(' · '));
+  });
+
+  require('./authoring-ui').registerAuthoring(context, register, choose, output);
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/*');
   function onChange(uri) {
