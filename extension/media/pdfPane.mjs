@@ -22,18 +22,29 @@
  * *immediately* tears down any existing `buildingLayer` so two hidden,
  * not-yet-committed layers can never coexist in the DOM.
  *
- * The actual swap ("make new layer visible, remove old layer, destroy the
+ * The actual swap ("make new layer visible, remove old layer, release the
  * old pdf.js document") happens in `commitSwap()`, which contains no
  * `await` at all -- it runs as one synchronous block.
  *
- * pdf.js document ownership: a layer never destroys its own `pdf`. Only two
- * places ever call `pdf.destroy()`:
+ * pdf.js document ownership: a layer never releases its own `pdf`. Only two
+ * places ever release one (via `disposeDoc()`, see below):
  *   1. `commitSwap()`, for the *previous* layer's document, and only when
  *      that document differs from the new layer's (a `refit()` reuses the
  *      same document across old and new layers, so it must survive).
  *   2. The `show()` call that loaded a given document, when that exact
  *      document never became the current layer (aborted, superseded, or a
  *      later stage failed).
+ *
+ * Note: `PDFDocumentProxy` has no `destroy()` method in pdf.js 6.x -- only
+ * its `loadingTask` (the object `getDocument()` returns, also reachable as
+ * `pdf.loadingTask`) does. `disposeDoc()` is the single, non-throwing choke
+ * point for releasing a document; nothing else should call
+ * `pdf.loadingTask.destroy()` directly.
+ *
+ * `refit()` while a `show()` is still in flight (or its most recent call
+ * ended in an error) re-renders the *pending* document -- the bytes most
+ * recently passed to `show()` -- rather than the (stale) current one, so a
+ * resize can never leave stale output on screen after a compile.
  */
 
 const PAGE_GAP = 16;
@@ -48,6 +59,7 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
   let currentLayer = null; // the committed, visible layer
   let buildingLayer = null; // an in-flight, hidden layer (at most one)
   let currentEmpty = null; // the `.pdfpane-empty` element from clear(), if any
+  let pendingBytes = null; // owned copy of the most recently REQUESTED (not yet committed) document
 
   let workerPromise = null;
   let paneWorker = null; // the pdfjsLib.PDFWorker instance, or null in main-thread fallback
@@ -83,17 +95,21 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
 
   async function show(bytes) {
     if (destroyed) return;
-    const myGen = ++generation;
-    abandonBuildingLayer();
-    const t0 = now();
 
-    let data;
+    let owned;
     try {
-      data = toOwnedUint8Array(bytes);
+      owned = toOwnedUint8Array(bytes);
     } catch (err) {
-      reportErrorIfCurrent(myGen, err);
+      const myGen = ++generation;
+      abandonBuildingLayer();
+      finishRequest(myGen, err);
       return;
     }
+
+    const myGen = ++generation;
+    abandonBuildingLayer();
+    pendingBytes = owned; // the most recently requested document, until this call settles
+    const t0 = now();
 
     let pdf = null;
     try {
@@ -101,7 +117,9 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
       if (destroyed || myGen !== generation) return;
 
       const task = pdfjsLib.getDocument({
-        data,
+        // getDocument transfers/detaches this buffer to the worker; `owned`
+        // itself must survive untouched so a later refit() can re-show it.
+        data: owned.slice(),
         worker: worker || undefined,
         isEvalSupported: false,
         useSystemFonts: false,
@@ -109,13 +127,13 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
       pdf = await task.promise;
       if (!(pdf.numPages > 0)) throw new Error('PDF has no pages');
     } catch (err) {
-      if (pdf) pdf.destroy().catch(() => {});
-      reportErrorIfCurrent(myGen, err);
+      if (pdf) disposeDoc(pdf);
+      finishRequest(myGen, err);
       return;
     }
 
     if (destroyed || myGen !== generation) {
-      pdf.destroy().catch(() => {});
+      disposeDoc(pdf);
       return;
     }
 
@@ -123,19 +141,31 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
       const committed = await mountAndSwap(pdf, myGen);
       if (committed) {
         if (myGen === generation) {
+          pendingBytes = null; // this request is now the current layer, no longer merely pending
           emit({ phase: 'swapped', pages: pdf.numPages, ms: now() - t0, worker: workerKind });
         }
       } else {
-        pdf.destroy().catch(() => {});
+        disposeDoc(pdf);
       }
     } catch (err) {
-      pdf.destroy().catch(() => {});
-      reportErrorIfCurrent(myGen, err);
+      disposeDoc(pdf);
+      finishRequest(myGen, err);
     }
   }
 
   function refit() {
-    if (destroyed || !currentLayer) return;
+    if (destroyed) return;
+
+    if (pendingBytes) {
+      // A show() is in flight (or its most recent call ended in an error)
+      // and hasn't been committed yet. The most recently REQUESTED document
+      // always wins: re-render it at the new size instead of resurrecting
+      // the stale current layer.
+      show(pendingBytes);
+      return;
+    }
+
+    if (!currentLayer) return;
     const pdf = currentLayer.pdf;
     const myGen = ++generation;
     abandonBuildingLayer();
@@ -148,7 +178,7 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
         }
       })
       .catch((err) => {
-        reportErrorIfCurrent(myGen, err);
+        finishRequest(myGen, err);
       });
   }
 
@@ -156,11 +186,12 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
     if (destroyed) return;
     generation++;
     abandonBuildingLayer();
+    pendingBytes = null;
     if (currentLayer) {
       const dying = currentLayer;
       currentLayer = null;
       teardownLayer(dying);
-      dying.pdf.destroy().catch(() => {});
+      disposeDoc(dying.pdf);
     }
     removeCurrentEmpty();
     const empty = document.createElement('div');
@@ -175,11 +206,12 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
     destroyed = true;
     generation++;
     abandonBuildingLayer();
+    pendingBytes = null;
     if (currentLayer) {
       const dying = currentLayer;
       currentLayer = null;
       teardownLayer(dying);
-      dying.pdf.destroy().catch(() => {});
+      disposeDoc(dying.pdf);
     }
     removeCurrentEmpty();
     container.textContent = '';
@@ -207,8 +239,9 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
     currentEmpty = null;
   }
 
-  function reportErrorIfCurrent(myGen, err) {
+  function finishRequest(myGen, err) {
     if (destroyed || myGen !== generation) return; // superseded: stay silent, this is "latest wins", not a failure
+    pendingBytes = null; // this request has settled (unsuccessfully); nothing is pending anymore
     emit({ phase: 'error', message: describeError(err) });
   }
 
@@ -259,7 +292,7 @@ export function createPdfPane({ container, pdfjsLib, workerUrl, onState }) {
     removeCurrentEmpty();
     if (previous && previous !== layer) {
       teardownLayer(previous);
-      if (previous.pdf !== layer.pdf) previous.pdf.destroy().catch(() => {});
+      if (previous.pdf !== layer.pdf) disposeDoc(previous.pdf);
     }
   }
 
@@ -436,6 +469,23 @@ function teardownLayer(layer) {
   }
   if (layer.root.parentNode) {
     layer.root.parentNode.removeChild(layer.root);
+  }
+}
+
+/**
+ * Releases a pdf.js document. `PDFDocumentProxy` has no `destroy()` method
+ * in pdf.js 6.x -- only its `loadingTask` (the object `getDocument()`
+ * returns, also reachable as `pdf.loadingTask`) does. This is the single
+ * choke point for releasing a document; it must never throw or reject,
+ * since cleanup must never break a swap or a `show()`/`refit()` call.
+ */
+function disposeDoc(pdf) {
+  try {
+    const task = pdf && pdf.loadingTask;
+    const result = task && typeof task.destroy === 'function' ? task.destroy() : undefined;
+    if (result && typeof result.then === 'function') result.catch(() => {});
+  } catch {
+    // cleanup must never break a swap
   }
 }
 
