@@ -196,7 +196,10 @@ function activate(context) {
   // no toast, no Output pop — the editor's own error strip is the signal.
   async function doBuild(item, { preview = false, htmlMode = null, editor = false } = {}) {
     if (!vscode.workspace.isTrusted) throw new Error('Trust this workspace before running local builds.');
-    const target = await choose(item);
+    // M5: an editor compile builds exactly what the editor resolved and must not
+    // retarget watch mode / "Open Generated Output" by assigning `selected`.
+    if (editor && !(item?.file && item?.id)) throw new Error('The editor did not resolve a main document to build.');
+    const target = editor ? item : await choose(item);
     if (!target) return;
     if (!await vscode.workspace.saveAll(false)) throw new Error('Save the source files before building.');
     status.text = '$(sync~spin) Building artifact';

@@ -90,6 +90,8 @@ function buildEditorHtml(webview, ast, isDirty, extensionUri) {
   #raw-text { flex: 1; min-height: 0; width: 100%; box-sizing: border-box; resize: none; font-family: var(--vscode-editor-font-family, monospace); font-size: var(--vscode-editor-font-size, 12px); background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, transparent); padding: 8px; border-radius: 4px; }
   #raw-error { display: none; margin-top: 6px; font-size: 12px; padding: 6px 8px; border-radius: 4px; background: color-mix(in srgb, var(--vscode-inputValidation-errorBackground) 60%, transparent); }
   #raw-error.shown { display: block; }
+  #raw-error .raw-actions { display: flex; gap: 6px; margin-top: 6px; }
+  #raw-error .raw-actions button { padding: 3px 10px; font-size: 12px; }
   #pane-right { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; background: var(--vscode-editor-background); }
   #pane-right.collapsed { flex: 0 0 34px; }
   #pane-right.collapsed #pdf-container, #pane-right.collapsed #btn-open-pdf { display: none; }
@@ -153,9 +155,6 @@ function buildEditorHtml(webview, ast, isDirty, extensionUri) {
   </div>
 </div>
 <script type="module" nonce="${nonce}">
-import * as pdfjsLib from '${pdfjsJs}';
-import { createPdfPane } from '${paneJs}';
-
 const vscode = acquireVsCodeApi();
 const byId = id => document.getElementById(id);
 
@@ -187,6 +186,8 @@ const state = {
   tab: saved.tab === 'raw' ? 'raw' : 'form',
   collapsed: saved.collapsed === true,
   rawValid: true,
+  conflict: false,     // the file changed under a focused textarea (F3)
+  pendingSwitch: false, // a Form-tab click waiting on the flushed rawEdit (M4)
   hasMain: false,
   compiling: false,
   compiledAt: null,
@@ -195,19 +196,32 @@ const state = {
 };
 const persist = () => vscode.setState({ tab: state.tab, collapsed: state.collapsed });
 
-const pane = createPdfPane({
-  container: els.pdfContainer,
-  pdfjsLib,
-  workerUrl: '${workerJs}',
-  onState: (s) => {
-    if (s && s.phase === 'error') els.pdfStatus.textContent = 'PDF error: ' + (s.message || 'unknown');
-  }
-});
-pane.clear('Loading…');
+/* Dynamic import so the resource URIs are JSON-quoted rather than pasted into
+   a string literal: an apostrophe in the install path must not break the module. */
+let pane = null;
+try {
+  const pdfjsLib = await import(${JSON.stringify(pdfjsJs)});
+  const { createPdfPane } = await import(${JSON.stringify(paneJs)});
+  pane = createPdfPane({
+    container: els.pdfContainer,
+    pdfjsLib,
+    workerUrl: ${JSON.stringify(workerJs)},
+    onState: (s) => {
+      if (s && s.phase === 'error') els.pdfStatus.textContent = 'PDF error: ' + (s.message || 'unknown');
+    }
+  });
+  pane.clear('Loading…');
+} catch (err) {
+  els.pdfStatus.textContent = 'PDF viewer failed to load';
+  els.pdfContainer.textContent = String((err && err.message) || err);
+}
+const paneShow = (bytes) => { if (pane) pane.show(bytes); };
+const paneClear = (text) => { if (pane) pane.clear(text); };
+const paneRefit = () => { if (pane) pane.refit(); };
 
 /* ---------- toolbar state ---------- */
 function syncCompileEnabled() {
-  els.compile.disabled = state.compiling || !state.hasMain || !state.rawValid;
+  els.compile.disabled = state.compiling || !state.hasMain || !state.rawValid || state.conflict;
   els.compile.textContent = state.compiling ? 'Compiling…' : 'Compile';
 }
 function two(n) { return String(n).padStart(2, '0'); }
@@ -242,7 +256,7 @@ els.compileError.addEventListener('click', () => {
 function applyCollapsed() {
   els.paneRight.classList.toggle('collapsed', state.collapsed);
   els.paneToggle.textContent = state.collapsed ? '⟨' : '⟩';
-  if (!state.collapsed) pane.refit();
+  if (!state.collapsed) paneRefit();
 }
 els.paneToggle.addEventListener('click', () => {
   state.collapsed = !state.collapsed;
@@ -252,7 +266,7 @@ els.paneToggle.addEventListener('click', () => {
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => { if (!state.collapsed) pane.refit(); }, 150);
+  resizeTimer = setTimeout(() => { if (!state.collapsed) paneRefit(); }, 150);
 });
 
 /* ---------- tabs ---------- */
@@ -270,30 +284,105 @@ els.tabRaw.addEventListener('click', () => {
   applyTab();
   els.raw.focus();
 });
-els.tabForm.addEventListener('click', () => {
-  if (state.tab === 'form') return;
-  if (!state.rawValid) return; // invalid text may never reach the form
+function switchToForm() {
   state.tab = 'form';
+  state.pendingSwitch = false;
   persist();
   applyTab();
   vscode.postMessage({ type: 'requestForm' });
+}
+els.tabForm.addEventListener('click', () => {
+  if (state.tab === 'form') return;
+  if (state.conflict) return;   // resolve the conflict before leaving the tab
+  if (rawPending) {             // M4: flush the debounce and switch once the host answers
+    flushRawEdit();
+    state.pendingSwitch = true;
+    return;
+  }
+  if (!state.rawValid) return;  // invalid text may never reach the form
+  switchToForm();
 });
 
 /* ---------- raw editing ---------- */
 let rawTimer;
+let rawPending = false;   // a debounced rawEdit is owed to the host
+let lastSentRaw = null;   // the text of the rawEdit we are waiting on
+let baseText = null;      // the document text this tab is known to be based on
+let theirText = null;     // the latest text received while in conflict
+
+function sendRawEdit() {
+  clearTimeout(rawTimer);
+  rawPending = false;
+  if (state.conflict) return;   // a conflict must be resolved before we write
+  lastSentRaw = els.raw.value;
+  vscode.postMessage({ type: 'rawEdit', text: lastSentRaw });
+}
+function flushRawEdit() { if (rawPending) sendRawEdit(); }
+
 els.raw.addEventListener('input', () => {
   clearTimeout(rawTimer);
-  rawTimer = setTimeout(() => {
-    vscode.postMessage({ type: 'rawEdit', text: els.raw.value });
-  }, 300);
+  if (state.conflict) return;   // typing does not clear a conflict, and never writes
+  rawPending = true;
+  rawTimer = setTimeout(sendRawEdit, 300);
   setDirty(true);
 });
+
+/* F3: the file changed underneath a focused textarea. Never overwrite it
+   silently — hold the edit and let the user choose. Built with DOM APIs. */
+function enterConflict(text) {
+  theirText = text;
+  state.conflict = true;
+  clearTimeout(rawTimer);
+  rawPending = false;
+  state.pendingSwitch = false;
+  els.rawError.textContent = '';
+  els.rawError.className = 'shown';
+  const note = document.createElement('div');
+  note.textContent = 'The file changed outside this tab.';
+  const row = document.createElement('div');
+  row.className = 'raw-actions';
+  const keep = document.createElement('button');
+  keep.type = 'button';
+  keep.id = 'btn-raw-keep';
+  keep.textContent = 'Keep mine';
+  keep.addEventListener('click', () => {
+    clearConflict();
+    rawPending = true;
+    sendRawEdit();
+  });
+  const load = document.createElement('button');
+  load.type = 'button';
+  load.id = 'btn-raw-load';
+  load.textContent = 'Load theirs';
+  load.addEventListener('click', () => {
+    els.raw.value = theirText == null ? '' : theirText;
+    baseText = els.raw.value;
+    clearConflict();
+  });
+  row.appendChild(keep);
+  row.appendChild(load);
+  els.rawError.appendChild(note);
+  els.rawError.appendChild(row);
+  syncCompileEnabled();
+}
+function clearConflict() {
+  state.conflict = false;
+  theirText = null;
+  els.rawError.textContent = '';
+  els.rawError.className = '';
+  syncCompileEnabled();
+}
 function showRawState(msg) {
   state.rawValid = msg.ok !== false;
   if (state.rawValid) {
-    els.rawError.textContent = '';
-    els.rawError.className = '';
+    if (lastSentRaw !== null) baseText = lastSentRaw;
+    if (!state.conflict) {
+      els.rawError.textContent = '';
+      els.rawError.className = '';
+    }
+    if (state.pendingSwitch) switchToForm();
   } else {
+    state.pendingSwitch = false;  // M4: stay on the raw tab, where the error is visible
     const line = msg.line == null ? '' : 'line ' + msg.line + ': ';
     els.rawError.textContent = line + (msg.message || 'Invalid document');
     els.rawError.className = 'shown';
@@ -322,18 +411,24 @@ els.form.addEventListener('change', (e) => {
 });
 function bindGenButtons() {
   els.form.querySelectorAll('[data-gen-path]').forEach((btn) => {
-    btn.onclick = () => {
+    btn.addEventListener('click', () => {
       const path = btn.getAttribute('data-gen-path');
       const instruction = window.prompt('Instructions for field ' + path + ' (optional):', 'Fill a realistic value consistent with the document.');
       if (instruction === null) return;
       vscode.postMessage({ type: 'generateField', path, instruction });
-    };
+    });
   });
 }
 bindGenButtons();
 
 /* ---------- toolbar actions ---------- */
-els.compile.addEventListener('click', () => vscode.postMessage({ type: 'compile' }));
+els.compile.addEventListener('click', () => {
+  if (state.compiling) return;        // F2: a double-click must send exactly one compile
+  state.compiling = true;             // disable before posting, not when the host answers
+  els.progress.className = 'running';
+  syncCompileEnabled();
+  vscode.postMessage({ type: 'compile' });
+});
 byId('btn-save').addEventListener('click', () => vscode.postMessage({ type: 'saveDocument' }));
 els.openPdf.addEventListener('click', () => vscode.postMessage({ type: 'openPdf' }));
 els.more.addEventListener('click', () => els.moreMenu.classList.toggle('open'));
@@ -355,7 +450,7 @@ byId('btn-gen-artifact').addEventListener('click', () => {
   vscode.postMessage({ type: 'generateArtifact', instruction });
 });
 window.addEventListener('keydown', (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+  if ((e.metaKey || e.ctrlKey) && typeof e.key === 'string' && e.key.toLowerCase() === 's') {
     e.preventDefault();
     vscode.postMessage({ type: 'saveDocument' });
   }
@@ -380,7 +475,18 @@ window.addEventListener('message', (event) => {
   } else if (msg.type === 'rawText') {
     state.format = msg.format === 'yaml' ? 'yaml' : 'json';
     els.tabRaw.textContent = state.format.toUpperCase();
-    if (document.activeElement !== els.raw) els.raw.value = msg.text || '';
+    const text = msg.text || '';
+    if (document.activeElement !== els.raw) {
+      els.raw.value = text;          // never fight the cursor; safe to adopt here
+      baseText = text;
+      if (state.conflict) clearConflict();
+    } else if (state.conflict) {
+      theirText = text;              // keep the newest version behind the notice
+    } else if (baseText !== null && text !== baseText) {
+      enterConflict(text);           // F3
+    } else {
+      baseText = text;
+    }
   } else if (msg.type === 'rawState') {
     showRawState(msg);
   } else if (msg.type === 'saveState') {
@@ -397,10 +503,10 @@ window.addEventListener('message', (event) => {
     state.compiledAt = msg.compiledAt == null ? null : Number(msg.compiledAt);
     if (bytes && bytes.length) {
       els.openPdf.disabled = false;
-      pane.show(bytes);
+      paneShow(bytes);
     } else {
       els.openPdf.disabled = true;
-      pane.clear('No compiled PDF yet — click Compile.');
+      paneClear('No compiled PDF yet — click Compile.');
     }
     syncPdfStatus();
   } else if (msg.type === 'status') {

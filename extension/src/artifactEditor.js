@@ -38,10 +38,25 @@ class ArtifactEditorProvider {
     this.onAstSaved = onAstSaved;
     this.onCompile = onCompile;
     this._updating = new Set();
-    this._origins = new Map(); // uri -> 'edit' | 'rawEdit'; consumed by the change handler
+    this._origins = new Map(); // uri -> FIFO of 'edit' | 'rawEdit', one per applied edit
+    this._chains = new Map();  // uri -> promise; every document mutation runs on this chain
+    this._compiling = new Set(); // uri; one compile at a time per document
     this._saveStatus = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     this._saveStatus.name = 'Artifact Studio save state';
     context.subscriptions.push(this._saveStatus);
+  }
+
+  /**
+   * F4: every document-mutating message for one document runs strictly one at
+   * a time, so each mutation reads the document AFTER the previous one landed
+   * (an unserialized read-modify-write silently drops the earlier field).
+   * A rejected link never poisons the chain; the caller still sees the error.
+   */
+  _serialize(key, fn) {
+    const previous = this._chains.get(key) || Promise.resolve();
+    const run = previous.then(fn);
+    this._chains.set(key, run.then(() => {}, () => {}));
+    return run;
   }
 
   _updateSaveStatus(document) {
@@ -111,7 +126,17 @@ class ArtifactEditorProvider {
         post({ type: 'status', stale: false });
         return;
       }
-      const bytes = new Uint8Array(await fs.readFile(file));
+      let bytes;
+      try {
+        bytes = new Uint8Array(await fs.readFile(file));
+      } catch (error) {
+        // The file vanished between stat and read: report "no PDF", never throw
+        // out of the message handler into a toast.
+        this.output?.appendLine(`Artifact editor: cannot read ${file}: ${error.message}`);
+        post({ type: 'pdf', bytes: null, compiledAt: null });
+        post({ type: 'status', stale: false });
+        return;
+      }
       post({ type: 'pdf', bytes, compiledAt: stat.mtimeMs });
       let dataMtimeMs = 0;
       try { dataMtimeMs = (await fs.stat(document.uri.fsPath)).mtimeMs; } catch { /* unsaved twin */ }
@@ -157,16 +182,17 @@ class ArtifactEditorProvider {
 
     const changeSub = vscode.workspace.onDidChangeTextDocument(async e => {
       if (e.document.uri.toString() !== key) return;
-      const origin = this._origins.get(key) || null;
-      this._origins.delete(key);
+      const pending = this._origins.get(key);
+      const origin = pending && pending.length ? pending.shift() : null;
       if (this._updating.has(key)) return; // our own WorkspaceEdit; the handler that made it answers
       this._updateSaveStatus(document);
       try {
-        if (origin !== 'edit') await postForm(); // never rebuild the form under the user's cursor
-        postRawText();                           // the webview ignores this while the textarea has focus
+        if (origin !== 'edit') await postForm();    // never rebuild the form under the user's cursor
+        if (origin !== 'rawEdit') postRawText();    // our own raw edit is already in the textarea
         post({ type: 'saveState', dirty: e.document.isDirty });
         const ctx = await mainContext();
-        await this._postStatusOnly(post, document, ctx, outputPath(ctx));
+        postMain(ctx);                              // F1: the manifest may have gained a main document
+        await this._postStatusOnly(post, document, outputPath(ctx));
       } catch (error) {
         this.output?.appendLine(`Artifact editor: ${error.message}`);
       }
@@ -177,7 +203,8 @@ class ArtifactEditorProvider {
       this._updateSaveStatus(doc);
       post({ type: 'saveState', dirty: false });
       const ctx = await mainContext();
-      await this._postStatusOnly(post, document, ctx, outputPath(ctx));
+      postMain(ctx); // F1
+      await this._postStatusOnly(post, document, outputPath(ctx));
     });
 
     const dirtySub = vscode.workspace.onDidChangeTextDocument(() => {
@@ -189,22 +216,18 @@ class ArtifactEditorProvider {
     webviewPanel.webview.onDidReceiveMessage(async message => {
       try {
         if (message?.type === 'edit' && message.path != null) {
-          this._origins.set(key, 'edit');
-          if (!await this._applyPathEdit(document, message.path, message.value)) this._origins.delete(key);
+          await this._serialize(key, () => this._applyPathEdit(document, message.path, message.value, 'edit'));
           this._updateSaveStatus(document);
           postRawText();
           post({ type: 'saveState', dirty: document.isDirty });
-          await this._postStatusFor(post, document, mainContext, outputPath);
+          await this._postStatusOnly(post, document, outputPath(await mainContext()));
         } else if (message?.type === 'rawEdit') {
-          await this._applyRawEdit(document, post, message.text, format, key);
+          await this._serialize(key, () => this._applyRawEdit(document, post, message.text, format));
           this._updateSaveStatus(document);
           post({ type: 'saveState', dirty: document.isDirty });
-          await this._postStatusFor(post, document, mainContext, outputPath);
+          await this._postStatusOnly(post, document, outputPath(await mainContext()));
         } else if (message?.type === 'requestForm') {
           await postForm();
-        } else if (message?.type === 'replace' && message.data) {
-          await this._replaceDocument(document, message.data);
-          this._updateSaveStatus(document);
         } else if (message?.type === 'saveDocument') {
           await document.save();
           this._updateSaveStatus(document);
@@ -212,7 +235,7 @@ class ArtifactEditorProvider {
         } else if (message?.type === 'renderHtml') {
           if (this.onAstSaved) await this.onAstSaved(document, 'html-display');
         } else if (message?.type === 'compile') {
-          await this._compile(document, post, mainContext, postPdf);
+          await this._compile(document, key, post, mainContext, postPdf);
         } else if (message?.type === 'openPdf') {
           const ctx = await mainContext();
           const file = outputPath(ctx);
@@ -249,16 +272,13 @@ class ArtifactEditorProvider {
       saveSub.dispose();
       dirtySub.dispose();
       this._origins.delete(key);
+      this._chains.delete(key);
+      this._compiling.delete(key);
       this._saveStatus.hide();
     });
   }
 
-  async _postStatusFor(post, document, mainContext, outputPath) {
-    const ctx = await mainContext();
-    await this._postStatusOnly(post, document, ctx, outputPath(ctx));
-  }
-
-  async _postStatusOnly(post, document, ctx, file) {
+  async _postStatusOnly(post, document, file) {
     if (!file) return;
     let pdfMtimeMs = null;
     try { pdfMtimeMs = (await fs.stat(file)).mtimeMs; } catch { pdfMtimeMs = null; }
@@ -269,7 +289,9 @@ class ArtifactEditorProvider {
   }
 
   /** Compile the project's MAIN document. Errors land in the editor's strip, not a toast. */
-  async _compile(document, post, mainContext, postPdf) {
+  async _compile(document, key, post, mainContext, postPdf) {
+    if (this._compiling.has(key)) return; // F2: ignore a second click while one build runs
+    this._compiling.add(key);
     post({ type: 'compileState', running: true });
     post({ type: 'compileError', message: null });
     try {
@@ -283,6 +305,15 @@ class ArtifactEditorProvider {
       const diagnostic = firstDiagnostic(error.message) || { message: String(error.message || 'Compile failed') };
       post({ type: 'compileError', ...diagnostic });
     } finally {
+      this._compiling.delete(key);
+      // M6: doBuild clears the whole diagnostic collection; put this document's
+      // schema issues back (the build's own Typst diagnostics are other files).
+      try {
+        const ast = await loadAstContext(document);
+        this._setDiagnostics(document, ast.issues);
+      } catch (error) {
+        this.output?.appendLine(`Artifact editor: ${error.message}`);
+      }
       post({ type: 'compileState', running: false });
     }
   }
@@ -298,7 +329,7 @@ class ArtifactEditorProvider {
    * The document only ever receives text that parses; invalid text stays in
    * the webview's textarea.
    */
-  async _applyRawEdit(document, post, text, format, key) {
+  async _applyRawEdit(document, post, text, format) {
     const checked = checkRawText(text, format);
     if (!checked.ok) {
       post({ type: 'rawState', ok: false, message: checked.message, line: checked.line ?? null });
@@ -316,14 +347,12 @@ class ArtifactEditorProvider {
         post({ type: 'rawState', ok: false, message: 'The document root must be a mapping.', line: null });
         return;
       }
-      this._origins.set(key, 'rawEdit');
       // keep the author's YAML formatting: replace the text verbatim
-      if (!await this._replaceText(document, String(text ?? ''), data)) this._origins.delete(key);
+      await this._replaceText(document, String(text ?? ''), data, 'rawEdit');
       post({ type: 'rawState', ok: true });
       return;
     }
-    this._origins.set(key, 'rawEdit');
-    if (!await this._replaceDocument(document, checked.value)) this._origins.delete(key);
+    await this._replaceDocument(document, checked.value, 'rawEdit');
     post({ type: 'rawState', ok: true });
   }
 
@@ -336,33 +365,37 @@ class ArtifactEditorProvider {
     this.diagnostics.set(document.uri, diags);
   }
 
-  async _applyPathEdit(document, dottedPath, value) {
+  /** Read-modify-write of the whole document: only safe on the serialized chain. */
+  async _applyPathEdit(document, dottedPath, value, origin) {
     const ast = await loadAstContext(document);
     setPath(ast.data, dottedPath, value);
-    return this._replaceDocument(document, ast.data);
+    return this._replaceDocument(document, ast.data, origin);
   }
 
-  async _replaceDocument(document, data) {
+  async _replaceDocument(document, data, origin) {
     const next = await serializeAst(data, document.uri.fsPath);
-    const changed = await this._replaceText(document, next, data);
-
-    // Respect files.autoSave: if set to afterDelay/onFocusChange, VS Code handles it.
-    // Explicit save stays on Cmd+S / the Save button.
-    const autoSave = vscode.workspace.getConfiguration('files').get('autoSave');
-    if (autoSave && autoSave !== 'off') {
-      // Let VS Code autosave the TextDocument; status bar tracks dirty.
-    }
-    return changed;
+    return this._replaceText(document, next, data, origin);
   }
 
   /**
    * Replace the document TEXT verbatim (used by raw YAML edits, which keep
    * formatting). Returns whether the document actually changed.
+   *
+   * `origin` is stamped immediately before the edit is applied, so it is
+   * consumed by exactly this edit's change event (files.autoSave is VS Code's
+   * business: the TextDocument is what we touch).
    */
-  async _replaceText(document, text, data) {
+  async _replaceText(document, text, data, origin) {
     if (text === document.getText()) return false;
     const key = document.uri.toString();
     this._updating.add(key);
+    if (origin) {
+      // One marker per applied edit, consumed in order by that edit's change
+      // event: two quick form edits must not look like one plus an external change.
+      const pending = this._origins.get(key) || [];
+      pending.push(origin);
+      this._origins.set(key, pending);
+    }
     try {
       const edit = new vscode.WorkspaceEdit();
       const full = new vscode.Range(0, 0, document.lineCount, 0);
@@ -401,8 +434,13 @@ class ArtifactEditorProvider {
           );
           return;
         }
-        setPath(ast.data, fieldPath, result.value);
-        await this._replaceDocument(document, ast.data);
+        // Re-read inside the serialized link: edits made while the model ran
+        // must survive.
+        await this._serialize(document.uri.toString(), async () => {
+          const fresh = await loadAstContext(document);
+          setPath(fresh.data, fieldPath, result.value);
+          return this._replaceDocument(document, fresh.data);
+        });
         vscode.window.showInformationMessage(`Generated field ${fieldPath}`);
         webviewPanel.webview.postMessage({ type: 'generateDone', path: fieldPath });
         await this._postGenerated(document, webviewPanel);
@@ -434,7 +472,7 @@ class ArtifactEditorProvider {
           );
           return;
         }
-        await this._replaceDocument(document, result.data);
+        await this._serialize(document.uri.toString(), () => this._replaceDocument(document, result.data));
         vscode.window.showInformationMessage('Generated full artifact AST');
         webviewPanel.webview.postMessage({ type: 'generateDone', path: '' });
         await this._postGenerated(document, webviewPanel);
