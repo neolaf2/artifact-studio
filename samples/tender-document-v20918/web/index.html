@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>招标文件 A-box 编辑器 · Artifact Studio</title>
+<style>
+:root{--accent:#0f4c81;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--bg:#f3f4f6;--ok:#166534;--warn:#9a3412}
+*{box-sizing:border-box}
+body{margin:0;font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",system-ui,sans-serif;color:var(--ink);background:var(--bg);height:100vh;display:flex;flex-direction:column}
+header{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+header h1{font-size:15px;margin:0;color:var(--accent)}
+header .sub{font-size:12px;color:var(--muted);width:100%}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;font:inherit;cursor:pointer;font-size:13px}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.active{background:#eef4fb;border-color:#bfd3ea;color:var(--accent)}
+main{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:0}
+@media(max-width:960px){main{grid-template-columns:1fr}}
+.pane{min-height:0;display:flex;flex-direction:column;border-right:1px solid var(--line);background:#fff}
+.pane:last-child{border-right:0}
+.pane-h{padding:8px 12px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);background:#fafafa;display:flex;justify-content:space-between;gap:8px}
+.pane-b{flex:1;overflow:auto;padding:12px}
+textarea.json{width:100%;height:100%;min-height:480px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.45;border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical}
+.form label{display:block;font-size:11px;color:var(--muted);margin:10px 0 4px}
+.form input,.form select,.form textarea{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px}
+.form textarea{min-height:72px}
+.form .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ch-card{border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0;background:#fafafa}
+.ch-card h3{margin:0 0 8px;font-size:13px;color:var(--accent)}
+.status{font-size:12px;color:var(--muted)}.status.ok{color:var(--ok)}.status.err{color:var(--warn)}
+iframe#preview{width:100%;height:100%;border:0;background:#e5e7eb}
+.ann{border-left:3px solid var(--warn);background:#fff7ed;padding:6px 8px;margin:6px 0;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div style="flex:1;min-width:220px">
+    <h1>招标文件 A-box 编辑器</h1>
+    <div class="sub">原始招标文件 → T/A/R-box · 编辑 A-box · 默认模板导出 HTML / PDF（V20918 样例）</div>
+  </div>
+  <button class="btn active" id="btnTabForm" type="button">表单编辑</button>
+  <button class="btn" id="btnTabJson" type="button">JSON 编辑</button>
+  <button class="btn" id="btnReload" type="button">重新加载</button>
+  <button class="btn" id="btnValidate" type="button">校验 Schema</button>
+  <button class="btn" id="btnHtml" type="button">导出 HTML</button>
+  <button class="btn primary" id="btnPdf" type="button">导出 PDF</button>
+</header>
+<main>
+  <section class="pane">
+    <div class="pane-h"><span>A-box · edit mode</span><span class="status" id="status">Ready</span></div>
+    <div class="pane-b">
+      <div id="formView" class="form"></div>
+      <textarea id="jsonView" class="json" style="display:none" spellcheck="false"></textarea>
+    </div>
+  </section>
+  <section class="pane">
+    <div class="pane-h"><span>R-box · HTML display preview</span><span id="previewMeta"></span></div>
+    <div class="pane-b" style="padding:0"><iframe id="preview" title="preview"></iframe></div>
+  </section>
+</main>
+<script>
+const DATA_URL = '../data.json';
+const SCHEMA_URL = '../data.schema.json';
+let data = null;
+let schema = null;
+let mode = 'form';
+
+const $ = (id) => document.getElementById(id);
+function setStatus(msg, cls=''){ const el=$('status'); el.textContent=msg; el.className='status '+(cls||''); }
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function load(){
+  setStatus('Loading…');
+  const [d,s] = await Promise.all([
+    fetch(DATA_URL).then(r=>{ if(!r.ok) throw new Error('data '+r.status); return r.json(); }),
+    fetch(SCHEMA_URL).then(r=>{ if(!r.ok) throw new Error('schema '+r.status); return r.json(); }),
+  ]);
+  data = d; schema = s;
+  $('jsonView').value = JSON.stringify(data, null, 2);
+  renderForm();
+  refreshPreview();
+  setStatus('Loaded ' + data.artifact_id, 'ok');
+}
+
+function syncFromJson(){
+  try { data = JSON.parse($('jsonView').value); setStatus('JSON OK','ok'); return true; }
+  catch(e){ setStatus('JSON 无效: '+e.message,'err'); return false; }
+}
+
+function syncFromForm(){
+  const g = (name) => document.querySelector(`[name="${name}"]`)?.value;
+  data.title = g('title') ?? data.title;
+  data.tender_id = g('tender_id') ?? data.tender_id;
+  data.status = g('status') ?? data.status;
+  data.issue_date = g('issue_date') ?? data.issue_date;
+  data.buyer.name = g('buyer_name') ?? data.buyer.name;
+  data.buyer.agent = g('buyer_agent') ?? data.buyer.agent;
+  data.meta.estimate_cny_wan = Number(g('estimate_cny_wan') ?? data.meta.estimate_cny_wan);
+  data.meta.service_period_announced = g('service_period_announced') ?? data.meta.service_period_announced;
+  data.meta.service_period_sow = g('service_period_sow') ?? data.meta.service_period_sow;
+  data.meta.bid_deadline = g('bid_deadline') ?? data.meta.bid_deadline;
+  data.meta.bid_bond_cny = Number(g('bid_bond_cny') ?? data.meta.bid_bond_cny);
+  data.meta.performance_bond_ratio = Number(g('performance_bond_ratio') ?? data.meta.performance_bond_ratio);
+  data.chapters.forEach((ch, ci) => {
+    ch.title = g(`ch_${ci}_title`) ?? ch.title;
+    ch.sections.forEach((sec, si) => {
+      sec.heading = g(`ch_${ci}_s_${si}_h`) ?? sec.heading;
+      sec.body_md = g(`ch_${ci}_s_${si}_b`) ?? sec.body_md;
+    });
+  });
+  $('jsonView').value = JSON.stringify(data, null, 2);
+}
+
+function renderForm(){
+  const m = data.meta;
+  let html = `
+  <div class="row">
+    <div><label>title</label><input name="title" value="${esc(data.title)}" /></div>
+    <div><label>tender_id</label><input name="tender_id" value="${esc(data.tender_id)}" /></div>
+  </div>
+  <div class="row">
+    <div><label>status</label>
+      <select name="status">${['draft','review','published'].map(x=>`<option ${data.status===x?'selected':''}>${x}</option>`).join('')}</select>
+    </div>
+    <div><label>issue_date</label><input name="issue_date" value="${esc(data.issue_date||'')}" /></div>
+  </div>
+  <div class="row">
+    <div><label>buyer.name</label><input name="buyer_name" value="${esc(data.buyer.name)}" /></div>
+    <div><label>buyer.agent</label><input name="buyer_agent" value="${esc(data.buyer.agent)}" /></div>
+  </div>
+  <div class="row">
+    <div><label>meta.estimate_cny_wan</label><input name="estimate_cny_wan" type="number" value="${m.estimate_cny_wan}" /></div>
+    <div><label>meta.bid_bond_cny</label><input name="bid_bond_cny" type="number" value="${m.bid_bond_cny}" /></div>
+  </div>
+  <div class="row">
+    <div><label>meta.service_period_announced</label><input name="service_period_announced" value="${esc(m.service_period_announced)}" /></div>
+    <div><label>meta.service_period_sow</label><input name="service_period_sow" value="${esc(m.service_period_sow)}" /></div>
+  </div>
+  <div class="row">
+    <div><label>meta.bid_deadline</label><input name="bid_deadline" value="${esc(m.bid_deadline)}" /></div>
+    <div><label>meta.performance_bond_ratio</label><input name="performance_bond_ratio" type="number" step="0.01" value="${m.performance_bond_ratio}" /></div>
+  </div>
+  <h2 style="font-size:14px;color:var(--accent);margin:16px 0 8px">金标准批注 annotations</h2>
+  ${(data.annotations||[]).map(a=>`<div class="ann"><b>${esc(a.id)}</b> [${esc(a.severity)}] ${esc(a.label)} — ${esc(a.note)}</div>`).join('')}
+  <h2 style="font-size:14px;color:var(--accent);margin:16px 0 8px">章节 chapters（原文分解）</h2>`;
+  data.chapters.forEach((ch, ci) => {
+    html += `<div class="ch-card"><h3>${esc(ch.id)}</h3>
+      <label>title</label><input name="ch_${ci}_title" value="${esc(ch.title)}" />`;
+    ch.sections.forEach((sec, si) => {
+      html += `<label>section[${si}].heading</label><input name="ch_${ci}_s_${si}_h" value="${esc(sec.heading)}" />
+      <label>section[${si}].body_md</label><textarea name="ch_${ci}_s_${si}_b">${esc(sec.body_md)}</textarea>`;
+    });
+    html += `</div>`;
+  });
+  const f = $('formView');
+  f.innerHTML = html;
+  f.querySelectorAll('input,textarea,select').forEach(el => {
+    el.addEventListener('input', () => { syncFromForm(); refreshPreview(); setStatus('Edited',''); });
+  });
+}
+
+function buildDisplayHtml(d){
+  const annsBy = {};
+  (d.annotations||[]).forEach(a => { (annsBy[a.chapter] ||= []).push(a); });
+  const theme = `body{font-family:PingFang SC,Noto Sans CJK SC,Microsoft YaHei,sans-serif;color:#1f2937;margin:0;background:#e5e7eb}
+  .page{max-width:920px;margin:24px auto;background:#fff;padding:36px 44px}
+  .doc-title{text-align:center;font-size:22px;color:#0f4c81;margin:0 0 6px}
+  .doc-sub{text-align:center;color:#6b7280;font-size:13px}
+  .rule{border:0;border-top:2px solid #0f4c81;margin:12px 0 18px}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;font-size:14px;margin-bottom:18px}
+  .label{color:#6b7280;font-weight:600}
+  .chapter{margin:22px 0} .chapter h2{font-size:17px;color:#0f4c81;border-bottom:1px solid #e5e7eb;padding-bottom:4px}
+  .section h3{font-size:14px;margin:10px 0 6px} .body{font-size:13px;line-height:1.65;white-space:pre-wrap}
+  .ann{border-left:4px solid #9a3412;background:#fff7ed;padding:8px 12px;margin:8px 0;font-size:12px}
+  .footer{margin-top:24px;padding-top:8px;border-top:1px solid #e5e7eb;font-size:11px;color:#6b7280;display:flex;justify-content:space-between}`;
+  let ch = '';
+  d.chapters.forEach(c => {
+    const secs = c.sections.map(s => `<div class="section"><h3>${esc(s.heading)}</h3><div class="body">${esc(s.body_md)}</div></div>`).join('');
+    const anns = (annsBy[c.id]||[]).map(a => `<div class="ann"><b>${esc(a.id)}</b> [${esc(a.severity)}] ${esc(a.label)} — ${esc(a.note)}</div>`).join('');
+    ch += `<section class="chapter"><h2>${esc(c.title)}</h2>${anns}${secs}</section>`;
+  });
+  const m = d.meta;
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><title>${esc(d.title)}</title><style>${theme}</style></head><body>
+  <article class="page">
+    <h1 class="doc-title">${esc(d.title)}</h1>
+    <p class="doc-sub">${esc(d.doc_type)} · ${esc(d.tender_id)} · ${esc(d.status)}</p>
+    <hr class="rule"/>
+    <div class="meta">
+      <div><span class="label">招标人：</span>${esc(d.buyer.name)}</div>
+      <div><span class="label">代理机构：</span>${esc(d.buyer.agent)}</div>
+      <div><span class="label">估算价：</span>${m.estimate_cny_wan} 万元</div>
+      <div><span class="label">投标截止：</span>${esc(m.bid_deadline)}</div>
+      <div><span class="label">服务期(公告)：</span>${esc(m.service_period_announced)}</div>
+      <div><span class="label">服务期(大纲)：</span>${esc(m.service_period_sow)}</div>
+      <div><span class="label">投标保证金：</span>${m.bid_bond_cny} 元</div>
+      <div><span class="label">履约担保比例：</span>${Math.round(m.performance_bond_ratio*100)}%</div>
+    </div>
+    ${ch}
+    <div class="footer"><span>Artifact Studio · default HTML display template</span><span>${esc(d.artifact_id)}</span></div>
+  </article></body></html>`;
+}
+
+function refreshPreview(){
+  if (mode === 'json' && !syncFromJson()) return;
+  if (mode === 'form') syncFromForm();
+  $('preview').srcdoc = buildDisplayHtml(data);
+  $('previewMeta').textContent = data.tender_id;
+}
+
+function download(filename, text, type='text/html;charset=utf-8'){
+  const blob = new Blob([text], {type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function validate(){
+  if (mode === 'json' && !syncFromJson()) return false;
+  if (mode === 'form') syncFromForm();
+  const missing = (schema.required||[]).filter(k => data[k] == null || data[k] === '');
+  if (missing.length){ setStatus('缺少必填: '+missing.join(', '),'err'); return false; }
+  if (!Array.isArray(data.chapters) || !data.chapters.length){ setStatus('chapters 不能为空','err'); return false; }
+  setStatus('Schema 基础校验通过（'+data.chapters.length+' 章）','ok');
+  return true;
+}
+
+$('btnTabForm').onclick = () => {
+  if (mode === 'json' && !syncFromJson()) return;
+  mode = 'form';
+  $('btnTabForm').classList.add('active'); $('btnTabJson').classList.remove('active');
+  $('formView').style.display = ''; $('jsonView').style.display = 'none';
+  renderForm(); refreshPreview();
+};
+$('btnTabJson').onclick = () => {
+  if (mode === 'form') syncFromForm();
+  mode = 'json';
+  $('btnTabJson').classList.add('active'); $('btnTabForm').classList.remove('active');
+  $('formView').style.display = 'none'; $('jsonView').style.display = '';
+  $('jsonView').value = JSON.stringify(data, null, 2);
+};
+$('jsonView').addEventListener('input', () => { if (syncFromJson()) refreshPreview(); });
+$('btnReload').onclick = () => load().catch(e => setStatus(String(e),'err'));
+$('btnValidate').onclick = validate;
+$('btnHtml').onclick = () => {
+  if (mode === 'form') syncFromForm();
+  if (mode === 'json' && !syncFromJson()) return;
+  const name = (data.tender_id||'tender').replace(/[\\/]/g,'_') + '-display.html';
+  download(name, buildDisplayHtml(data));
+  // also write mirror into output via download only (static host)
+  setStatus('已导出 HTML：'+name,'ok');
+};
+$('btnPdf').onclick = () => {
+  if (mode === 'form') syncFromForm();
+  if (mode === 'json' && !syncFromJson()) return;
+  const w = window.open('', '_blank');
+  w.document.write(buildDisplayHtml(data));
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 400);
+  setStatus('已打开打印对话框（另存为 PDF）','ok');
+};
+
+load().catch(e => setStatus(String(e),'err'));
+</script>
+</body>
+</html>

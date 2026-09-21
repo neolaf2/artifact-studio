@@ -1,0 +1,17 @@
+
+:root{--accent:#0f4c81;--ink:#1f2937;--muted:#6b7280;--warn:#9a3412;--bg:#f8fafc;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:var(--ink);background:#e5e7eb}
+.page{max-width:920px;margin:24px auto;background:var(--card);padding:36px 44px;box-shadow:0 1px 8px rgba(0,0,0,.08)}
+.doc-title{text-align:center;font-size:22px;color:var(--accent);margin:0 0 6px}
+.doc-sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 16px}
+.rule{border:0;border-top:2px solid var(--accent);margin:12px 0 18px}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;font-size:14px;margin-bottom:18px}
+.label{color:var(--muted);font-weight:600}
+.chapter{margin:22px 0}
+.chapter h2{font-size:17px;color:var(--accent);border-bottom:1px solid #e5e7eb;padding-bottom:4px}
+.section{margin:12px 0}
+.section h3{font-size:14px;margin:0 0 6px}
+.section .body{font-size:13px;line-height:1.65;white-space:pre-wrap}
+.ann{border-left:4px solid var(--warn);background:#fff7ed;padding:8px 12px;margin:8px 0;font-size:12px}
+.footer{margin-top:28px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;color:var(--muted);font-size:11px}

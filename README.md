@@ -24,7 +24,12 @@ The combined **`data.json` / `data.yaml` + JSON Schema + ontology (T-box)** is t
 | **Upstream** | Custom **Artifact AST Editor** (schema-driven form, WorkspaceEdit, diagnostics) |
 | **Downstream** | **HTML** display/editor · **Typst PDF** from the same data |
 
-Demo sample: [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
+Demo samples:
+
+- Clarification (HTML→PDF): [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
+- **Tender document (VS Code + Web dual route):** [`samples/tender-document-v20918`](./samples/tender-document-v20918/) · [Demo guide](./docs/TENDER_SAMPLE_DEMO.md)
+
+Legacy line kept for links: [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
 
 1. Install extension **v0.4.0+**
 2. Open `data.json` → Artifact AST Editor
@@ -323,7 +328,9 @@ Artifact Studio also ships a **Next.js web UI** for the same AST model.
 |------|---------|
 | `web/` | Next.js App Router app |
 | `/` | Artifact catalog |
+| `/artifacts/tender` | 招标文件 V20918 schema form + ontology (same AST as sample) |
 | `/artifacts/clarification` | Schema form (T-box) + ontology + live HTML preview |
+| `/settings` | Configure OpenAI-compatible LLM API key in the browser (httpOnly cookie) |
 | `GET/PUT /api/artifacts/:id` | Load / validate+save A-box JSON |
 
 ```bash

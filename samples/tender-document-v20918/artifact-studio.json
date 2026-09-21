@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "ast": {
+    "data": "data.json",
+    "dataTwin": "data.yaml",
+    "schema": "data.schema.json",
+    "ontology": "ontology.md",
+    "note": "Same AST for VS Code Artifact AST Editor and Next.js /artifacts/tender web route."
+  },
+  "artifacts": [
+    {
+      "id": "tender-html-display",
+      "template": "form.display.html",
+      "data": "data.yaml",
+      "output": "output/display.html",
+      "dataSchema": "data.schema.json",
+      "renderer": "html-display"
+    },
+    {
+      "id": "tender-html-editor",
+      "template": "form.editor.html",
+      "data": "data.yaml",
+      "output": "output/editor.html",
+      "dataSchema": "data.schema.json",
+      "renderer": "html-editor"
+    },
+    {
+      "id": "tender-pdf",
+      "template": "tender.typ",
+      "data": "data.yaml",
+      "output": "output/tender.pdf",
+      "dataSchema": "data.schema.json",
+      "renderer": "typst"
+    }
+  ]
+}

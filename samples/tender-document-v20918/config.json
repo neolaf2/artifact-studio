@@ -1,0 +1,20 @@
+{
+  "title": "信科公司基于海油发展大数据平台的数据应用、分析系统的开发及运营服务单项协议",
+  "modes": [
+    "editor",
+    "display",
+    "pdf"
+  ],
+  "data": "../abox/data.json",
+  "schema": "../tbox/data.schema.json",
+  "ontology": "../tbox/ontology.md",
+  "templates": {
+    "display": "form.display.html",
+    "editor": "../web/index.html",
+    "pdf": "tender.typ"
+  },
+  "outputs": {
+    "display": "../output/display.html",
+    "pdf": "../output/tender.pdf"
+  }
+}

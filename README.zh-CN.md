@@ -22,7 +22,11 @@ Copyright © 2026 **Richard Tong**. 授权协议：[Apache License 2.0](./LICENS
 | **上游** | 自定义 **Artifact AST 编辑器**（Schema 驱动表单、WorkspaceEdit、诊断） |
 | **下游** | 同一数据驱动 **HTML** 展示/编辑 · **Typst PDF** |
 
-演示样例：[`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
+演示样例：[`samples/supplier-clarification-html-zh`]
+
+- **招标文件双路线样例：** [`samples/tender-document-v20918`](./samples/tender-document-v20918/) · [演示指南](./docs/zh/招标文件样例演示指南.md)
+
+[`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
 
 1. 安装扩展 **v0.4.0+**
 2. 打开 `data.json` → 进入 Artifact AST Editor
@@ -395,3 +399,8 @@ Copyright © 2026 **Richard Tong**.
 ## 作者
 
 **Richard Tong** — [@neolaf2](https://github.com/neolaf2)
+
+
+## 招标文件样例（V20918）
+
+同一 AST 支持 VS Code 扩展与 Web 编辑；Web 可在 `/settings` 配置 LLM API Key。详见 [docs/zh/招标文件样例演示指南.md](./docs/zh/招标文件样例演示指南.md)。
