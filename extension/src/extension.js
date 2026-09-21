@@ -404,6 +404,8 @@ function activate(context) {
     if (!watching || !selected) return;
     const root = path.dirname(selected.file);
     if (!uri.fsPath.startsWith(root + path.sep)) return;
+    // The build writes selected.output under root; reacting to it would rebuild forever.
+    if (selected.output && uri.fsPath === path.resolve(root, selected.output)) return;
     if (!/\.(typ|html?|css|json|ya?ml|png|jpe?g|svg|bib|csv)$/i.test(uri.fsPath)) return;
     const entry = closures.get(`${selected.file}::${selected.id}`);
     if (entry && entry.inputs.length) {
