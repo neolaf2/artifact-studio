@@ -8,3 +8,5 @@
 ```bash
 node scripts/e2e-clarification-ast.js samples/supplier-clarification-zh
 ```
+
+Web dashboard (Open / New project): run `cd web && npm run dev` → http://localhost:3000 — see [docs/OVERLEAF_EDITOR.md](../docs/OVERLEAF_EDITOR.md).

@@ -32,7 +32,7 @@ Demo samples:
 
 Legacy line kept for links: [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/)
 
-1. Install extension **v0.4.0+**
+1. Install extension **v0.5.3+**
 2. Open `data.json` → Artifact AST Editor
 3. Edit fields → **Render HTML** / **Render PDF**
 4. Or run **Artifact Studio: E2E Clarification Demo (edit → HTML → PDF)**
@@ -44,6 +44,23 @@ Related commands:
 - `Artifact Studio: Render HTML from AST`
 - `Artifact Studio: Render PDF from AST`
 - `Artifact Studio: Open HTML Display` / `Open HTML Editor`
+
+---
+
+## Web app (Overleaf-style)
+
+```bash
+cd web && npm install && npm run dev
+```
+
+1. Open http://localhost:3000 — **project dashboard**
+2. **Open** an existing project, or **New project** (clarification / tender template)
+3. Edit in the split editor (form + live HTML preview); **Cmd/Ctrl+S** or autosave
+4. Production (Vercel): set `ARTIFACT_STUDIO_GITHUB_TOKEN` so saves stick — see [docs/OVERLEAF_EDITOR.md](./docs/OVERLEAF_EDITOR.md)
+
+Live sample (when deployed): project home → Open / New project → editor.
+
+VS Code extension **v0.5.3+**: commands **Artifact Studio: Open Project** and **Artifact Studio: New Project**.
 
 ---
 
@@ -88,7 +105,7 @@ All PDF routes ultimately call **local Typst**. Choose the entry point that matc
 ```text
 artifact-studio/
 ├── scripts/     # install.sh (+ macOS/Linux helpers), e2e-clarification-ast.js
-├── extension/   # VS Code / Cursor extension (v0.4.0) + VSIX
+├── extension/   # VS Code / Cursor extension (v0.5.3+) + VSIX
 ├── cli/         # Terminal / agent recipe builder
 ├── samples/     # Recipes (manifest + data + Typst and/or HTML)
 ├── skills/      # Agent skills (SKILL.md + project layouts)
@@ -326,7 +343,7 @@ Artifact Studio also ships a **Next.js web UI** for the same AST model.
 | Path | Purpose |
 |------|---------|
 | `web/` | Next.js App Router app |
-| `/` | Artifact catalog |
+| `/` | Project dashboard (Open / New project) |
 | `/artifacts/tender` | Tender V20918: schema form + **T-box** ontology + **R-box** review tab + **A-box** JSON (aligned snapshots; same AST as sample) |
 | `/artifacts/clarification` | Schema form (T-box) + ontology + live HTML preview (no R-box file → R-box tab hidden) |
 | `/settings` | Configure OpenAI-compatible LLM API key in the browser (httpOnly cookie) |
