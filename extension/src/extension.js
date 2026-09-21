@@ -4,6 +4,8 @@ const path = require('node:path');
 const fs = require('node:fs/promises');
 const { loadRecipe, build } = require('./core');
 const { buildHtml, loadDataFile } = require('./html');
+const { ArtifactEditorProvider, VIEW_TYPE } = require('./artifactEditor');
+const { loadAstContext, resolveCompanionPaths } = require('./ast');
 
 function activate(context) {
   const output = vscode.window.createOutputChannel('Artifact Studio');
@@ -238,6 +240,75 @@ function activate(context) {
     const { artifacts } = await loadRecipe(recipePath);
     selected = { file: recipePath, id: artifacts[0].id, output: artifacts[0].output, renderer: artifacts[0].renderer };
     await vscode.window.showTextDocument(vscode.Uri.file(path.join(destination, 'data.yaml')));
+  });
+
+
+  async function buildFromDataDocument(document, kind) {
+    const companions = await resolveCompanionPaths(document.uri);
+    if (!companions.recipe) throw new Error('No artifact-studio.json next to this data file.');
+    const { artifacts } = await loadRecipe(companions.recipe);
+    let target;
+    if (kind === 'html-display' || kind === 'html') {
+      target = artifacts.find(a => a.renderer === 'html-display') || artifacts.find(a => (a.renderer || '').startsWith('html'));
+    } else {
+      target = artifacts.find(a => a.renderer === 'typst' || !a.renderer);
+    }
+    if (!target) throw new Error(`No ${kind} artifact in recipe.`);
+    return enqueue({ file: companions.recipe, id: target.id, output: target.output, renderer: target.renderer }, { preview: true });
+  }
+
+  context.subscriptions.push(
+    ArtifactEditorProvider.register(context, {
+      diagnostics,
+      output,
+      onAstSaved: async (document, kind) => {
+        try {
+          await document.save();
+          const result = await buildFromDataDocument(document, kind);
+          vscode.window.showInformationMessage(`Rendered ${result.id} → ${path.basename(result.output)}`);
+        } catch (error) {
+          vscode.window.showErrorMessage(error.message);
+          output.show(true);
+        }
+      }
+    })
+  );
+
+  register('openAstEditor', async (uri) => {
+    const target = uri || vscode.window.activeTextEditor?.document.uri;
+    if (!target) throw new Error('Open a data.json / data.yaml first.');
+    await vscode.commands.executeCommand('vscode.openWith', target, VIEW_TYPE);
+  });
+  register('renderHtmlFromAst', async () => {
+    const doc = vscode.window.activeTextEditor?.document;
+    if (!doc) throw new Error('Open an artifact data file first.');
+    await buildFromDataDocument(doc, 'html-display');
+  });
+  register('renderPdfFromAst', async () => {
+    const doc = vscode.window.activeTextEditor?.document;
+    if (!doc) throw new Error('Open an artifact data file first.');
+    await buildFromDataDocument(doc, 'typst');
+  });
+  register('e2eClarificationDemo', async () => {
+    const sample = (await vscode.workspace.findFiles('**/supplier-clarification-html-zh/data.json', null, 1))[0]
+      || (await vscode.workspace.findFiles('**/supplier-clarification*/data.json', null, 1))[0];
+    if (!sample) throw new Error('Clarification sample data.json not found in workspace.');
+    await vscode.commands.executeCommand('vscode.openWith', sample, VIEW_TYPE);
+    const doc = await vscode.workspace.openTextDocument(sample);
+    // Mutate subject via AST path then render both
+    const { setPath, serializeAst, parseDocumentText } = require('./ast');
+    const data = await parseDocumentText(doc.getText(), doc.uri.fsPath);
+    const stamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    if (data.letter) data.letter.subject = `${data.letter.subject || '澄清函'} · E2E ${stamp}`;
+    else setPath(data, 'letter.subject', `澄清函 · E2E ${stamp}`);
+    const next = await serializeAst(data, doc.uri.fsPath);
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(doc.uri, new vscode.Range(0, 0, doc.lineCount, 0), next);
+    await vscode.workspace.applyEdit(edit);
+    await doc.save();
+    await buildFromDataDocument(doc, 'html-display');
+    await buildFromDataDocument(doc, 'typst');
+    vscode.window.showInformationMessage('E2E demo done: AST edit → HTML display → Typst PDF');
   });
 
   require('./authoring-ui').registerAuthoring(context, register, choose, output);

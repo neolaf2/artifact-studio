@@ -8,7 +8,7 @@
       "output": "output/clarification-display.html",
       "dataSchema": "schema/data.schema.json",
       "renderer": "html-display",
-      "note": "Same data.yaml as Typst letter.typ"
+      "note": "Downstream HTML from AST (open data.json with Artifact AST Editor)"
     },
     {
       "id": "clarification-html-editor",
@@ -25,7 +25,15 @@
       "output": "output/clarification.pdf",
       "dataSchema": "schema/data.schema.json",
       "renderer": "typst",
-      "note": "Parity PDF from the same data"
+      "note": "Downstream Typst PDF from the same AST"
     }
-  ]
+  ],
+  "ast": {
+    "data": "data.json",
+    "dataTwin": "data.yaml",
+    "schema": "schema/data.schema.json",
+    "ontology": "ontology.md",
+    "editor": "artifactStudio.artifactEditor",
+    "note": "Combined data + JSON Schema + T-box ontology is the AST for upstream editing and downstream HTML/Typst rendering."
+  }
 }

@@ -1,20 +1,21 @@
-# supplier-clarification-html-zh
+# Supplier clarification (HTML + PDF) — AST editor demo
 
-HTML form/display twin of `supplier-clarification-zh`, using the **same** `data.yaml` / `data.json` /
-`data.schema.json` (and `letter.typ` for PDF parity).
+**AST** = `data.json` (canonical) + `data.yaml` twin + `schema/data.schema.json` + `ontology.md` (T-box).
 
-## Render HTML
+## VS Code / Cursor
+
+1. Open this folder (or the repo root) in the workspace.
+2. Open `data.json` — Artifact Studio’s **Artifact AST Editor** opens by default.
+3. Edit fields in the form (writes through the TextDocument; undo/save work).
+4. Toolbar: **Render HTML** / **Render PDF**, or command palette:
+   - `Artifact Studio: E2E Clarification Demo (edit → HTML → PDF)`
+
+Outputs land in `output/`.
+
+## Headless E2E
 
 ```bash
-python3 ../../skills/portable-html-form-renderer/scripts/validate_project.py .
-python3 ../../skills/portable-html-form-renderer/scripts/render_html.py . --mode display -o output/clarification-display.html
-python3 ../../skills/portable-html-form-renderer/scripts/render_html.py . --mode editor -o output/clarification-editor.html
+node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh
 ```
 
-## PDF parity (optional)
-
-```bash
-typst compile --root . --input data=data.yaml letter.typ output/clarification.pdf
-```
-
-Pattern: `form.display.html` + `theme.css` ↔ `letter.typ` (Typst); data/schema unchanged.
+Requires local `typst` and `python3` + PyYAML.

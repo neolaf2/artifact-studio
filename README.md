@@ -215,6 +215,14 @@ Some skills use Pandoc as a Typst front-end or for review exports — see each s
 
 ---
 
+## Artifact AST Editor
+
+`data.json` + JSON Schema + ontology (T-box YAML/MD) is the **AST** for upstream editing and downstream HTML / Typst PDF.
+
+- Open `samples/supplier-clarification-html-zh/data.json` with the extension (v0.4+)
+- Custom editor form → **Render HTML** / **Render PDF**
+- Headless: `node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`
+
 ## Samples (recipe demos)
 
 | Sample | Description |

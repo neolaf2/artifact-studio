@@ -285,10 +285,10 @@ async function buildHtml(recipeFile, id, options = {}) {
 }
 
 module.exports = {
+  schemaFields,
   escapeHtml,
   fillTemplate,
   loadDataFile,
-  loadDataFile: loadDataFile,
   renderDisplayHtml,
   renderEditorHtml,
   buildHtml

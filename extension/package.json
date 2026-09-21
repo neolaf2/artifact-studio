@@ -1,8 +1,8 @@
 {
   "name": "artifact-studio",
   "displayName": "Artifact Studio",
-  "description": "Generate PDF (Typst) and HTML display/editor artifacts from shared JSON/YAML + JSON Schema.",
-  "version": "0.3.0",
+  "description": "Custom AST editor (data.json + schema + ontology) with HTML and Typst PDF rendering.",
+  "version": "0.4.0",
   "publisher": "artifact-studio-local",
   "engines": {
     "vscode": "^1.95.0"
@@ -13,7 +13,10 @@
   "main": "./src/extension.js",
   "activationEvents": [
     "workspaceContains:**/artifact-studio.json",
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCustomEditor:artifactStudio.artifactEditor",
+    "onCommand:artifactStudio.openAstEditor",
+    "onCommand:artifactStudio.e2eClarificationDemo"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -78,6 +81,22 @@
       {
         "command": "artifactStudio.htmlEditor",
         "title": "Artifact Studio: Open HTML Editor"
+      },
+      {
+        "command": "artifactStudio.openAstEditor",
+        "title": "Artifact Studio: Open AST Editor"
+      },
+      {
+        "command": "artifactStudio.renderHtmlFromAst",
+        "title": "Artifact Studio: Render HTML from AST"
+      },
+      {
+        "command": "artifactStudio.renderPdfFromAst",
+        "title": "Artifact Studio: Render PDF from AST"
+      },
+      {
+        "command": "artifactStudio.e2eClarificationDemo",
+        "title": "Artifact Studio: E2E Clarification Demo (edit \u2192 HTML \u2192 PDF)"
       }
     ],
     "views": {
@@ -114,6 +133,18 @@
           "command": "artifactStudio.htmlEditor",
           "when": "view == artifactStudio.artifacts",
           "group": "navigation"
+        },
+        {
+          "command": "artifactStudio.openAstEditor",
+          "when": "view == artifactStudio.artifacts",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "artifactStudio.openAstEditor",
+          "when": "resourceFilename =~ /^data\\.(json|ya?ml)$/",
+          "group": "navigation@9"
         }
       ]
     },
@@ -144,6 +175,24 @@
       {
         "fileMatch": "artifact-studio.json",
         "url": "./recipe.schema.json"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "artifactStudio.artifactEditor",
+        "displayName": "Artifact AST Editor",
+        "selector": [
+          {
+            "filenamePattern": "**/data.json"
+          },
+          {
+            "filenamePattern": "**/data.yaml"
+          },
+          {
+            "filenamePattern": "**/data.yml"
+          }
+        ],
+        "priority": "default"
       }
     ]
   },

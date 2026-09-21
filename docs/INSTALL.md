@@ -257,3 +257,14 @@ Chinese samples: ensure a CJK font is visible to Typst.
 | [zh/快速开始.md](./zh/快速开始.md) | Short Chinese quick start |
 | [cli/README.md](../cli/README.md) | CLI details |
 | [skills/README.md](../skills/README.md) | Skill index |
+
+## Artifact AST Editor (extension 0.4+)
+
+The combined `data.json` / `data.yaml` + JSON Schema + ontology (T-box) is the AST for upstream editing and downstream HTML/Typst rendering.
+
+1. Install extension ≥ 0.4.0
+2. Open a sample such as `samples/supplier-clarification-html-zh/data.json`
+3. The **Artifact AST Editor** custom editor opens (form from schema; ontology shown)
+4. Edit → **Render HTML** / **Render PDF**, or run `Artifact Studio: E2E Clarification Demo`
+
+Headless: `node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`

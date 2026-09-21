@@ -279,3 +279,12 @@ Copyright © 2026 **Richard Tong**.
 ## 作者
 
 **Richard Tong** — [@neolaf2](https://github.com/neolaf2)
+
+## Artifact AST 编辑器
+
+`data.json` + JSON Schema + ontology（T-box）是上游编辑与下游 HTML / Typst PDF 的 **AST**。
+
+- 用扩展 v0.4+ 打开 `samples/supplier-clarification-html-zh/data.json`
+- 自定义表单编辑 → **Render HTML** / **Render PDF**
+- 无界面：`node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`
+
