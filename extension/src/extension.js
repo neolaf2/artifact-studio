@@ -7,7 +7,7 @@ const { loadRecipe, build } = require('./core');
 const { buildHtml, loadDataFile } = require('./html');
 const { ArtifactEditorProvider, VIEW_TYPE } = require('./artifactEditor');
 const { loadAstContext, resolveCompanionPaths } = require('./ast');
-const { declaredModel, mergeClosures } = require('./projectModel');
+const { declaredModel, mergeClosures, affectedArtifacts } = require('./projectModel');
 const { treeNodes } = require('./projectTree');
 
 function activate(context) {
@@ -400,6 +400,15 @@ function activate(context) {
     const root = path.dirname(selected.file);
     if (!uri.fsPath.startsWith(root + path.sep)) return;
     if (!/\.(typ|html?|css|json|ya?ml|png|jpe?g|svg|bib|csv)$/i.test(uri.fsPath)) return;
+    const known = {};
+    for (const [key, closure] of closures) {
+      const sep = key.lastIndexOf('::');
+      if (key.slice(0, sep) === selected.file && closure.inputs.length) known[key.slice(sep + 2)] = closure;
+    }
+    if (Object.keys(known).length) {
+      const rel = path.relative(root, uri.fsPath).split(path.sep).join('/');
+      if (!affectedArtifacts(known, rel).includes(selected.id)) return;
+    }
     clearTimeout(timer);
     timer = setTimeout(() => { enqueue(undefined, { preview: true }).catch(() => {}); }, 400);
   }

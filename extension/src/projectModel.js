@@ -93,4 +93,14 @@ function mergeClosures(declared, closuresById) {
   return { files, unused, dependents };
 }
 
-module.exports = { declaredModel, mergeClosures };
+/**
+ * Artifact ids whose closure contains `changedRelPath` (project-relative).
+ * `closuresById` has the same shape `mergeClosures` accepts: { [id]: { inputs, outputs } }.
+ */
+function affectedArtifacts(closuresById, changedRelPath) {
+  const byId = closuresById && typeof closuresById === 'object' ? closuresById : {};
+  const p = String(changedRelPath).split('\\').join('/');
+  return Object.keys(byId).filter(id => (byId[id].inputs || []).includes(p));
+}
+
+module.exports = { declaredModel, mergeClosures, affectedArtifacts };

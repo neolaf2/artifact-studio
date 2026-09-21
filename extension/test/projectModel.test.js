@@ -2,6 +2,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { declaredModel } = require('../src/projectModel');
+const { affectedArtifacts } = require('../src/projectModel');
 
 const MANIFEST = {
   version: 1,
@@ -97,4 +98,28 @@ test('with no closures yet, nothing is reported unused', () => {
   const { unused, files } = mergeClosures(DECLARED, {});
   assert.deepEqual(unused, []);
   assert.ok(files.size > 0, 'declared files still render');
+});
+
+test('a shared file affects every dependent artifact', () => {
+  const closures = {
+    pdf: { inputs: ['tender.typ', 'theme.css'], outputs: [] },
+    review: { inputs: ['theme.css'], outputs: [] }
+  };
+  assert.deepEqual(affectedArtifacts(closures, 'theme.css').sort(), ['pdf', 'review']);
+  assert.deepEqual(affectedArtifacts(closures, 'tender.typ'), ['pdf']);
+});
+
+test('an unknown file affects nothing', () => {
+  const closures = { pdf: { inputs: ['tender.typ'], outputs: [] } };
+  assert.deepEqual(affectedArtifacts(closures, 'node_modules/x/y.js'), []);
+});
+
+test('windows separators in the changed path are normalised', () => {
+  const closures = { pdf: { inputs: ['rbox/review.yaml'], outputs: [] } };
+  assert.deepEqual(affectedArtifacts(closures, 'rbox\\review.yaml'), ['pdf']);
+});
+
+test('affectedArtifacts tolerates a missing or empty closures object', () => {
+  assert.deepEqual(affectedArtifacts({}, 'tender.typ'), []);
+  assert.deepEqual(affectedArtifacts(undefined, 'tender.typ'), []);
 });
