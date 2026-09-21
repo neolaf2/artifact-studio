@@ -32,6 +32,7 @@ function activate(context) {
         let manifest;
         try {
           manifest = JSON.parse(await fs.readFile(uri.fsPath, 'utf8'));
+          await loadRecipe(uri.fsPath); // semantic validation; errors read `artifact "<id>": ...`
         } catch (error) {
           roots.push({ kind: 'warning', label: path.basename(path.dirname(uri.fsPath)), description: error.message });
           continue;
@@ -51,6 +52,22 @@ function activate(context) {
       }
       return roots;
     },
+    async listArtifacts() {
+      const manifests = await vscode.workspace.findFiles('**/artifact-studio.json', '**/{node_modules,.git}/**', 100);
+      const items = [];
+      for (const uri of manifests) {
+        try {
+          const { artifacts } = await loadRecipe(uri.fsPath);
+          for (const recipe of artifacts) {
+            if (recipe.renderer === 'review-box') continue; // validates only; not buildable in this plan
+            items.push({ file: uri.fsPath, id: recipe.id, output: recipe.output, renderer: recipe.renderer || 'typst' });
+          }
+        } catch (error) {
+          output.appendLine(`${uri.fsPath}: ${error.message}`);
+        }
+      }
+      return items;
+    },
     getTreeItem(node) {
       const collapsible = node.children && node.children.length
         ? vscode.TreeItemCollapsibleState.Collapsed
@@ -65,11 +82,13 @@ function activate(context) {
           node.description.startsWith('html-editor') ? 'edit' :
           node.description.startsWith('html-display') ? 'browser' :
           node.description.startsWith('review-box') ? 'checklist' : 'file-pdf');
-        item.command = {
-          command: 'artifactStudio.build',
-          title: 'Build Artifact',
-          arguments: [{ file: node.manifestPath, id: node.artifactId }]
-        };
+        if (!node.description.startsWith('review-box')) {
+          item.command = {
+            command: 'artifactStudio.build',
+            title: 'Build Artifact',
+            arguments: [{ file: node.manifestPath, id: node.artifactId }]
+          };
+        }
       } else if (node.kind === 'file') {
         item.iconPath = new vscode.ThemeIcon('file');
       } else {
@@ -83,7 +102,7 @@ function activate(context) {
   async function choose(item) {
     if (item?.file && item?.id) selected = item;
     if (!selected) {
-      const items = await provider.getChildren();
+      const items = await provider.listArtifacts();
       if (!items.length) throw new Error('No artifact-studio.json found. Run Artifact Studio: New Example Project.');
       selected = items.length === 1
         ? items[0]
