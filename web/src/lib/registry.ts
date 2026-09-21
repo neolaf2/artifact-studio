@@ -24,6 +24,7 @@ export const ARTIFACTS: ArtifactMeta[] = [
   },
 ];
 
+/** Sync lookup for built-ins only. Prefer resolveArtifactMeta for user projects. */
 export function getArtifactMeta(id: string): ArtifactMeta | undefined {
   return ARTIFACTS.find((a) => a.id === id);
 }

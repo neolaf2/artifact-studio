@@ -1,5 +1,5 @@
 import { promises as fs } from 'node:fs';
-import { getArtifactMeta } from './registry';
+import { resolveArtifactMeta } from './projectStore';
 import {
   artifactRboxPath,
   artifactSchemaPath,
@@ -43,7 +43,7 @@ async function readOptionalUtf8(filePath: string): Promise<string | undefined> {
 }
 
 export async function loadArtifact(id: string): Promise<ArtifactBundle> {
-  const meta = getArtifactMeta(id);
+  const meta = await resolveArtifactMeta(id);
   if (!meta) throw new Error(`Unknown artifact: ${id}`);
   const [schemaRaw, tboxMarkdown, durable, rboxYaml] = await Promise.all([
     fs.readFile(artifactSchemaPath(id), 'utf8'),
@@ -66,6 +66,7 @@ export async function saveArtifactData(
   id: string,
   data: Record<string, unknown>,
 ): Promise<PersistResult> {
-  if (!getArtifactMeta(id)) throw new Error(`Unknown artifact: ${id}`);
+  const meta = await resolveArtifactMeta(id);
+  if (!meta) throw new Error(`Unknown artifact: ${id}`);
   return writeDurableData(id, data);
 }
