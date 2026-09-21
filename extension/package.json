@@ -133,5 +133,9 @@
     "type": "git",
     "url": "https://github.com/neolaf2/artifact-studio.git"
   },
-  "license": "MIT"
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Richard Tong",
+    "url": "https://github.com/neolaf2"
+  }
 }
