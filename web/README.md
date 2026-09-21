@@ -142,5 +142,5 @@ The web editor **Download PDF** button compiles the artifact pack’s Typst view
 
 ### Vercel / no-Typst PDF
 
-On Vercel (or when Typst is not installed), **Download PDF** renders the same **HTML preview** the editor shows into a PDF via headless Chromium. Locally, Typst is preferred when available for packs that ship a `.typ` view.
+On **Vercel**, **Download PDF** uses the same **HTML preview** as the editor and builds the PDF **in the browser** (`html2pdf.js`) — no Typst/Chromium on the server. Locally, Typst is preferred when installed; otherwise the same HTML path is used.
 
