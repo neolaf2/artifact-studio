@@ -4,26 +4,38 @@ Next.js route for **T-box schema–driven** artifact editing.
 
 The combined **JSON Schema + ontology (T-box)** constrains the **A-box** instance (`data.json`). Same AST model as the VS Code/Cursor extension.
 
-## Demo: clarification letter
+## Quick start
 
 ```bash
 cd web
 npm install
+cp .env.example .env.local   # optional LLM + durable-save keys
 npm run dev
 ```
 
-Open http://localhost:3000 → **供应商澄清函** → schema form + live HTML preview.
+Open http://localhost:3000 — **Overleaf-style project home**:
 
-- Content pack: `content/artifacts/clarification/` (`schema.json`, `tbox.md`, `data.json`)
-- Seeded from `samples/supplier-clarification-zh/`
+- **Open** a listed project (built-in `clarification` / `tender`, or user projects under `content/artifacts/`)
+- **New project** — name + template → scaffolds T/A/R → opens the split editor
+
+Editor: left Schema / T / R / A-box, right live HTML preview, dirty chip, Cmd/Ctrl+S, ~1.5s autosave.  
+Full guide: [../docs/OVERLEAF_EDITOR.md](../docs/OVERLEAF_EDITOR.md).
+
+Built-in packs:
+
+- `content/artifacts/clarification/` ← `samples/supplier-clarification-zh/`
+- `content/artifacts/tender/` ← `samples/tender-document-v20918/`
 
 ## Routes
 
 | Path | Purpose |
 |------|---------|
-| `/` | Artifact catalog |
-| `/artifacts/clarification` | Schema form editor + T-box + JSON + preview |
-| `GET/PUT /api/artifacts/clarification` | Load / validate+save AST |
+| `/` | Project dashboard — **Open** / **New project** |
+| `/artifacts/[id]` | Overleaf split editor (form + live preview) |
+| `/settings` | LLM browser key / status |
+| `GET /api/artifacts` | List projects + templates |
+| `POST /api/artifacts` | Create project from template |
+| `GET/PUT /api/artifacts/[id]` | Load / validate + durable save AST |
 
 ## Stack
 
@@ -67,7 +79,7 @@ Clear the key with the **Clear browser key** button on the settings page.
 
 ## Tender sample
 
-Catalog entry **招标文件（测试套题 V20918）** loads `content/artifacts/tender/` — same AST as `samples/tender-document-v20918/`. Demo: [../docs/TENDER_SAMPLE_DEMO.md](../docs/TENDER_SAMPLE_DEMO.md).
+Dashboard entry **招标文件（测试套题 V20918）** loads `content/artifacts/tender/` — same AST as `samples/tender-document-v20918/`. Demo: [../docs/TENDER_SAMPLE_DEMO.md](../docs/TENDER_SAMPLE_DEMO.md).
 
 
 ## Durable save + Overleaf editor

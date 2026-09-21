@@ -1,74 +1,105 @@
 # Overleaf-like Artifact Editor
 
-Artifact Studio's web and VS Code editors follow an Overleaf-style layout: **edit on the left, live preview on the right**, with a clear save state.
+Artifact Studio’s web app and VS Code extension follow an **Overleaf-style** workflow:
 
-## Web (`/artifacts/[id]`)
+1. Start from a **project home** (Open an existing project, or **New project**).
+2. Edit in a **split view** (source / form on the left, live preview on the right).
+3. **Save that sticks** (local disk, or GitHub / Blob on Vercel).
 
-- **Top bar**: project title, dirty chip (`Unsaved` / `Saving...` / `Saved HH:MM`), Reset, Generate, **Validate & save**, LLM settings.
-- **Cmd/Ctrl+S** saves; **autosave** runs ~1.5s after the last edit.
-- **Validation failure** shows schema issues but **keeps the dirty buffer** (nothing is discarded).
-- **Split layout**: Schema form / T-box / R-box / A-box JSON on the left; live HTML preview on the right (drag the divider; toggle Hide preview).
-- **Refresh preview** forces a re-render (preview already updates on every A-box change).
-- **PDF**: use Typst locally or the VS Code extension recipe build - not compiled in the browser.
+Chinese summary: [zh/OVERLEAF_EDITOR.md](./zh/OVERLEAF_EDITOR.md).
 
-## Open / New project (Overleaf home)
+---
 
-Web home `/` is an Overleaf-style project dashboard:
+## 1. Start: Open or New project
 
-| Action | Behavior |
-|--------|----------|
-| **Open** | Navigate to `/artifacts/[id]` (built-in samples + user projects under `web/content/artifacts/`) |
-| **New project** | Dialog: name + template (`clarification` ZH or `tender`) -> scaffolds T/A/R (+ A-box from `templates/abox.default.json` when present) -> durable persist -> redirect into the editor |
+### Web (`http://localhost:3000/` or production)
 
-### API
+Home **`/`** is the project dashboard (not a single hard-coded sample).
 
-- `GET /api/artifacts` - list projects + templates
-- `POST /api/artifacts` - `{ "name": "...", "template": "clarification" | "tender", "id?": "..." }` -> `{ ok, id, meta }`
+| Action | What happens |
+|--------|----------------|
+| **Open** | Click a project card → `/artifacts/[id]` (Overleaf split editor). Lists built-in packs (`clarification`, `tender`) plus anything under `web/content/artifacts/` (including user-created projects). |
+| **New project** | Dialog: **name** + **template** (`clarification` ZH or `tender`) → scaffolds T/A/R (+ default A-box from `templates/` when present) → persists → redirects into the editor. |
 
-New ids are slugified from the name (or an explicit `id`). Reserved built-in ids (`clarification`, `tender`) cannot be overwritten. Scaffolded A-box text is sanitized to **fake orgs only** (no CNOOC / Zhonghaiyou).
+**API**
 
-### VS Code
+- `GET /api/artifacts` — list projects + available templates  
+- `POST /api/artifacts` — body `{ "name": "...", "template": "clarification" | "tender", "id?": "..." }` → `{ ok, id, meta }`
 
-- **Artifact Studio: Open Project** - quick-pick `web/content/artifacts/*/data.json` and `samples/*/data.json`, open in the Overleaf AST editor
-- **Artifact Studio: New Project** - pick clarification / tender template + name, scaffold into `projects/<slug>/`, open AST editor
+IDs are slugified from the name (or an explicit `id`). Built-in ids `clarification` and `tender` are reserved. Scaffolded text is sanitized to **fictional orgs only**.
 
-## Durable save (Vercel)
+### VS Code / Cursor (extension **v0.5.3+**)
 
-`saveArtifactData` no longer relies solely on ephemeral filesystem writes:
+| Command | Behavior |
+|---------|----------|
+| **Artifact Studio: Open Project** | Quick-pick `web/content/artifacts/*/data.json` and `samples/*/data.json` → open Artifact AST (Overleaf) editor |
+| **Artifact Studio: New Project** | Pick template + name → scaffold under `projects/<slug>/` in the workspace → open AST editor |
+
+---
+
+## 2. Editor: split edit + live preview
+
+### Web (`/artifacts/[id]`)
+
+- **Top bar**: title, dirty chip (`Unsaved` / `Saving…` / `Saved HH:MM`), Reset, Generate, **Validate & save**, LLM settings.
+- **Cmd/Ctrl+S** saves; **autosave** ~1.5s after the last edit.
+- Validation errors are shown **without discarding** the dirty buffer.
+- **Left**: Schema form / T-box / R-box / A-box JSON tabs.  
+- **Right**: live HTML preview (updates on A-box changes; drag divider; toggle hide preview).
+- **PDF**: Typst locally or via the VS Code extension — not compiled in the browser.
+
+### VS Code custom editor
+
+- Side-by-side form + live HTML preview.
+- Status bar: **Artifact: Unsaved** / **Artifact: Saved HH:MM**.
+- Cmd/Ctrl+S → document save; respects `files.autoSave`; preview refreshes on edit.
+
+---
+
+## 3. Durable save (so edits stick on Vercel)
 
 | Environment | Backend |
 |-------------|---------|
-| Local / Node with writable disk | `web/content/artifacts/<id>/data.json` (+ yaml twin if present) |
-| Production with `ARTIFACT_STUDIO_GITHUB_TOKEN` | GitHub Contents API -> same path under the repo (and sample mirrors) |
+| Local / writable Node | `web/content/artifacts/<id>/data.json` (+ yaml twin if present) |
+| Production + `ARTIFACT_STUDIO_GITHUB_TOKEN` | GitHub Contents API → same path in the repo (and sample mirrors) |
 | Optional | `ARTIFACT_STUDIO_BLOB_READ_WRITE_TOKEN` (Vercel Blob) |
 
-PUT `/api/artifacts/[id]` returns:
+`PUT /api/artifacts/[id]` returns e.g.:
 
 ```json
-{ "ok": true, "persistedTo": "github", "path": "web/content/artifacts/clarification/data.json", "sha": "..." }
+{ "ok": true, "persistedTo": "github", "path": "web/content/artifacts/clarification/data.json", "sha": "…" }
 ```
 
-### Sample A-box mirrors
+### Sample A-box mirrors (source of truth alongside web content)
 
-| Artifact id | Web content path | Sample mirrors |
-|-------------|------------------|----------------|
-| `clarification` | `web/content/artifacts/clarification/data.json` | `samples/supplier-clarification-zh/data.json (+ abox/data.json)` |
-| `tender` | `web/content/artifacts/tender/data.json` | `samples/tender-document-v20918/data.json`, `.../abox/data.json` |
+| Artifact id | Web content | Sample mirrors |
+|-------------|-------------|----------------|
+| `clarification` | `web/content/artifacts/clarification/data.json` | `samples/supplier-clarification-zh/data.json` (+ `abox/` when present) |
+| `tender` | `web/content/artifacts/tender/data.json` | `samples/tender-document-v20918/data.json`, `…/abox/data.json` |
 
-Set on Vercel project **artifact-studio-web** (team **neolaf1**):
+**Vercel** (project **artifact-studio-web**): set
 
-1. `ARTIFACT_STUDIO_GITHUB_TOKEN` - fine-grained PAT, **Contents: Read and write**
-2. Optional: `ARTIFACT_STUDIO_GITHUB_REPO` (default `neolaf2/artifact-studio`), `ARTIFACT_STUDIO_GITHUB_BRANCH` (default `main`)
+1. `ARTIFACT_STUDIO_GITHUB_TOKEN` — fine-grained PAT, **Contents: Read and write**  
+2. Optional: `ARTIFACT_STUDIO_GITHUB_REPO` (default `neolaf2/artifact-studio`), `ARTIFACT_STUDIO_GITHUB_BRANCH` (default `main`)  
+3. Optional Blob token as fallback  
 
-## VS Code / Cursor extension
+Without a GitHub/Blob token, local `npm run dev` still saves to disk; production saves may not survive redeploys.
 
-Custom AST editor (`artifactStudio.artifactEditor`):
+See also `web/.env.example` and [web/README.md](../web/README.md).
 
-- Side-by-side form + live HTML preview webview
-- Status bar: **Artifact: Unsaved** / **Artifact: Saved HH:MM**
-- In-webview Save button and Cmd/Ctrl+S -> `TextDocument.save()`
-- Respects `files.autoSave`; preview refreshes on every edit
+---
+
+## Terminology (T / A / R + views)
+
+| Piece | Meaning |
+|-------|---------|
+| **T-box** | Schema + ontology |
+| **A-box** | Versioned instance (`data.json`, often with `snapshot`) |
+| **R-box** | Rules / review YAML (`rbox/`) — **not** HTML/Typst |
+| **Views** | HTML display/editor + Typst PDF templates |
+
+---
 
 ## Fake company names only
 
-Demo A-box data uses fictional orgs (e.g. sample buyers/suppliers). Do not commit real customer secrets into content packs.
+Demos use fictional orgs (e.g. StarSea / 星海能源 style placeholders). Do not commit real customer secrets or real oil-major names into sample packs.

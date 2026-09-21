@@ -29,7 +29,7 @@ Copyright © 2026 **Richard Tong**. 授权协议：[Apache License 2.0](./LICENS
 
 [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/)
 
-1. 安装扩展 **v0.4.0+**
+1. 安装扩展 **v0.5.3+**
 2. 打开 `data.json` → 进入 Artifact AST Editor
 3. 编辑字段 → **Render HTML** / **Render PDF**
 4. 或运行命令 **Artifact Studio: E2E Clarification Demo (edit → HTML → PDF)**
@@ -41,6 +41,21 @@ Copyright © 2026 **Richard Tong**. 授权协议：[Apache License 2.0](./LICENS
 - `Artifact Studio: Render HTML from AST`
 - `Artifact Studio: Render PDF from AST`
 - `Artifact Studio: Open HTML Display` / `Open HTML Editor`
+
+---
+
+## Web 应用（Overleaf 风格）
+
+```bash
+cd web && npm install && npm run dev
+```
+
+1. 打开 http://localhost:3000 — **项目首页**
+2. **打开**已有项目，或 **新建项目**（澄清函 / 招标文件模板）
+3. 分栏编辑（表单 + HTML 实时预览）；**Cmd/Ctrl+S** 或自动保存
+4. 生产环境（Vercel）请配置 `ARTIFACT_STUDIO_GITHUB_TOKEN`，详见 [docs/zh/OVERLEAF_EDITOR.md](./docs/zh/OVERLEAF_EDITOR.md)
+
+VS Code 扩展 **v0.5.3+**：命令 **Artifact Studio: Open Project** / **New Project**。
 
 ---
 
@@ -87,7 +102,7 @@ Copyright © 2026 **Richard Tong**. 授权协议：[Apache License 2.0](./LICENS
 ```text
 artifact-studio/
 ├── scripts/     # install.sh（及 macOS/Linux 辅助）、e2e-clarification-ast.js
-├── extension/   # VS Code / Cursor 扩展（v0.4.0）+ VSIX
+├── extension/   # VS Code / Cursor 扩展（v0.5.3+）+ VSIX
 ├── cli/         # 终端 / Agent 用配方构建器
 ├── samples/     # 配方示例（清单 + 数据 + Typst 和/或 HTML）
 ├── skills/      # Agent 技能包（SKILL.md + 工程布局）
