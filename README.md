@@ -26,17 +26,17 @@ The combined **`data.json` / `data.yaml` + JSON Schema + ontology (T-box)** is t
 
 Demo samples:
 
-- Clarification (HTML→PDF): [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
+- Clarification (HTML→PDF): [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/)
 - **Tender document (VS Code + Web dual route):** [`samples/tender-document-v20918`](./samples/tender-document-v20918/) · [Demo guide](./docs/TENDER_SAMPLE_DEMO.md) · [T/A/R convention](./docs/ARTIFACT_TAR_BOX.md)
   - **T-box** = schema + ontology · **A-box** = versioned instance (`snapshot`) · **R-box** = `rbox/review.yaml` rules/findings · HTML/Typst = **views** (not R-box)
 
-Legacy line kept for links: [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
+Legacy line kept for links: [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/)
 
 1. Install extension **v0.4.0+**
 2. Open `data.json` → Artifact AST Editor
 3. Edit fields → **Render HTML** / **Render PDF**
 4. Or run **Artifact Studio: E2E Clarification Demo (edit → HTML → PDF)**
-5. Headless: `node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`
+5. Headless: `node scripts/e2e-clarification-ast.js samples/supplier-clarification-zh`
 
 Related commands:
 
@@ -161,7 +161,7 @@ Releases: https://github.com/neolaf2/artifact-studio/releases
 
 **Edit → HTML → PDF (AST demo)**
 
-1. Open folder `samples/supplier-clarification-html-zh`
+1. Open folder `samples/supplier-clarification-zh`
 2. Open `data.json` (Artifact AST Editor)
 3. Edit fields, then **Render HTML** / **Render PDF**, or run the E2E command
 
@@ -242,10 +242,8 @@ Some skills use Pandoc as a front-end or for review exports — see each skill�
 
 | Sample | Description |
 |--------|-------------|
-| [`samples/supplier-clarification`](./samples/supplier-clarification/) | Bilingual clarification letter (Typst PDF) |
 | [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/) | Chinese 澄清函 (Typst PDF) |
-| [`samples/supplier-clarification-html`](./samples/supplier-clarification-html/) | EN HTML display/editor + Typst PDF (shared AST) |
-| [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/) | ZH HTML + Typst PDF — **AST editor E2E demo** |
+| [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/) | ZH HTML + Typst PDF — **AST editor E2E demo** |
 
 Quick matrix — Chinese Typst sample:
 
@@ -264,7 +262,7 @@ node cli/artifact-studio.js "$SAMPLE/artifact-studio.json" clarification-zh
 AST E2E (HTML + PDF):
 
 ```bash
-node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh
+node scripts/e2e-clarification-ast.js samples/supplier-clarification-zh
 ```
 
 ---

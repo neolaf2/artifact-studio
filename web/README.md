@@ -15,7 +15,7 @@ npm run dev
 Open http://localhost:3000 → **供应商澄清函** → schema form + live HTML preview.
 
 - Content pack: `content/artifacts/clarification/` (`schema.json`, `tbox.md`, `data.json`)
-- Seeded from `samples/supplier-clarification-html-zh/`
+- Seeded from `samples/supplier-clarification-zh/`
 
 ## Routes
 

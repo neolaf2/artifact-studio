@@ -22,18 +22,18 @@ Copyright © 2026 **Richard Tong**. 授权协议：[Apache License 2.0](./LICENS
 | **上游** | 自定义 **Artifact AST 编辑器**（Schema 驱动表单、WorkspaceEdit、诊断） |
 | **下游** | 同一数据驱动 **HTML** 展示/编辑 · **Typst PDF** |
 
-演示样例：[`samples/supplier-clarification-html-zh`]
+演示样例：[`samples/supplier-clarification-zh`]
 
 - **招标文件双路线样例：** [`samples/tender-document-v20918`](./samples/tender-document-v20918/) · [演示指南](./docs/zh/招标文件样例演示指南.md) · [T/A/R 约定](./docs/zh/产物TAR箱模型.md)
   - **T-box** = Schema + 本体 · **A-box** = 带版本实例（`snapshot`）· **R-box** = `rbox/review.yaml` 规则/发现 · HTML/Typst = **视图**（不再称为 R-box）
 
-[`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
+[`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/)
 
 1. 安装扩展 **v0.4.0+**
 2. 打开 `data.json` → 进入 Artifact AST Editor
 3. 编辑字段 → **Render HTML** / **Render PDF**
 4. 或运行命令 **Artifact Studio: E2E Clarification Demo (edit → HTML → PDF)**
-5. 无界面：`node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`
+5. 无界面：`node scripts/e2e-clarification-ast.js samples/supplier-clarification-zh`
 
 相关命令：
 
@@ -160,7 +160,7 @@ code --install-extension extension/artifact-studio-0.4.0.vsix
 
 **编辑 → HTML → PDF（AST 演示）**
 
-1. 打开文件夹 `samples/supplier-clarification-html-zh`
+1. 打开文件夹 `samples/supplier-clarification-zh`
 2. 打开 `data.json`（Artifact AST Editor）
 3. 编辑字段后点 **Render HTML** / **Render PDF**，或运行 E2E 命令
 
@@ -239,10 +239,8 @@ pandoc output/澄清函-正文.md -o output/澄清函-示例.docx
 
 | 样例 | 说明 |
 |------|------|
-| [`samples/supplier-clarification`](./samples/supplier-clarification/) | 中英双语澄清函（Typst PDF） |
 | [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/) | 中文澄清函（Typst PDF） |
-| [`samples/supplier-clarification-html`](./samples/supplier-clarification-html/) | 英文 HTML 展示/编辑 + Typst PDF（共用 AST） |
-| [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/) | 中文 HTML + Typst PDF — **AST 编辑器端到端演示** |
+| [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/) | 中文 HTML + Typst PDF — **AST 编辑器端到端演示** |
 
 同一中文 Typst 样例的三种 PDF 路径：
 
@@ -261,7 +259,7 @@ node cli/artifact-studio.js "$SAMPLE/artifact-studio.json" clarification-zh
 AST 端到端（HTML + PDF）：
 
 ```bash
-node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh
+node scripts/e2e-clarification-ast.js samples/supplier-clarification-zh
 ```
 
 ---

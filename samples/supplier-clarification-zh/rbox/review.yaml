@@ -1,0 +1,35 @@
+apiVersion: artifact-studio/v1
+kind: ReviewBox
+metadata:
+  id: supplier-clarification-zh-rbox
+  title: 供应商澄清函校验 R-box（MVP）
+  version: 1.0.0
+binding:
+  abox:
+    path: ../abox/data.json
+    snapshotVersion: "1.0.0"
+    contentHash: "sha256:bcccc03b1ff03f9902f28b340b763ec0c28554b3b312a48b43e879f8184a3080"
+  tbox:
+    schema: ../tbox/data.schema.json
+    ontology: ../tbox/ontology.md
+rules:
+  - id: RULE-REQUIRED-CORE
+    severity: high
+    title: 核心字段必填
+    check: {type: required_nonempty, paths: [issuer, supplier, reference, issue_date, response_due, questions]}
+  - id: RULE-QUESTIONS-NONEMPTY
+    severity: high
+    title: 澄清事项不得为空
+    check: {type: array_min_length, path: questions, min: 1}
+  - id: RULE-DUE-AFTER-ISSUE
+    severity: medium
+    title: 回复期限晚于发函日期
+    check: {type: date_order, earlier: issue_date, later: response_due}
+  - id: RULE-NO-REAL-MAJORS
+    severity: medium
+    title: 样例禁用真实油企名称
+    check: {type: forbidden_substrings, needles: [中国海油, CNOOC, 中海油]}
+findings: []
+releaseDecision:
+  status: ready
+  summary: MVP rules; hash aligned to A-box 1.0.0.

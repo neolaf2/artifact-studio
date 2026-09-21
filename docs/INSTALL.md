@@ -170,7 +170,6 @@ node cli/artifact-studio.js \
 # or
 cd cli && npm link
 
-artifact-studio samples/supplier-clarification/artifact-studio.json
 ```
 
 Stdout: JSON result. Stderr: Typst logs. Env: `TYPST_PATH`.
@@ -240,7 +239,6 @@ In VS Code or Cursor: open `extension/`, press **F5** (**Run Artifact Studio**).
 ```bash
 ./scripts/install.sh --check
 typst --version
-node cli/artifact-studio.js samples/supplier-clarification/artifact-studio.json
 ```
 
 Chinese samples: ensure a CJK font is visible to Typst.
@@ -263,11 +261,11 @@ Chinese samples: ensure a CJK font is visible to Typst.
 The combined `data.json` / `data.yaml` + JSON Schema + ontology (T-box) is the AST for upstream editing and downstream HTML/Typst rendering.
 
 1. Install extension ≥ 0.4.0
-2. Open a sample such as `samples/supplier-clarification-html-zh/data.json`
+2. Open a sample such as `samples/supplier-clarification-zh/data.json`
 3. The **Artifact AST Editor** custom editor opens (form from schema; ontology shown)
 4. Edit → **Render HTML** / **Render PDF**, or run `Artifact Studio: E2E Clarification Demo`
 
-Headless: `node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`
+Headless: `node scripts/e2e-clarification-ast.js samples/supplier-clarification-zh`
 
 ## Route: Next.js Web editor
 
