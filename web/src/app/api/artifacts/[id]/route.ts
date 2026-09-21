@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { loadArtifact, saveArtifactData } from '@/lib/loadArtifact';
-import { getArtifactMeta } from '@/lib/registry';
+import { resolveArtifactMeta } from '@/lib/projectStore';
 import { validateAgainstSchema } from '@/lib/validate';
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
-  if (!getArtifactMeta(id)) {
+  if (!(await resolveArtifactMeta(id))) {
     return NextResponse.json({ error: 'Unknown artifact' }, { status: 404 });
   }
   try {
@@ -23,7 +23,7 @@ export async function GET(_req: Request, ctx: Ctx) {
 
 export async function PUT(req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
-  if (!getArtifactMeta(id)) {
+  if (!(await resolveArtifactMeta(id))) {
     return NextResponse.json({ error: 'Unknown artifact' }, { status: 404 });
   }
   try {
@@ -34,7 +34,6 @@ export async function PUT(req: Request, ctx: Ctx) {
     const { schema } = await loadArtifact(id);
     const result = validateAgainstSchema(schema, body.data);
     if (!result.ok) {
-      // Keep client dirty buffer — return issues only; do not persist.
       return NextResponse.json(
         { error: 'Schema validation failed', issues: result.issues, ok: false },
         { status: 400 },
