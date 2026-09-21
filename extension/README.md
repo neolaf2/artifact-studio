@@ -78,6 +78,7 @@ Data is passed as a file, not interpolated into Typst source. Normal strings rem
 | Output access | Opens the PDF with the system's associated application |
 | Project example | Creates a new clarification-letter example without overwriting an existing one |
 | CLI | Shares the extension's build core and returns a JSON result |
+| **Project tree** — T-box / A-box / R-box / Shared groups plus every artifact,<br/>backed by the dependency closure Typst reports for each build. |
 
 The preview is a raster page preview, not an embedded PDF reader. Text selection, annotations, source-to-preview synchronization, and PDF search are not implemented. Adding those would be a subsequent iteration.
 
