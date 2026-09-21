@@ -1,51 +1,79 @@
 # Artifact Studio
 
-**本地优先的 PDF 产物生成工具** — 多条路径，同一套 Typst 工具链。
+**本地优先的 PDF / HTML 产物生成工具** — 多条路径，同一套数据 AST 与 Typst 工具链。
 
-用结构化数据 + Typst 模板在本机生成 PDF（无需云端编译）。可按场景选择：**VS Code / Cursor 图形界面**、**命令行 CLI**、**Agent Skills**，或直接使用 **Typst / Pandoc**。
+用结构化数据 + Typst 模板 / HTML 表单在本机生成产物（无需云端编译）。可按场景选择：**VS Code / Cursor 图形界面**、**命令行 CLI**、**Agent Skills**，或直接使用 **Typst / Pandoc**。
 
 Copyright © 2026 **Richard Tong**. 授权协议：[Apache License 2.0](./LICENSE)。
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
 [![Release](https://img.shields.io/github/v/release/neolaf2/artifact-studio)](https://github.com/neolaf2/artifact-studio/releases)
 
-**English:** [README.md](./README.md) · **中文文档索引:** [docs/zh/](./docs/zh/)
+**English:** [README.md](./README.md) · **中文文档索引:** [docs/zh/](./docs/zh/) · [安装指南](./docs/zh/安装指南.md)
+
+---
+
+## Artifact AST（核心概念）
+
+**`data.json` / `data.yaml` + JSON Schema + ontology（T-box）** 共同构成 **AST**：
+
+| 方向 | 作用 |
+|------|------|
+| **上游** | 自定义 **Artifact AST 编辑器**（Schema 驱动表单、WorkspaceEdit、诊断） |
+| **下游** | 同一数据驱动 **HTML** 展示/编辑 · **Typst PDF** |
+
+演示样例：[`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
+
+1. 安装扩展 **v0.4.0+**
+2. 打开 `data.json` → 进入 Artifact AST Editor
+3. 编辑字段 → **Render HTML** / **Render PDF**
+4. 或运行命令 **Artifact Studio: E2E Clarification Demo (edit → HTML → PDF)**
+5. 无界面：`node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`
+
+相关命令：
+
+- `Artifact Studio: Open AST Editor`
+- `Artifact Studio: Render HTML from AST`
+- `Artifact Studio: Render PDF from AST`
+- `Artifact Studio: Open HTML Display` / `Open HTML Editor`
 
 ---
 
 ## 生成 PDF 的多种路径（任选其一）
 
-所有路径最终都调用本机 **Typst**。按工作方式选择入口：
+所有 PDF 路径最终都调用本机 **Typst**。按工作方式选择入口：
 
 | 路径 | 适合场景 | 如何开始 | 产出 |
 |------|----------|----------|------|
-| **1. VS Code / Cursor 图形界面** | 边改边预览 | 安装扩展并打开 sample 目录 | PDF + 编辑器内页预览 |
+| **1. VS Code / Cursor 图形界面** | 边改边预览 | 安装扩展并打开 sample 目录 | PDF + 页预览；HTML+PDF 样例可用 AST 编辑器 |
 | **2. CLI 命令行** | 脚本、CI、编程 Agent | `node cli/artifact-studio.js …` | PDF + stdout 上的 JSON 结果 |
 | **3. Skills（技能包）** | Agent 剧本 / 完整文档工程 | 按 `skills/*/SKILL.md` 与脚本执行 | PDF（常附带 Pandoc 导出的 DOCX/MD） |
 | **4. 直接 Typst** | 专注调模板 | `typst compile …` | 仅 PDF |
 | **5. Pandoc（可选）** | Word / 中间 Markdown | 在 Typst 之后或旁路调用 `pandoc` | DOCX、MD 等 |
 
 ```text
-                    ┌─────────────────────────┐
-                    │   JSON / YAML / MD 数据  │
-                    └───────────┬─────────────┘
-                                │
-         ┌──────────────────────┼──────────────────────┐
-         ▼                      ▼                      ▼
- ┌───────────────┐    ┌─────────────────┐    ┌──────────────────┐
- │ 扩展图形界面   │    │  CLI（Node）     │    │ Skills（Agent）   │
- │ 构建 / 预览    │    │ artifact-studio │    │ SKILL.md + 脚本   │
- └───────┬───────┘    └────────┬────────┘    └────────┬─────────┘
-         │                     │                      │
-         └──────────┬──────────┴──────────┬───────────┘
-                    ▼                     ▼
-              ┌──────────┐         ┌────────────┐
-              │  Typst   │         │ Pandoc     │  （可选）
-              │  → PDF   │         │ → DOCX/MD  │
-              └──────────┘         └────────────┘
+                    ┌──────────────────────────────────┐
+                    │  AST：data + schema + ontology   │
+                    └────────────────┬─────────────────┘
+                                     │
+         ┌───────────────────────────┼───────────────────────────┐
+         ▼                           ▼                           ▼
+ ┌─────────────────┐       ┌─────────────────┐       ┌──────────────────┐
+ │ 扩展图形界面     │       │  CLI（Node）     │       │ Skills（Agent）   │
+ │ AST / 构建 /     │       │ artifact-studio │       │ SKILL.md + 脚本   │
+ │ HTML / 预览      │       └────────┬────────┘       └────────┬─────────┘
+ └────────┬────────┘                │                         │
+          └────────────┬────────────┴────────────┬────────────┘
+                       ▼                         ▼
+                 ┌──────────┐              ┌────────────┐
+                 │  Typst   │              │ Pandoc     │  （可选）
+                 │  → PDF   │              │ → DOCX/MD  │
+                 └──────────┘              └────────────┘
+                       ▲
+                       │  另：HTML 展示 / 编辑（同一 AST）
 ```
 
-更细的说明见：[docs/zh/生成路径.md](./docs/zh/生成路径.md)、[docs/zh/快速开始.md](./docs/zh/快速开始.md)。
+更细说明：[docs/zh/生成路径.md](./docs/zh/生成路径.md)、[docs/zh/快速开始.md](./docs/zh/快速开始.md)。
 
 ---
 
@@ -53,12 +81,12 @@ Copyright © 2026 **Richard Tong**. 授权协议：[Apache License 2.0](./LICENS
 
 ```text
 artifact-studio/
-├── scripts/     # macOS / Linux installers (install.sh)
-├── extension/   # VS Code / Cursor 扩展（v0.2.0）+ VSIX
+├── scripts/     # install.sh（及 macOS/Linux 辅助）、e2e-clarification-ast.js
+├── extension/   # VS Code / Cursor 扩展（v0.4.0）+ VSIX
 ├── cli/         # 终端 / Agent 用配方构建器
-├── samples/     # Artifact Studio 配方示例（清单 + 数据 + .typ）
+├── samples/     # 配方示例（清单 + 数据 + Typst 和/或 HTML）
 ├── skills/      # Agent 技能包（SKILL.md + 工程布局）
-├── docs/zh/     # 中文文档
+├── docs/        # INSTALL.md（英文）· docs/zh/（中文）
 ├── LICENSE
 ├── NOTICE
 ├── README.md        # English
@@ -67,11 +95,12 @@ artifact-studio/
 
 | 目录 | 作用 |
 |------|------|
-| [`extension/`](./extension/) | 编辑器 UI：产物视图、构建、预览、监视 |
+| [`extension/`](./extension/) | 产物视图、AST 编辑器、构建 / 预览 / 监视、HTML 面板 |
 | [`cli/`](./cli/) | 同一套配方引擎的命令行入口 |
 | [`samples/`](./samples/) | 面向路径 1–2 的配方示例 |
 | [`skills/`](./skills/) | 面向路径 3 的技能包 |
-| [`docs/zh/`](./docs/zh/) | 中文使用文档 |
+| [`scripts/`](./scripts/) | 安装脚本 + AST 端到端演示 |
+| [`docs/`](./docs/) | 安装与使用文档（中英） |
 
 ---
 
@@ -87,12 +116,13 @@ artifact-studio/
 
 English: [docs/INSTALL.md](./docs/INSTALL.md)
 
-## 环境要求
+### 环境要求
 
 - [Typst](https://typst.app/) 在 `PATH` 中 — `brew install typst`
 - 可选：[Pandoc](https://pandoc.org/) — `brew install pandoc`
 - VS Code 1.95+ 或 Cursor（图形界面路径）
 - Node.js 18+（CLI / 打包 VSIX）
+- `python3` + PyYAML（YAML AST 孪生文件 / E2E 辅助）
 
 中文样例需要 Typst 能用到的 CJK 字体（如苹方 PingFang SC、Noto Sans CJK SC）。
 
@@ -103,32 +133,36 @@ English: [docs/INSTALL.md](./docs/INSTALL.md)
 **安装**
 
 ```bash
-cursor --install-extension extension/artifact-studio-0.2.0.vsix
+cursor --install-extension extension/artifact-studio-0.4.0.vsix
 # 或
-code --install-extension extension/artifact-studio-0.2.0.vsix
+code --install-extension extension/artifact-studio-0.4.0.vsix
 ```
 
 也可打开 `extension/` 后按 **F5**（`Run Artifact Studio`）。  
 发布页：https://github.com/neolaf2/artifact-studio/releases
 
-**生成 PDF**
+**生成 PDF（Typst 配方）**
 
 1. **文件 → 打开文件夹** → 例如 `samples/supplier-clarification-zh`
 2. 信任工作区
 3. 命令面板：
-   - **Artifact Studio: Build Artifact** → 仅 PDF  
-   - **Artifact Studio: Build and Preview** → PDF + 预览页  
-   - **Artifact Studio: Toggle Watch** → 保存时自动重建  
-   - **Artifact Studio: Check Local Environment** → 检查 `typst` 等  
-   - **Artifact Studio: New Example Project** → 脚手架新配方  
+   - **Artifact Studio: Build Artifact** → 仅 PDF
+   - **Artifact Studio: Build and Preview** → PDF + 预览页
+   - **Artifact Studio: Toggle Watch** → 保存时自动重建
+   - **Artifact Studio: Check Local Environment** → 检查 `typst` 等
+   - **Artifact Studio: New Example Project** → 脚手架新配方
 
-编辑 `data.yaml`（或 `.json`）与 `letter.typ`，再次构建即可。
+**编辑 → HTML → PDF（AST 演示）**
+
+1. 打开文件夹 `samples/supplier-clarification-html-zh`
+2. 打开 `data.json`（Artifact AST Editor）
+3. 编辑字段后点 **Render HTML** / **Render PDF**，或运行 E2E 命令
 
 ---
 
 ## 路径 2 — CLI 命令行
 
-与扩展共用核心（`extension/src/core.js`），适合脚本与 Agent。
+与扩展共用核心，适合脚本与 Agent。
 
 ```bash
 # 在仓库根目录 — 构建中文澄清函样例
@@ -141,9 +175,9 @@ cd cli && npm link
 artifact-studio /绝对路径/artifact-studio.json [artifact-id]
 ```
 
-- **标准输出：** JSON 结果（`id`、`output` 等）  
-- **标准错误：** Typst 日志  
-- **环境变量：** `TYPST_PATH` 可覆盖 Typst 可执行文件  
+- **标准输出：** JSON 结果（`id`、`output` 等）
+- **标准错误：** Typst 日志
+- **环境变量：** `TYPST_PATH` 可覆盖 Typst 可执行文件
 
 详见 [`cli/README.md`](./cli/README.md)。
 
@@ -151,15 +185,14 @@ artifact-studio /绝对路径/artifact-studio.json [artifact-id]
 
 ## 路径 3 — Skills（Agent 技能包）
 
-Skills 是带 `SKILL.md`、模板与脚本的完整 Typst **工程**。由编程 Agent（或人工）按技能说明执行，底层仍是本机 Typst（并常配合 Pandoc）。
-
 | 技能 | 生成内容 |
 |------|----------|
-| [`skills/bid-clarification-letter`](./skills/bid-clarification-letter/) | 供应商澄清函（含测试产出 `CLR-2026-0147`） |
+| [`skills/bid-clarification-letter`](./skills/bid-clarification-letter/) | 供应商澄清函 |
 | [`skills/bid-document-intelligent-review-report`](./skills/bid-document-intelligent-review-report/) | 智能审标 / 评审报告 |
 | [`skills/portable-typst-pdf-generator`](./skills/portable-typst-pdf-generator/) | 可移植 Typst→PDF 工程脚手架 |
-| [`skills/rfp-project-document-suite`](./skills/rfp-project-document-suite/) | 招投标多文档套件（10 套布局） |
-| [`skills/typst-showcase`](./skills/typst-showcase/) | 版式演示（简历、策略、数学） |
+| [`skills/portable-html-form-renderer`](./skills/portable-html-form-renderer/) | 与 Typst 共用数据的 HTML 展示/编辑 |
+| [`skills/rfp-project-document-suite`](./skills/rfp-project-document-suite/) | 招投标多文档套件 |
+| [`skills/typst-showcase`](./skills/typst-showcase/) | 版式演示 |
 
 ```bash
 cd skills/bid-clarification-letter
@@ -178,37 +211,34 @@ cd skills/bid-clarification-letter
 
 ## 路径 4 — 直接 Typst
 
-不需要扩展或 CLI 时：
-
 ```bash
 cd samples/supplier-clarification-zh
 typst compile --root . --input data=/data.yaml letter.typ output/澄清函-示例.pdf
 ```
 
-适合调试模板。此路径**不会**做配方 ID / 路径安全等校验 — 需要校验时请用 CLI 或图形界面。
+此路径**不会**做配方 ID / 路径安全等校验 — 需要校验时请用 CLI 或图形界面。
 
 ---
 
 ## 路径 5 — Pandoc（可选配套）
 
-Pandoc 不替代这些配方的 Typst PDF，但技能与中文样例常在 PDF 旁再导出 Markdown / DOCX：
-
 ```bash
 cd samples/supplier-clarification-zh
 pandoc output/澄清函-正文.md -o output/澄清函-示例.docx
-pandoc source.md -o output/撰稿说明.docx
 ```
 
 ---
 
-## 样例（配方演示）
+## 样例
 
 | 样例 | 说明 |
 |------|------|
-| [`samples/supplier-clarification`](./samples/supplier-clarification/) | 中英双语澄清函 |
-| [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/) | 中文澄清函（澄字〔2026〕0147号） |
+| [`samples/supplier-clarification`](./samples/supplier-clarification/) | 中英双语澄清函（Typst PDF） |
+| [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/) | 中文澄清函（Typst PDF） |
+| [`samples/supplier-clarification-html`](./samples/supplier-clarification-html/) | 英文 HTML 展示/编辑 + Typst PDF（共用 AST） |
+| [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/) | 中文 HTML + Typst PDF — **AST 编辑器端到端演示** |
 
-同一中文样例的三种 PDF 路径：
+同一中文 Typst 样例的三种 PDF 路径：
 
 ```bash
 SAMPLE=samples/supplier-clarification-zh
@@ -220,6 +250,12 @@ node cli/artifact-studio.js "$SAMPLE/artifact-studio.json" clarification-zh
 ( cd "$SAMPLE" && typst compile --root . --input data=/data.yaml letter.typ output/澄清函-示例.pdf )
 
 # 路径 1 — 在 Cursor 中打开 $SAMPLE →「Artifact Studio: Build and Preview」
+```
+
+AST 端到端（HTML + PDF）：
+
+```bash
+node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh
 ```
 
 ---
@@ -234,18 +270,22 @@ node cli/artifact-studio.js "$SAMPLE/artifact-studio.json" clarification-zh
       "id": "clarification-zh",
       "template": "letter.typ",
       "data": "data.yaml",
-      "output": "output/澄清函-示例.pdf"
+      "output": "output/澄清函-示例.pdf",
+      "renderer": "typst"
     }
   ]
 }
 ```
 
+HTML 产物使用 `"renderer": "html-display"` 或 `"html-editor"`，模板为 `.html`。可选 `dataSchema` / `ontology` 字段绑定 AST 编辑器。
+
 | 字段 | 规则 |
 |------|------|
 | `data` | `.json` / `.yaml` / `.yml` |
-| `template` | `.typ`（通过 `--input data=/…` 读入数据） |
-| `output` | `.pdf` — 不得覆盖源文件 |
-| 路径 | 相对于配方所在目录（Typst 工程根） |
+| `template` | `.typ`（PDF）或 `.html`（HTML 路径） |
+| `output` | `.pdf` 或 `.html` — 不得覆盖源文件 |
+| `renderer` | `typst` · `html-display` · `html-editor` |
+| 路径 | 相对于配方所在目录 |
 
 ---
 
@@ -253,7 +293,8 @@ node cli/artifact-studio.js "$SAMPLE/artifact-studio.json" clarification-zh
 
 | 如果你… | 请用 |
 |---------|------|
-| 边改数据/模板边看预览 | **图形界面**（路径 1） |
+| 要用同一 AST 做表单编辑 + HTML + PDF | **AST 编辑器**（扩展 v0.4+） |
+| 边改 Typst 数据/模板边看预览 | **图形界面** Build / Preview |
 | 写脚本、上 CI、或让 Agent 驱动 | **CLI**（路径 2） |
 | 需要完整澄清 / 审标 / 招标文件剧本 | **Skills**（路径 3） |
 | 只调 Typst 排版 | **直接 Typst**（路径 4） |
@@ -264,9 +305,10 @@ node cli/artifact-studio.js "$SAMPLE/artifact-studio.json" clarification-zh
 ## 设计原则
 
 1. **本地编译** — Typst 跑在用户机器上  
-2. **多入口** — GUI、CLI、Skills、裸 Typst 共用工具链  
-3. **显式配方** — 路径 1–2 用数据 / 模板 / 输出清单  
-4. **Agent 友好** — CLI 向 stdout 打 JSON；Skills 用 `SKILL.md` 说明  
+2. **一套 AST** — data + schema + ontology 同时服务编辑与渲染  
+3. **多入口** — GUI、CLI、Skills、裸 Typst 共用工具链  
+4. **显式配方** — 路径 1–2 用数据 / 模板 / 输出清单  
+5. **Agent 友好** — CLI 向 stdout 打 JSON；Skills 用 `SKILL.md` 说明  
 
 ---
 
@@ -279,12 +321,3 @@ Copyright © 2026 **Richard Tong**.
 ## 作者
 
 **Richard Tong** — [@neolaf2](https://github.com/neolaf2)
-
-## Artifact AST 编辑器
-
-`data.json` + JSON Schema + ontology（T-box）是上游编辑与下游 HTML / Typst PDF 的 **AST**。
-
-- 用扩展 v0.4+ 打开 `samples/supplier-clarification-html-zh/data.json`
-- 自定义表单编辑 → **Render HTML** / **Render PDF**
-- 无界面：`node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`
-

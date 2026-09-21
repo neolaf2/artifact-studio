@@ -1,15 +1,21 @@
 # Samples
 
-Artifact Studio **recipe** demos: `artifact-studio.json` + Typst template + JSON/YAML data, built by the extension or [`../cli/`](../cli/).
+Thin `artifact-studio.json` recipes for the GUI and CLI.
 
 | Sample | Description |
 |--------|-------------|
-| [`supplier-clarification`](./supplier-clarification/) | Bilingual supplier clarification letter |
-| [`supplier-clarification-zh`](./supplier-clarification-zh/) | Chinese 澄清函 (澄字〔2026〕0147号) |
+| [`supplier-clarification`](./supplier-clarification/) | Bilingual clarification letter (Typst PDF) |
+| [`supplier-clarification-zh`](./supplier-clarification-zh/) | Chinese 澄清函 (Typst PDF) |
+| [`supplier-clarification-html`](./supplier-clarification-html/) | EN HTML display/editor + Typst PDF (shared AST) |
+| [`supplier-clarification-html-zh`](./supplier-clarification-html-zh/) | ZH HTML + Typst PDF — Artifact AST Editor E2E demo |
+
+## AST demo (HTML → PDF)
 
 ```bash
-cd samples/supplier-clarification-zh
-node ../../cli/artifact-studio.js artifact-studio.json clarification-zh
+# From repo root
+node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh
 ```
 
-Agent skill projects (full `SKILL.md` layouts) live under [`../skills/`](../skills/).
+Or open `supplier-clarification-html-zh/data.json` with extension **v0.4.0+** (Artifact AST Editor).
+
+See also: [../README.md](../README.md) · [../README.zh-CN.md](../README.zh-CN.md)

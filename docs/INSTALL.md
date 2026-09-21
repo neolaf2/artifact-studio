@@ -119,7 +119,7 @@ export TYPST_PATH=/path/to/typst
 
 ## C. Extension (GUI)
 
-**Artifact needed:** `extension/artifact-studio-0.2.0.vsix` (also on [GitHub Releases](https://github.com/neolaf2/artifact-studio/releases)).
+**Artifact needed:** `extension/artifact-studio-0.4.0.vsix` (also on [GitHub Releases](https://github.com/neolaf2/artifact-studio/releases)).
 
 ### C1. Install script (Cursor / VS Code CLI)
 
@@ -130,16 +130,16 @@ export TYPST_PATH=/path/to/typst
 ### C2. Editor CLI (manual)
 
 ```bash
-cursor --install-extension extension/artifact-studio-0.2.0.vsix
+cursor --install-extension extension/artifact-studio-0.4.0.vsix
 # and/or
-code --install-extension extension/artifact-studio-0.2.0.vsix
+code --install-extension extension/artifact-studio-0.4.0.vsix
 ```
 
 ### C3. Editor UI
 
 1. Open Cursor or VS Code  
 2. Extensions view → `…` → **Install from VSIX…**  
-3. Select `extension/artifact-studio-0.2.0.vsix`  
+3. Select `extension/artifact-studio-0.4.0.vsix`  
 4. Reload the window  
 
 ### After install

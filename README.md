@@ -1,8 +1,8 @@
 # Artifact Studio
 
-**Local-first PDF artifact generation** — several routes, one Typst toolchain.
+**Local-first PDF & HTML artifact generation** — several routes, one shared data AST and Typst toolchain.
 
-Compose structured data with Typst templates on your machine (no cloud compile service). Use the **VS Code / Cursor GUI**, the **CLI**, **agent skills**, or **raw Typst / Pandoc** depending on how you work.
+Compose structured data with Typst templates and HTML forms on your machine (no cloud compile service). Use the **VS Code / Cursor GUI**, the **CLI**, **agent skills**, or **raw Typst / Pandoc** depending on how you work.
 
 Copyright © 2026 **Richard Tong**. Licensed under the [Apache License 2.0](./LICENSE).
 
@@ -11,47 +11,68 @@ Copyright © 2026 **Richard Tong**. Licensed under the [Apache License 2.0](./LI
 
 ---
 
-**中文文档:** [README.zh-CN.md](./README.zh-CN.md) · [docs/zh/](./docs/zh/)
+**中文文档:** [README.zh-CN.md](./README.zh-CN.md) · [docs/zh/](./docs/zh/) · [安装指南](./docs/zh/安装指南.md)
 
-## HTML display / editor
+---
 
-Same JSON/YAML + JSON Schema contract as Typst. Extension commands:
+## Artifact AST (core idea)
 
-- `Artifact Studio: Open HTML Display`
-- `Artifact Studio: Open HTML Editor`
+The combined **`data.json` / `data.yaml` + JSON Schema + ontology (T-box)** is the **AST** for:
 
-Skill: [`skills/portable-html-form-renderer`](./skills/portable-html-form-renderer/). Samples: `samples/supplier-clarification-html-zh`.
+| Direction | Role |
+|-----------|------|
+| **Upstream** | Custom **Artifact AST Editor** (schema-driven form, WorkspaceEdit, diagnostics) |
+| **Downstream** | **HTML** display/editor · **Typst PDF** from the same data |
+
+Demo sample: [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/)
+
+1. Install extension **v0.4.0+**
+2. Open `data.json` → Artifact AST Editor
+3. Edit fields → **Render HTML** / **Render PDF**
+4. Or run **Artifact Studio: E2E Clarification Demo (edit → HTML → PDF)**
+5. Headless: `node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`
+
+Related commands:
+
+- `Artifact Studio: Open AST Editor`
+- `Artifact Studio: Render HTML from AST`
+- `Artifact Studio: Render PDF from AST`
+- `Artifact Studio: Open HTML Display` / `Open HTML Editor`
+
+---
 
 ## Routes to a PDF (pick one)
 
-All routes ultimately call **local Typst**. Choose the entry point that matches your workflow:
+All PDF routes ultimately call **local Typst**. Choose the entry point that matches your workflow:
 
 | Route | Best for | How you start | What you get |
 |-------|----------|---------------|--------------|
-| **1. VS Code / Cursor GUI** | Interactive edit → build → preview | Install extension, open a sample folder | PDF + page preview in the editor |
+| **1. VS Code / Cursor GUI** | Interactive edit → build → preview | Install extension, open a sample folder | PDF + page preview; AST editor for HTML+PDF samples |
 | **2. CLI** | Scripts, CI, coding agents | `node cli/artifact-studio.js …` | PDF + JSON result on stdout |
 | **3. Skills** | Agent playbooks / fuller document projects | Follow `skills/*/SKILL.md` + skill scripts | PDF (often + DOCX/MD via Pandoc) |
 | **4. Direct Typst** | Template hacking, minimal deps | `typst compile …` | PDF only |
 | **5. Pandoc (optional)** | Word / intermediate Markdown | `pandoc …` after or beside Typst | DOCX, MD, etc. |
 
 ```text
-                    ┌─────────────────────────┐
-                    │   JSON / YAML / MD data │
-                    └───────────┬─────────────┘
-                                │
-         ┌──────────────────────┼──────────────────────┐
-         ▼                      ▼                      ▼
- ┌───────────────┐    ┌─────────────────┐    ┌──────────────────┐
- │ Extension GUI │    │  CLI (Node)     │    │ Skills (agents)  │
- │ Build/Preview │    │ artifact-studio │    │ SKILL.md+scripts │
- └───────┬───────┘    └────────┬────────┘    └────────┬─────────┘
-         │                     │                      │
-         └──────────┬──────────┴──────────┬───────────┘
-                    ▼                     ▼
-              ┌──────────┐         ┌────────────┐
-              │  Typst   │         │ Pandoc     │  (optional)
-              │  → PDF   │         │ → DOCX/MD  │
-              └──────────┘         └────────────┘
+                    ┌──────────────────────────────────┐
+                    │  AST: data + schema + ontology   │
+                    └────────────────┬─────────────────┘
+                                     │
+         ┌───────────────────────────┼───────────────────────────┐
+         ▼                           ▼                           ▼
+ ┌─────────────────┐       ┌─────────────────┐       ┌──────────────────┐
+ │ Extension GUI   │       │  CLI (Node)     │       │ Skills (agents)  │
+ │ AST / Build /   │       │ artifact-studio │       │ SKILL.md+scripts │
+ │ HTML / Preview  │       └────────┬────────┘       └────────┬─────────┘
+ └────────┬────────┘                │                         │
+          └────────────┬────────────┴────────────┬────────────┘
+                       ▼                         ▼
+                 ┌──────────┐              ┌────────────┐
+                 │  Typst   │              │ Pandoc     │  (optional)
+                 │  → PDF   │              │ → DOCX/MD  │
+                 └──────────┘              └────────────┘
+                       ▲
+                       │  also: HTML display / editor (same AST)
 ```
 
 ---
@@ -60,28 +81,32 @@ All routes ultimately call **local Typst**. Choose the entry point that matches 
 
 ```text
 artifact-studio/
-├── scripts/     # macOS / Linux installers (install.sh)
-├── extension/   # VS Code / Cursor extension (v0.2.0) + VSIX
+├── scripts/     # install.sh (+ macOS/Linux helpers), e2e-clarification-ast.js
+├── extension/   # VS Code / Cursor extension (v0.4.0) + VSIX
 ├── cli/         # Terminal / agent recipe builder
-├── samples/     # Small Artifact Studio recipes (manifest + data + .typ)
+├── samples/     # Recipes (manifest + data + Typst and/or HTML)
 ├── skills/      # Agent skills (SKILL.md + project layouts)
+├── docs/        # INSTALL.md (EN) · docs/zh/ (中文)
 ├── LICENSE
 ├── NOTICE
-└── README.md
+├── README.md        # English (this file)
+└── README.zh-CN.md  # 中文
 ```
 
 | Folder | Role |
 |--------|------|
-| [`extension/`](./extension/) | Editor UI: Artifacts view, Build, Preview, Watch |
+| [`extension/`](./extension/) | Artifacts view, AST editor, Build / Preview / Watch, HTML panels |
 | [`cli/`](./cli/) | Same recipe engine from the shell |
-| [`samples/`](./samples/) | Recipe demos for routes 1–2 |
-| [`skills/`](./skills/) | Skill demos for route 3 |
+| [`samples/`](./samples/) | Recipe demos for GUI + CLI |
+| [`skills/`](./skills/) | Agent-oriented document kits |
+| [`scripts/`](./scripts/) | Installers + AST E2E demo |
+| [`docs/`](./docs/) | Install & usage guides (EN + ZH) |
 
 ---
 
 ## Install
 
-See **[docs/INSTALL.md](./docs/INSTALL.md)** for every route (script, toolchain, extension, CLI, skills, Typst, Pandoc).
+Full guide: **[docs/INSTALL.md](./docs/INSTALL.md)** (script, toolchain, extension, CLI, skills, Typst, Pandoc).
 
 ```bash
 ./scripts/install.sh                 # plan
@@ -91,12 +116,13 @@ See **[docs/INSTALL.md](./docs/INSTALL.md)** for every route (script, toolchain,
 
 中文安装说明：[docs/zh/安装指南.md](./docs/zh/安装指南.md)
 
-## Prerequisites
+### Prerequisites
 
 - [Typst](https://typst.app/) on `PATH` — `brew install typst`
 - Optional: [Pandoc](https://pandoc.org/) — `brew install pandoc`
 - VS Code 1.95+ or Cursor (GUI route)
-- Node.js 18+ (CLI route / VSIX packaging)
+- Node.js 18+ (CLI / VSIX packaging)
+- `python3` + PyYAML (YAML AST twin / E2E helpers)
 
 Chinese samples need CJK fonts available to Typst (e.g. PingFang SC, Noto Sans CJK SC).
 
@@ -107,35 +133,39 @@ Chinese samples need CJK fonts available to Typst (e.g. PingFang SC, Noto Sans C
 **Install**
 
 ```bash
-cursor --install-extension extension/artifact-studio-0.2.0.vsix
+cursor --install-extension extension/artifact-studio-0.4.0.vsix
 # or
-code --install-extension extension/artifact-studio-0.2.0.vsix
+code --install-extension extension/artifact-studio-0.4.0.vsix
 ```
 
 Or open `extension/` and press **F5** (`Run Artifact Studio`).  
 Releases: https://github.com/neolaf2/artifact-studio/releases
 
-**Generate a PDF**
+**Generate a PDF (Typst recipe)**
 
 1. **File → Open Folder** → e.g. `samples/supplier-clarification-zh`
 2. Trust the workspace
 3. Command Palette:
-   - **Artifact Studio: Build Artifact** → PDF only  
-   - **Artifact Studio: Build and Preview** → PDF + page PNGs in a preview panel  
-   - **Artifact Studio: Toggle Watch** → rebuild on save  
-   - **Artifact Studio: Check Local Environment** → verify `typst` / optional tools  
-   - **Artifact Studio: New Example Project** → scaffold a recipe folder  
+   - **Artifact Studio: Build Artifact** → PDF only
+   - **Artifact Studio: Build and Preview** → PDF + page PNGs
+   - **Artifact Studio: Toggle Watch** → rebuild on save
+   - **Artifact Studio: Check Local Environment** → verify `typst` / optional tools
+   - **Artifact Studio: New Example Project** → scaffold a recipe folder
 
-Edit `data.yaml` (or `.json`) and `letter.typ`, then build again.
+**Edit → HTML → PDF (AST demo)**
+
+1. Open folder `samples/supplier-clarification-html-zh`
+2. Open `data.json` (Artifact AST Editor)
+3. Edit fields, then **Render HTML** / **Render PDF**, or run the E2E command
 
 ---
 
 ## Route 2 — CLI
 
-Uses the same core as the extension (`extension/src/core.js`). Ideal for agents and automation.
+Uses the same core as the extension. Ideal for agents and automation.
 
 ```bash
-# From repo root — build the Chinese clarification sample
+# From repo root — Chinese clarification PDF sample
 node cli/artifact-studio.js \
   samples/supplier-clarification-zh/artifact-studio.json \
   clarification-zh
@@ -145,39 +175,30 @@ cd cli && npm link
 artifact-studio /absolute/path/to/artifact-studio.json [artifact-id]
 ```
 
-- **Stdout:** JSON result (`id`, `output`, …)  
-- **Stderr:** Typst logs  
-- **Env:** `TYPST_PATH` to override the Typst binary  
+- **Stdout:** JSON result (`id`, `output`, …)
+- **Stderr:** Typst logs
+- **Env:** `TYPST_PATH` to override the Typst binary
 
 Details: [`cli/README.md`](./cli/README.md).
-
-Compat shim (same entry via the extension tree):
-
-```bash
-node extension/src/cli.js samples/supplier-clarification-zh/artifact-studio.json clarification-zh
-```
 
 ---
 
 ## Route 3 — Skills (agent playbooks)
 
-Skills are fuller Typst **projects** with `SKILL.md`, templates, and scripts. Coding agents (or you) follow the skill recipe; they still compile with local Typst (and often Pandoc).
-
 | Skill | Generates |
 |-------|-----------|
-| [`skills/bid-clarification-letter`](./skills/bid-clarification-letter/) | Supplier clarification letter (+ tested `CLR-2026-0147` output) |
+| [`skills/bid-clarification-letter`](./skills/bid-clarification-letter/) | Supplier clarification letter |
 | [`skills/bid-document-intelligent-review-report`](./skills/bid-document-intelligent-review-report/) | Intelligent bid / tender review report |
 | [`skills/portable-typst-pdf-generator`](./skills/portable-typst-pdf-generator/) | Bootstrap a portable Typst→PDF project |
-| [`skills/rfp-project-document-suite`](./skills/rfp-project-document-suite/) | Multi-doc RFP suite (10 Typst layouts) |
-| [`skills/typst-showcase`](./skills/typst-showcase/) | Layout demos (resume, strategy, math) |
-
-Typical pattern inside a skill:
+| [`skills/portable-html-form-renderer`](./skills/portable-html-form-renderer/) | HTML display/editor twin of Typst data |
+| [`skills/rfp-project-document-suite`](./skills/rfp-project-document-suite/) | Multi-doc RFP suite |
+| [`skills/typst-showcase`](./skills/typst-showcase/) | Layout demos |
 
 ```bash
 cd skills/bid-clarification-letter
 # read SKILL.md, then e.g.:
 ./scripts/check_environment.py
-./scripts/generate_pdf.py   # skill-specific; wraps typst / pandoc
+./scripts/generate_pdf.py
 ```
 
 Index: [`skills/README.md`](./skills/README.md).
@@ -190,47 +211,36 @@ Index: [`skills/README.md`](./skills/README.md).
 
 ## Route 4 — Direct Typst
 
-Skip the extension and CLI when you only need the compiler:
-
 ```bash
 cd samples/supplier-clarification-zh
 typst compile --root . --input data=/data.yaml letter.typ output/澄清函-示例.pdf
 ```
 
-Useful for debugging templates. Recipe validation (IDs, path safety, schema) is **not** applied on this route — use the CLI or GUI when you want those guards.
+Recipe validation (IDs, path safety, schema) is **not** applied on this route — use the CLI or GUI when you want those guards.
 
 ---
 
 ## Route 5 — Pandoc (optional companion)
 
-Pandoc does not replace Typst for these PDF recipes, but skills and Chinese samples often emit Markdown / DOCX beside the PDF:
-
 ```bash
 cd samples/supplier-clarification-zh
 pandoc output/澄清函-正文.md -o output/澄清函-示例.docx
-pandoc source.md -o output/撰稿说明.docx
 ```
 
-Some skills use Pandoc as a Typst front-end or for review exports — see each skill’s `SKILL.md` and `scripts/`.
+Some skills use Pandoc as a front-end or for review exports — see each skill’s `SKILL.md`.
 
 ---
 
-## Artifact AST Editor
-
-`data.json` + JSON Schema + ontology (T-box YAML/MD) is the **AST** for upstream editing and downstream HTML / Typst PDF.
-
-- Open `samples/supplier-clarification-html-zh/data.json` with the extension (v0.4+)
-- Custom editor form → **Render HTML** / **Render PDF**
-- Headless: `node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`
-
-## Samples (recipe demos)
+## Samples
 
 | Sample | Description |
 |--------|-------------|
-| [`samples/supplier-clarification`](./samples/supplier-clarification/) | Bilingual clarification letter |
-| [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/) | Chinese 澄清函 (澄字〔2026〕0147号) |
+| [`samples/supplier-clarification`](./samples/supplier-clarification/) | Bilingual clarification letter (Typst PDF) |
+| [`samples/supplier-clarification-zh`](./samples/supplier-clarification-zh/) | Chinese 澄清函 (Typst PDF) |
+| [`samples/supplier-clarification-html`](./samples/supplier-clarification-html/) | EN HTML display/editor + Typst PDF (shared AST) |
+| [`samples/supplier-clarification-html-zh`](./samples/supplier-clarification-html-zh/) | ZH HTML + Typst PDF — **AST editor E2E demo** |
 
-Quick matrix — same sample, three PDF routes:
+Quick matrix — Chinese Typst sample:
 
 ```bash
 SAMPLE=samples/supplier-clarification-zh
@@ -242,6 +252,12 @@ node cli/artifact-studio.js "$SAMPLE/artifact-studio.json" clarification-zh
 ( cd "$SAMPLE" && typst compile --root . --input data=/data.yaml letter.typ output/澄清函-示例.pdf )
 
 # Route 1 — open $SAMPLE in Cursor → "Artifact Studio: Build and Preview"
+```
+
+AST E2E (HTML + PDF):
+
+```bash
+node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh
 ```
 
 ---
@@ -256,18 +272,22 @@ node cli/artifact-studio.js "$SAMPLE/artifact-studio.json" clarification-zh
       "id": "clarification-zh",
       "template": "letter.typ",
       "data": "data.yaml",
-      "output": "output/澄清函-示例.pdf"
+      "output": "output/澄清函-示例.pdf",
+      "renderer": "typst"
     }
   ]
 }
 ```
 
+HTML artifacts use `"renderer": "html-display"` or `"html-editor"` with `.html` templates. Optional `dataSchema` / `ontology` fields bind the AST editor.
+
 | Field | Rules |
 |-------|--------|
 | `data` | `.json` / `.yaml` / `.yml` |
-| `template` | `.typ` — loads data via `--input data=/…` |
-| `output` | `.pdf` — must not overwrite sources |
-| Paths | Relative to the recipe directory (Typst project root) |
+| `template` | `.typ` (PDF) or `.html` (HTML routes) |
+| `output` | `.pdf` or `.html` — must not overwrite sources |
+| `renderer` | `typst` · `html-display` · `html-editor` |
+| Paths | Relative to the recipe directory |
 
 ---
 
@@ -275,20 +295,22 @@ node cli/artifact-studio.js "$SAMPLE/artifact-studio.json" clarification-zh
 
 | If you… | Use |
 |---------|-----|
-| Want side-by-side preview while editing data/templates | **GUI** (Route 1) |
+| Want form editing + HTML + PDF from one AST | **AST Editor** (extension v0.4+) |
+| Want side-by-side Typst preview while editing | **GUI** Build / Preview |
 | Are scripting, testing in CI, or driving from an agent | **CLI** (Route 2) |
 | Need a full clarification / review / RFP playbook | **Skills** (Route 3) |
 | Are iterating on Typst markup only | **Direct Typst** (Route 4) |
-| Need Word for human review / delivery | **Pandoc** (Route 5) after PDF or from skill Markdown |
+| Need Word for human review / delivery | **Pandoc** (Route 5) |
 
 ---
 
 ## Design principles
 
-1. **Local compile** — Typst on the user’s machine  
-2. **Multiple front-doors** — GUI, CLI, skills, raw Typst share one toolchain  
-3. **Explicit recipes** — data / template / output manifests for routes 1–2  
-4. **Agent-friendly** — CLI JSON on stdout; skills documented in `SKILL.md`  
+1. **Local compile** — Typst on the user’s machine
+2. **One AST** — data + schema + ontology drive editing and rendering
+3. **Multiple front-doors** — GUI, CLI, skills, raw Typst share one toolchain
+4. **Explicit recipes** — data / template / output manifests for routes 1–2
+5. **Agent-friendly** — CLI JSON on stdout; skills documented in `SKILL.md`
 
 ---
 

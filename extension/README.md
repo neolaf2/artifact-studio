@@ -33,7 +33,7 @@ To create an installable VSIX on your machine:
 
 ```bash
 npm run package
-code --install-extension artifact-studio-0.2.0.vsix
+code --install-extension artifact-studio-0.4.0.vsix
 ```
 
 Packaging uses `npx @vscode/vsce` and may download that packaging tool. The extension itself has no npm runtime dependencies. Replace the placeholder publisher before Marketplace publication. Packaging and installation have not been executed in the authoring environment.
@@ -177,3 +177,9 @@ Commands:
 - **Artifact Studio: Open HTML Editor** — schema-driven form; **Save to workspace** writes data back
 
 See `samples/supplier-clarification-html-zh` and skill `skills/portable-html-form-renderer`.
+
+
+## Artifact AST Editor (0.4+)
+
+Open `data.json` / `data.yaml` next to `schema/data.schema.json` (and optional `ontology.md`).
+Edits apply via WorkspaceEdit. Toolbar / commands render HTML and Typst PDF from the same AST.
