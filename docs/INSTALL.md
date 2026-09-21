@@ -268,3 +268,12 @@ The combined `data.json` / `data.yaml` + JSON Schema + ontology (T-box) is the A
 4. Edit → **Render HTML** / **Render PDF**, or run `Artifact Studio: E2E Clarification Demo`
 
 Headless: `node scripts/e2e-clarification-ast.js samples/supplier-clarification-html-zh`
+
+## Route: Next.js Web editor
+
+```bash
+cd web && npm install && npm run dev
+```
+
+Open http://localhost:3000 and choose the clarification letter to edit against the T-box schema.
+

@@ -8,3 +8,8 @@ node_modules/
 **/.venv/
 **/venv/
 **/__pycache__/
+
+# Next.js web app
+web/node_modules/
+web/.next/
+web/out/

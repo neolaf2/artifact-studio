@@ -98,6 +98,7 @@ artifact-studio/
 | [`extension/`](./extension/) | Artifacts view, AST editor, Build / Preview / Watch, HTML panels |
 | [`cli/`](./cli/) | Same recipe engine from the shell |
 | [`samples/`](./samples/) | Recipe demos for GUI + CLI |
+| [`web/`](./web/) | Next.js T-box schema editor (clarification demo) |
 | [`skills/`](./skills/) | Agent-oriented document kits |
 | [`scripts/`](./scripts/) | Installers + AST E2E demo |
 | [`docs/`](./docs/) | Install & usage guides (EN + ZH) |
@@ -313,6 +314,27 @@ HTML artifacts use `"renderer": "html-display"` or `"html-editor"` with `.html` 
 5. **Agent-friendly** — CLI JSON on stdout; skills documented in `SKILL.md`
 
 ---
+
+## Route 6 — Next.js Web (T-box editor)
+
+Artifact Studio also ships a **Next.js web UI** for the same AST model.
+
+| Path | Purpose |
+|------|---------|
+| `web/` | Next.js App Router app |
+| `/` | Artifact catalog |
+| `/artifacts/clarification` | Schema form (T-box) + ontology + live HTML preview |
+| `GET/PUT /api/artifacts/:id` | Load / validate+save A-box JSON |
+
+```bash
+cd web
+npm install
+npm run dev
+# → http://localhost:3000
+```
+
+Demo pack: `web/content/artifacts/clarification/` (seeded from `samples/supplier-clarification-html-zh`).
+Edits are constrained by the predefined JSON Schema T-box and shown against the ontology markdown.
 
 ## License
 

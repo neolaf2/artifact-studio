@@ -98,6 +98,7 @@ artifact-studio/
 | [`extension/`](./extension/) | 产物视图、AST 编辑器、构建 / 预览 / 监视、HTML 面板 |
 | [`cli/`](./cli/) | 同一套配方引擎的命令行入口 |
 | [`samples/`](./samples/) | 面向路径 1–2 的配方示例 |
+| [`web/`](./web/) | Next.js T-box Schema 编辑器（澄清函演示） |
 | [`skills/`](./skills/) | 面向路径 3 的技能包 |
 | [`scripts/`](./scripts/) | 安装脚本 + AST 端到端演示 |
 | [`docs/`](./docs/) | 安装与使用文档（中英） |
@@ -311,6 +312,27 @@ HTML 产物使用 `"renderer": "html-display"` 或 `"html-editor"`，模板为 `
 5. **Agent 友好** — CLI 向 stdout 打 JSON；Skills 用 `SKILL.md` 说明  
 
 ---
+
+## 路径 6 — Next.js Web（T-box 编辑器）
+
+除 VS Code 扩展外，仓库还提供 **Next.js Web 界面**，共用同一套 AST。
+
+| 路径 | 作用 |
+|------|------|
+| `web/` | Next.js App Router 应用 |
+| `/` | 产物目录 |
+| `/artifacts/clarification` | 基于 T-box Schema 的表单 + 本体说明 + HTML 预览 |
+| `GET/PUT /api/artifacts/:id` | 读取 / 校验并保存 A-box JSON |
+
+```bash
+cd web
+npm install
+npm run dev
+# → http://localhost:3000
+```
+
+演示内容包：`web/content/artifacts/clarification/`（由 `samples/supplier-clarification-html-zh` 播种）。
+编辑受预定义 JSON Schema（T-box）约束，并对照本体说明展示。
 
 ## 许可协议
 
