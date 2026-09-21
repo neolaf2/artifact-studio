@@ -34,13 +34,21 @@ export async function PUT(req: Request, ctx: Ctx) {
     const { schema } = await loadArtifact(id);
     const result = validateAgainstSchema(schema, body.data);
     if (!result.ok) {
+      // Keep client dirty buffer — return issues only; do not persist.
       return NextResponse.json(
-        { error: 'Schema validation failed', issues: result.issues },
+        { error: 'Schema validation failed', issues: result.issues, ok: false },
         { status: 400 },
       );
     }
-    await saveArtifactData(id, body.data);
-    return NextResponse.json({ ok: true, issues: [] });
+    const persisted = await saveArtifactData(id, body.data);
+    return NextResponse.json({
+      ok: true,
+      issues: [],
+      persistedTo: persisted.persistedTo,
+      path: persisted.path,
+      ...(persisted.sha ? { sha: persisted.sha } : {}),
+      ...(persisted.mirrored ? { mirrored: persisted.mirrored } : {}),
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Save failed' },

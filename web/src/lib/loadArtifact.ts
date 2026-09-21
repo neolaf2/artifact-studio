@@ -1,11 +1,15 @@
 import { promises as fs } from 'node:fs';
 import { getArtifactMeta } from './registry';
 import {
-  artifactDataPath,
   artifactRboxPath,
   artifactSchemaPath,
   artifactTboxPath,
 } from './paths';
+import {
+  readDurableData,
+  writeDurableData,
+  type PersistResult,
+} from './durableStore';
 import type {
   ArtifactBundle,
   ArtifactSnapshotSummary,
@@ -41,13 +45,13 @@ async function readOptionalUtf8(filePath: string): Promise<string | undefined> {
 export async function loadArtifact(id: string): Promise<ArtifactBundle> {
   const meta = getArtifactMeta(id);
   if (!meta) throw new Error(`Unknown artifact: ${id}`);
-  const [schemaRaw, tboxMarkdown, dataRaw, rboxYaml] = await Promise.all([
+  const [schemaRaw, tboxMarkdown, durable, rboxYaml] = await Promise.all([
     fs.readFile(artifactSchemaPath(id), 'utf8'),
     fs.readFile(artifactTboxPath(id), 'utf8'),
-    fs.readFile(artifactDataPath(id), 'utf8'),
+    readDurableData(id),
     readOptionalUtf8(artifactRboxPath(id)),
   ]);
-  const data = JSON.parse(dataRaw) as Record<string, unknown>;
+  const data = durable.data;
   return {
     meta,
     schema: JSON.parse(schemaRaw) as JsonSchema,
@@ -61,11 +65,7 @@ export async function loadArtifact(id: string): Promise<ArtifactBundle> {
 export async function saveArtifactData(
   id: string,
   data: Record<string, unknown>,
-): Promise<void> {
+): Promise<PersistResult> {
   if (!getArtifactMeta(id)) throw new Error(`Unknown artifact: ${id}`);
-  await fs.writeFile(
-    artifactDataPath(id),
-    `${JSON.stringify(data, null, 2)}\n`,
-    'utf8',
-  );
+  return writeDurableData(id, data);
 }
