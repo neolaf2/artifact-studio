@@ -132,3 +132,11 @@ On the Vercel **production** deployment, A-box saves use **Vercel Blob** (`BLOB_
 - **Local / CLI / VS Code extension** are unchanged — they keep writing the workspace filesystem (no Blob token in Development).
 - **GitHub Contents write-back** is optional and off on production unless you set `ARTIFACT_STUDIO_GITHUB_TOKEN`.
 
+## Download PDF (Typst)
+
+The web editor **Download PDF** button compiles the artifact pack’s Typst view (`views.json` → `.typ`) with the current A-box.
+
+- **Generic:** any project that ships `views.json` + a `.typ` (or inherits its template’s view) can build a PDF — not clarification-only.
+- **Local:** requires `typst` on PATH (or `TYPST_PATH`).
+- **Vercel production:** JSON still saves to Blob; PDF compile returns 501 unless Typst is available in that environment.
+

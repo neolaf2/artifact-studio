@@ -103,3 +103,12 @@ See also `web/.env.example` and [web/README.md](../web/README.md).
 ## Fake company names only
 
 Demos use fictional orgs (e.g. StarSea / 星海能源 style placeholders). Do not commit real customer secrets or real oil-major names into sample packs.
+
+## Download PDF (Typst)
+
+The web editor **Download PDF** button compiles the artifact pack’s Typst view (`views.json` → `.typ`) with the current A-box.
+
+- **Generic:** any project that ships `views.json` + a `.typ` (or inherits its template’s view) can build a PDF — not clarification-only.
+- **Local:** requires `typst` on PATH (or `TYPST_PATH`).
+- **Vercel production:** JSON still saves to Blob; PDF compile returns 501 unless Typst is available in that environment.
+

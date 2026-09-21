@@ -38,6 +38,7 @@ export function ArtifactEditor({ initial }: Props) {
   const [generatingAll, setGeneratingAll] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [showPreview, setShowPreview] = useState(true);
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [splitPct, setSplitPct] = useState(50);
   const [previewTick, setPreviewTick] = useState(0);
   const [llmStatus, setLlmStatus] = useState<{
@@ -179,6 +180,38 @@ export function ArtifactEditor({ initial }: Props) {
     setStatus('Reset to loaded AST');
   }
 
+
+  async function onDownloadPdf() {
+    setPdfBusy(true);
+    setStatus('Building PDF with Typst…');
+    try {
+      const res = await fetch(`/api/artifacts/${bundle.meta.id}/pdf`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ data }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `PDF failed (${res.status})`);
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') || '';
+      const match = /filename="([^"]+)"/.exec(cd);
+      const filename = match?.[1] || `${bundle.meta.id}.pdf`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      setStatus(`PDF downloaded (${filename})`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'PDF build failed');
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   const chipLabel = chip === 'saving' ? 'Saving…' : chip === 'unsaved' ? 'Unsaved' : savedAt ? `Saved ${formatSavedClock(savedAt)}` : 'Saved';
   const chipClass = chip === 'saving' ? 'border-sky-300 bg-sky-50 text-sky-900' : chip === 'unsaved' ? 'border-amber-400 bg-amber-50 text-amber-950' : 'border-emerald-300 bg-emerald-50 text-emerald-900';
 
@@ -204,6 +237,9 @@ export function ArtifactEditor({ initial }: Props) {
         <button type="button" onClick={onReset} className="rounded-md border border-zinc-500 bg-zinc-800 px-2.5 py-1.5 text-xs hover:bg-zinc-700">Reset</button>
         <button type="button" disabled={generatingAll} onClick={onGenerateArtifact} className="rounded-md border border-amber-400/60 bg-amber-500/20 px-2.5 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-500/30 disabled:opacity-60">
           {generatingAll ? 'Generating…' : '✨ Generate'}
+        </button>
+        <button type="button" disabled={pdfBusy} onClick={() => void onDownloadPdf()} className="rounded-md border border-sky-400/70 bg-sky-500/20 px-2.5 py-1.5 text-xs font-medium text-sky-50 hover:bg-sky-500/30 disabled:opacity-60" title="Compile Typst view for this pack (generic; needs local Typst)">
+          {pdfBusy ? 'Building PDF…' : 'Download PDF'}
         </button>
         <button type="button" disabled={saving} onClick={() => void persist('manual')} className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60" title="Cmd/Ctrl+S">
           {saving ? 'Saving…' : 'Validate & save'}
