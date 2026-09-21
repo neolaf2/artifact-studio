@@ -334,6 +334,19 @@ npm run dev
 演示内容包：`web/content/artifacts/clarification/`（由 `samples/supplier-clarification-html-zh` 播种）。
 编辑受预定义 JSON Schema（T-box）约束，并对照本体说明展示。
 
+## LLM A-box 生成（单字段 + 整份产物）
+
+## LLM A-box 生成（单字段 + 整份产物）
+
+技能：[`skills/artifact-llm-generator`](./skills/artifact-llm-generator/) · 共享提示词：[`shared/llm-generate`](./shared/llm-generate/)
+
+| 宿主 | 用法 |
+|------|------|
+| **VS Code / Cursor 扩展（v0.5+）** | AST 编辑器工具栏 **Generate Artifact (LLM)**；字段旁 **✨**。使用 `vscode.lm` 聊天模型。 |
+| **Next.js Web** | 工具栏 **✨ Generate artifact**；字段旁 **✨ LLM**。`POST /api/artifacts/:id/generate`。配置 `ARTIFACT_STUDIO_LLM_API_KEY` 或 `ARTIFACT_STUDIO_LLM_MOCK=1`。 |
+
+两条路径都按同一套 T-box（JSON Schema + 本体）生成，并写回 A-box AST。
+
 ## 许可协议
 
 Copyright © 2026 **Richard Tong**.

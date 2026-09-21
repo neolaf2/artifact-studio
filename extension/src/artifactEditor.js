@@ -8,6 +8,7 @@ const path = require('node:path');
 const fs = require('node:fs/promises');
 const { loadAstContext, serializeAst, setPath } = require('./ast');
 const { schemaFields, escapeHtml } = require('./html');
+const { generateField, generateArtifact } = require('./llmGenerate');
 
 const VIEW_TYPE = 'artifactStudio.artifactEditor';
 
@@ -63,6 +64,10 @@ class ArtifactEditorProvider {
           if (this.onAstSaved) await this.onAstSaved(document, 'html-display');
         } else if (message?.type === 'renderPdf') {
           if (this.onAstSaved) await this.onAstSaved(document, 'typst');
+        } else if (message?.type === 'generateField') {
+          await this._generateField(document, webviewPanel, message.path, message.instruction);
+        } else if (message?.type === 'generateArtifact') {
+          await this._generateArtifact(document, webviewPanel, message.instruction);
         } else if (message?.type === 'ready') {
           await refresh();
         }
@@ -108,6 +113,66 @@ class ArtifactEditorProvider {
     this._updating.delete(key);
   }
 
+
+  async _generateField(document, webviewPanel, fieldPath, instruction) {
+    const ast = await loadAstContext(document);
+    await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: `Generating ${fieldPath}…`, cancellable: true },
+      async (_, token) => {
+        const result = await generateField({
+          path: fieldPath,
+          instruction: instruction || '',
+          schema: ast.schema,
+          ontology: ast.ontology,
+          data: ast.data,
+          artifactKind: 'clarification-letter',
+        }, token);
+        if (!result) return;
+        if (!result.ok) {
+          vscode.window.showWarningMessage(
+            `Needs input: ${(result.needsInput || []).join('; ') || 'unspecified'}`,
+          );
+          return;
+        }
+        setPath(ast.data, fieldPath, result.value);
+        await this._replaceDocument(document, ast.data);
+        vscode.window.showInformationMessage(`Generated field ${fieldPath}`);
+        webviewPanel.webview.postMessage({ type: 'generateDone', path: fieldPath });
+      },
+    );
+  }
+
+  async _generateArtifact(document, webviewPanel, instruction) {
+    const ast = await loadAstContext(document);
+    const prompt = instruction || await vscode.window.showInputBox({
+      prompt: 'Instructions for generating the full artifact JSON',
+      value: 'Refine into a complete supplier clarification letter consistent with the T-box schema.',
+    });
+    if (prompt === undefined) return;
+    await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: 'Generating full artifact…', cancellable: true },
+      async (_, token) => {
+        const result = await generateArtifact({
+          instruction: prompt,
+          schema: ast.schema,
+          ontology: ast.ontology,
+          data: ast.data,
+          artifactKind: 'clarification-letter',
+        }, token);
+        if (!result) return;
+        if (!result.ok) {
+          vscode.window.showWarningMessage(
+            `Needs input: ${(result.needsInput || []).join('; ') || 'unspecified'}`,
+          );
+          return;
+        }
+        await this._replaceDocument(document, result.data);
+        vscode.window.showInformationMessage('Generated full artifact AST');
+        webviewPanel.webview.postMessage({ type: 'generateDone', path: '' });
+      },
+    );
+  }
+
   _html(webview, ast) {
     const { data, schema, ontology, issues, companions } = ast;
     const fields = schema
@@ -130,6 +195,7 @@ class ArtifactEditorProvider {
     .toolbar { position: sticky; top: 0; z-index: 2; display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 14px; background: var(--vscode-sideBar-background); border-bottom: 1px solid var(--vscode-panel-border); }
     button { background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: 0; padding: 6px 12px; cursor: pointer; border-radius: 4px; }
     button.secondary { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); }
+    button.gen { background: transparent; color: var(--vscode-foreground); border: 1px solid var(--vscode-panel-border); padding: 2px 6px; margin-left: 6px; font-size: 12px; vertical-align: middle; }
     .shell { max-width: 920px; margin: 12px auto; padding: 0 14px; }
     fieldset.field { border: 1px solid var(--vscode-panel-border); border-radius: 6px; margin: 0 0 10px; padding: 8px 12px 12px; }
     legend { font-weight: 600; padding: 0 6px; }
@@ -146,6 +212,7 @@ class ArtifactEditorProvider {
   <div class="toolbar">
     <strong>Artifact AST Editor</strong>
     <button type="button" id="btn-html">Render HTML</button>
+    <button type="button" id="btn-gen-artifact" class="secondary">Generate Artifact (LLM)</button>
     <button type="button" id="btn-pdf" class="secondary">Render PDF</button>
     <span class="meta">data + schema + ontology → HTML / Typst</span>
   </div>
@@ -178,6 +245,19 @@ class ArtifactEditorProvider {
     });
     document.getElementById('btn-html').onclick = () => vscode.postMessage({ type: 'renderHtml' });
     document.getElementById('btn-pdf').onclick = () => vscode.postMessage({ type: 'renderPdf' });
+    document.getElementById('btn-gen-artifact').onclick = () => {
+      const instruction = window.prompt('Instructions for full artifact generation (optional):', 'Complete a coherent clarification letter from the T-box schema.');
+      if (instruction === null) return;
+      vscode.postMessage({ type: 'generateArtifact', instruction });
+    };
+    document.querySelectorAll('[data-gen-path]').forEach((btn) => {
+      btn.onclick = () => {
+        const path = btn.getAttribute('data-gen-path');
+        const instruction = window.prompt('Instructions for field ' + path + ' (optional):', 'Fill a realistic value consistent with the document.');
+        if (instruction === null) return;
+        vscode.postMessage({ type: 'generateField', path, instruction });
+      };
+    });
     vscode.postMessage({ type: 'ready' });
   </script>
 </body>

@@ -336,6 +336,19 @@ npm run dev
 Demo pack: `web/content/artifacts/clarification/` (seeded from `samples/supplier-clarification-html-zh`).
 Edits are constrained by the predefined JSON Schema T-box and shown against the ontology markdown.
 
+## LLM A-box generation (field + whole artifact)
+
+## LLM A-box generation (field + whole artifact)
+
+Skill: [`skills/artifact-llm-generator`](./skills/artifact-llm-generator/) · shared prompts: [`shared/llm-generate`](./shared/llm-generate/)
+
+| Host | How |
+|------|-----|
+| **VS Code / Cursor extension (v0.5+)** | AST editor toolbar **Generate Artifact (LLM)**; per-field **✨** buttons. Uses `vscode.lm` chat models. |
+| **Next.js web** | Toolbar **✨ Generate artifact**; per-field **✨ LLM**. `POST /api/artifacts/:id/generate`. Set `ARTIFACT_STUDIO_LLM_API_KEY` or `ARTIFACT_STUDIO_LLM_MOCK=1`. |
+
+Both paths generate against the same T-box JSON Schema + ontology and write back into the A-box AST.
+
 ## License
 
 Copyright © 2026 **Richard Tong**.

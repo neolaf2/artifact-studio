@@ -48,6 +48,75 @@ export function ArtifactEditor({ initial }: Props) {
     }
   }
 
+
+  const [generatingPath, setGeneratingPath] = useState<string | null>(null);
+  const [generatingAll, setGeneratingAll] = useState(false);
+
+  async function onGenerateField(fieldPath: string) {
+    const instruction =
+      window.prompt(
+        `LLM instructions for field "${fieldPath}" (optional)`,
+        'Fill a realistic value consistent with the rest of this clarification letter.',
+      ) ?? null;
+    if (instruction === null) return;
+    setGeneratingPath(fieldPath);
+    setStatus(`Generating ${fieldPath}…`);
+    try {
+      const res = await fetch(`/api/artifacts/${initial.meta.id}/generate`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'field',
+          path: fieldPath,
+          instruction,
+          data,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Generation failed');
+      if (!body.ok) {
+        setStatus(`Needs input: ${(body.needsInput || []).join('; ')}`);
+        return;
+      }
+      setData((prev) => applyPathChange(prev, fieldPath, body.value));
+      setStatus(`Generated field ${fieldPath} (unsaved)`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Generation failed');
+    } finally {
+      setGeneratingPath(null);
+    }
+  }
+
+  async function onGenerateArtifact() {
+    const instruction =
+      window.prompt(
+        'LLM instructions for full artifact generation (optional)',
+        'Produce a complete coherent supplier clarification letter for the T-box schema.',
+      ) ?? null;
+    if (instruction === null) return;
+    setGeneratingAll(true);
+    setStatus('Generating full artifact…');
+    try {
+      const res = await fetch(`/api/artifacts/${initial.meta.id}/generate`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mode: 'artifact', instruction, data }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Generation failed');
+      if (!body.ok) {
+        setStatus(`Needs input: ${(body.needsInput || []).join('; ')}`);
+        return;
+      }
+      setData(body.data);
+      setStatus('Generated full artifact (unsaved)');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Generation failed');
+    } finally {
+      setGeneratingAll(false);
+    }
+  }
+
   function onReset() {
     setData(initial.data);
     setIssues([]);
@@ -83,6 +152,14 @@ export function ArtifactEditor({ initial }: Props) {
             className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm hover:bg-zinc-50"
           >
             Reset
+          </button>
+          <button
+            type="button"
+            disabled={generatingAll}
+            onClick={onGenerateArtifact}
+            className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-950 hover:bg-amber-100 disabled:opacity-60"
+          >
+            {generatingAll ? 'Generating…' : '✨ Generate artifact'}
           </button>
           <button
             type="button"
@@ -144,6 +221,8 @@ export function ArtifactEditor({ initial }: Props) {
                 schema={initial.schema}
                 value={data}
                 onChange={onFieldChange}
+                onGenerate={onGenerateField}
+                generatingPath={generatingPath}
               />
             ) : null}
             {tab === 'tbox' ? (

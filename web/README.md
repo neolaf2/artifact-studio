@@ -28,3 +28,18 @@ Open http://localhost:3000 → **供应商澄清函** → schema form + live HTM
 ## Stack
 
 Next.js App Router · TypeScript · Tailwind · Ajv (JSON Schema 2020-12)
+
+
+## LLM generation (field + full artifact)
+
+The editor can call an agent to fill **one JSON path** or the **whole A-box instance** against the T-box schema.
+
+```bash
+cp .env.example .env.local
+# either set ARTIFACT_STUDIO_LLM_API_KEY=... or keep ARTIFACT_STUDIO_LLM_MOCK=1
+npm run dev
+```
+
+- UI: **✨ LLM** on each schema field, **✨ Generate artifact** in the toolbar
+- API: `POST /api/artifacts/:id/generate` with `{ mode: "field"|"artifact", path?, instruction?, data? }`
+- Skill: `skills/artifact-llm-generator`

@@ -75,11 +75,11 @@ function schemaFields(schema, data, prefix = '') {
         if (itemsSpec.type === 'object' || itemsSpec.properties) {
           return `<div class="array-item"><div class="hint">[${i}]</div>${schemaFields(itemsSpec, item || {}, `${fieldPath}.${i}`)}</div>`;
         }
-        return `<label>${escapeHtml(label)} [${i}]<input type="text" data-path="${escapeHtml(`${fieldPath}.${i}`)}" value="${escapeHtml(item)}" /></label>`;
+        return `<label>${escapeHtml(label)} [${i}]<input type="text" data-path="${escapeHtml(`${fieldPath}.${i}`)}" value="${escapeHtml(item)}" /><button type="button" class="gen" data-gen-path="${escapeHtml(`${fieldPath}.${i}`)}" title="Generate with LLM">✨</button></label>`;
       }).join('');
       chunks.push(`<fieldset class="field"><legend>${escapeHtml(label)}（数组）</legend>${body}</fieldset>`);
     } else if (type === 'boolean') {
-      chunks.push(`<fieldset class="field"><legend>${escapeHtml(label)}</legend><label><input type="checkbox" data-path="${escapeHtml(fieldPath)}"${val ? ' checked' : ''} /> ${escapeHtml(label)}</label></fieldset>`);
+      chunks.push(`<fieldset class="field"><legend>${escapeHtml(label)}</legend><label><input type="checkbox" data-path="${escapeHtml(fieldPath)}"${val ? ' checked' : ''} /> ${escapeHtml(label)}<button type="button" class="gen" data-gen-path="${escapeHtml(fieldPath)}" title="Generate with LLM">✨</button></label></fieldset>`);
     } else if (type === 'number' || type === 'integer') {
       chunks.push(`<fieldset class="field"><legend>${escapeHtml(label)}</legend><input type="number" data-path="${escapeHtml(fieldPath)}" value="${escapeHtml(val == null ? '' : val)}" /></fieldset>`);
     } else {

@@ -2,7 +2,7 @@
   "name": "artifact-studio",
   "displayName": "Artifact Studio",
   "description": "Custom AST editor (data.json + schema + ontology) with HTML and Typst PDF rendering.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "artifact-studio-local",
   "engines": {
     "vscode": "^1.95.0"
@@ -16,7 +16,9 @@
     "onStartupFinished",
     "onCustomEditor:artifactStudio.artifactEditor",
     "onCommand:artifactStudio.openAstEditor",
-    "onCommand:artifactStudio.e2eClarificationDemo"
+    "onCommand:artifactStudio.e2eClarificationDemo",
+    "onCommand:artifactStudio.generateField",
+    "onCommand:artifactStudio.generateArtifact"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -97,6 +99,14 @@
       {
         "command": "artifactStudio.e2eClarificationDemo",
         "title": "Artifact Studio: E2E Clarification Demo (edit \u2192 HTML \u2192 PDF)"
+      },
+      {
+        "command": "artifactStudio.generateField",
+        "title": "Artifact Studio: Generate Field with LLM"
+      },
+      {
+        "command": "artifactStudio.generateArtifact",
+        "title": "Artifact Studio: Generate Full Artifact with LLM"
       }
     ],
     "views": {
@@ -168,6 +178,11 @@
           "default": "markdownlint",
           "scope": "machine",
           "description": "Path to the existing local markdownlint executable."
+        },
+        "artifactStudio.llmArtifactKind": {
+          "type": "string",
+          "default": "clarification-letter",
+          "description": "Default artifact kind label sent to the LLM generator skill."
         }
       }
     },

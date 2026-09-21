@@ -7,6 +7,8 @@ type Props = {
   path?: string;
   value: unknown;
   onChange: (path: string, value: unknown) => void;
+  onGenerate?: (path: string) => void;
+  generatingPath?: string | null;
 };
 
 function cloneContainer(value: unknown, asArray: boolean): unknown {
@@ -43,31 +45,52 @@ export function applyPathChange(
 function Field({
   label,
   required,
+  path,
+  onGenerate,
+  generatingPath,
   children,
 }: {
   label: string;
   required?: boolean;
+  path?: string;
+  onGenerate?: (path: string) => void;
+  generatingPath?: string | null;
   children: React.ReactNode;
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-        {label}
-        {required ? <span className="text-rose-500"> *</span> : null}
+      <span className="flex items-center justify-between gap-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
+        <span>
+          {label}
+          {required ? <span className="text-rose-500"> *</span> : null}
+        </span>
+        {path && onGenerate ? (
+          <button
+            type="button"
+            className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+            disabled={generatingPath === path}
+            onClick={(e) => {
+              e.preventDefault();
+              onGenerate(path);
+            }}
+          >
+            {generatingPath === path ? '…' : '✨ LLM'}
+          </button>
+        ) : null}
       </span>
       {children}
     </label>
   );
 }
 
-export function SchemaForm({ schema, path = '', value, onChange }: Props) {
+export function SchemaForm({ schema, path = '', value, onChange, onGenerate, generatingPath }: Props) {
   const type = Array.isArray(schema.type) ? schema.type[0] : schema.type;
   const requiredSet = new Set(schema.required || []);
   const leafKey = path.split('.').pop() || '';
 
   if (schema.enum) {
     return (
-      <Field label={schema.title || leafKey || 'value'}>
+      <Field label={schema.title || leafKey || 'value'} path={path} onGenerate={onGenerate} generatingPath={generatingPath}>
         <select
           className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
           value={String(value ?? '')}
@@ -106,6 +129,8 @@ export function SchemaForm({ schema, path = '', value, onChange }: Props) {
               path={childPath}
               value={childVal}
               onChange={onChange}
+              onGenerate={onGenerate}
+              generatingPath={generatingPath}
             />
           );
         })}
@@ -143,6 +168,8 @@ export function SchemaForm({ schema, path = '', value, onChange }: Props) {
                 path={childPath}
                 value={item}
                 onChange={onChange}
+                onGenerate={onGenerate}
+                generatingPath={generatingPath}
               />
             </div>
           );
@@ -169,7 +196,7 @@ export function SchemaForm({ schema, path = '', value, onChange }: Props) {
 
   if (type === 'boolean') {
     return (
-      <Field label={schema.title || leafKey} required={requiredSet.has(leafKey)}>
+      <Field label={schema.title || leafKey} required={requiredSet.has(leafKey)} path={path} onGenerate={onGenerate} generatingPath={generatingPath}>
         <input
           type="checkbox"
           checked={Boolean(value)}
@@ -181,7 +208,7 @@ export function SchemaForm({ schema, path = '', value, onChange }: Props) {
 
   if (type === 'number' || type === 'integer') {
     return (
-      <Field label={schema.title || leafKey} required={requiredSet.has(leafKey)}>
+      <Field label={schema.title || leafKey} required={requiredSet.has(leafKey)} path={path} onGenerate={onGenerate} generatingPath={generatingPath}>
         <input
           type="number"
           className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
@@ -196,7 +223,7 @@ export function SchemaForm({ schema, path = '', value, onChange }: Props) {
 
   if (long) {
     return (
-      <Field label={schema.title || leafKey} required={requiredSet.has(leafKey)}>
+      <Field label={schema.title || leafKey} required={requiredSet.has(leafKey)} path={path} onGenerate={onGenerate} generatingPath={generatingPath}>
         <textarea
           rows={5}
           className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm leading-relaxed"
@@ -208,7 +235,7 @@ export function SchemaForm({ schema, path = '', value, onChange }: Props) {
   }
 
   return (
-    <Field label={schema.title || leafKey} required={requiredSet.has(leafKey)}>
+    <Field label={schema.title || leafKey} required={requiredSet.has(leafKey)} path={path} onGenerate={onGenerate} generatingPath={generatingPath}>
       <input
         type="text"
         className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"

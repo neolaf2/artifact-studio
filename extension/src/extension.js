@@ -311,7 +311,24 @@ function activate(context) {
     vscode.window.showInformationMessage('E2E demo done: AST edit → HTML display → Typst PDF');
   });
 
-  require('./authoring-ui').registerAuthoring(context, register, choose, output);
+  
+  register('generateField', async () => {
+    const editor = vscode.window.activeTextEditor;
+    // Prefer custom editor webview — fall back to prompt → open AST editor
+    const uri = editor?.document?.uri || (await vscode.window.showOpenDialog({ filters: { JSON: ['json'] } }))?.[0];
+    if (!uri) return;
+    await vscode.commands.executeCommand('vscode.openWith', uri, 'artifactStudio.artifactEditor');
+    vscode.window.showInformationMessage('Use ✨ on a field in the AST editor, or Generate Artifact (LLM) in the toolbar.');
+  });
+  register('generateArtifact', async () => {
+    const uri = vscode.window.activeTextEditor?.document?.uri
+      || (await vscode.workspace.findFiles('**/supplier-clarification-html-zh/data.json', null, 1))[0];
+    if (!uri) throw new Error('Open a data.json artifact first.');
+    await vscode.commands.executeCommand('vscode.openWith', uri, 'artifactStudio.artifactEditor');
+    vscode.window.showInformationMessage('Click “Generate Artifact (LLM)” in the AST editor toolbar.');
+  });
+
+require('./authoring-ui').registerAuthoring(context, register, choose, output);
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/*');
   function onChange(uri) {
