@@ -78,3 +78,45 @@ test('both shipped sample manifests load', async () => {
     assert.ok(artifacts.length >= 3, `${dir} should expose its artifacts`);
   }
 });
+
+test('build returns the dependency closure reported by the compiler', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'artifact-deps-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const compiler = path.join(root, 'fake-typst');
+  await fs.writeFile(compiler,
+    '#!/usr/bin/env node\n' +
+    'const fs=require("node:fs");const args=process.argv.slice(2);\n' +
+    'const di=args.indexOf("--deps");\n' +
+    'if(di>-1){fs.writeFileSync(args[di+1],JSON.stringify({inputs:["data.yaml","letter.typ","assets/logo.png"],outputs:["out.pdf"]}));}\n' +
+    'const out=args.at(-1);fs.writeFileSync(out.replace("{p}","1"),out.endsWith(".pdf")?"%PDF-test":"png");\n',
+    { mode: 0o755 });
+  const manifest = path.join(root, 'artifact-studio.json');
+  await fs.writeFile(manifest, JSON.stringify({
+    version: 1,
+    artifacts: [{ id: 'letter', template: 'letter.typ', data: 'data.yaml', output: 'output/letter.pdf' }]
+  }));
+  await fs.writeFile(path.join(root, 'letter.typ'), '');
+  await fs.writeFile(path.join(root, 'data.yaml'), 'title: Test');
+  const result = await build(manifest, 'letter', { executable: compiler });
+  assert.deepEqual(result.closure.inputs, ['data.yaml', 'letter.typ', 'assets/logo.png']);
+});
+
+test('build tolerates a compiler that writes no deps file', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'artifact-nodeps-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const compiler = path.join(root, 'fake-typst');
+  await fs.writeFile(compiler,
+    '#!/usr/bin/env node\n' +
+    'const fs=require("node:fs");const args=process.argv.slice(2);\n' +
+    'const out=args.at(-1);fs.writeFileSync(out.replace("{p}","1"),"%PDF-test");\n',
+    { mode: 0o755 });
+  const manifest = path.join(root, 'artifact-studio.json');
+  await fs.writeFile(manifest, JSON.stringify({
+    version: 1,
+    artifacts: [{ id: 'letter', template: 'letter.typ', data: 'data.yaml', output: 'output/letter.pdf' }]
+  }));
+  await fs.writeFile(path.join(root, 'letter.typ'), '');
+  await fs.writeFile(path.join(root, 'data.yaml'), 'title: Test');
+  const result = await build(manifest, 'letter', { executable: compiler });
+  assert.deepEqual(result.closure, { inputs: [], outputs: [] });
+});

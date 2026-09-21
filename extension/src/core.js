@@ -88,6 +88,16 @@ function run(executable, args, cwd, log = () => {}) {
   });
 }
 
+async function readClosure(depsFile) {
+  try {
+    const parsed = JSON.parse(await fs.readFile(depsFile, 'utf8'));
+    const norm = list => (Array.isArray(list) ? list : []).map(p => String(p).split(path.sep).join('/'));
+    return { inputs: norm(parsed.inputs), outputs: norm(parsed.outputs) };
+  } catch {
+    return { inputs: [], outputs: [] };
+  }
+}
+
 async function build(file, id, options = {}) {
   const { root, recipe } = await loadRecipe(file, id);
   if (recipe.renderer === 'html-display' || recipe.renderer === 'html-editor') {
@@ -105,7 +115,11 @@ async function build(file, id, options = {}) {
   const staging = await fs.mkdtemp(path.join(path.dirname(output), '.artifact-build-'));
   try {
     const tempPDF = path.join(staging, 'output.pdf');
-    await run(executable, [...common, tempPDF], root, options.log);
+    const depsFile = path.join(staging, 'deps.json');
+    await run(executable, ['compile', '--root', root, '--diagnostic-format', 'short',
+      '--input', `data=${dataPath}`, '--deps', depsFile, '--deps-format', 'json',
+      template, tempPDF], root, options.log);
+    const closure = await readClosure(depsFile);
     await fs.copyFile(tempPDF, output);
     let pages = [];
     if (options.previewDir) {
@@ -119,7 +133,7 @@ async function build(file, id, options = {}) {
         throw new Error(`PDF saved, but preview failed: ${error.message}`);
       }
     }
-    return { id: recipe.id, output, pages };
+    return { id: recipe.id, output, pages, closure };
   } finally { await fs.rm(staging, { recursive: true, force: true }); }
 }
 
