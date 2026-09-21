@@ -1,8 +1,8 @@
 {
   "name": "artifact-studio",
   "displayName": "Artifact Studio",
-  "description": "Custom AST editor (data.json + schema + ontology) with HTML and Typst PDF rendering.",
-  "version": "0.5.1",
+  "description": "Overleaf-like AST editor (form + live HTML preview) with HTML and Typst PDF rendering.",
+  "version": "0.5.2",
   "publisher": "artifact-studio-local",
   "engines": {
     "vscode": "^1.95.0"
@@ -101,7 +101,7 @@
       },
       {
         "command": "artifactStudio.e2eClarificationDemo",
-        "title": "Artifact Studio: E2E Clarification Demo (edit \u2192 HTML \u2192 PDF)"
+        "title": "Artifact Studio: E2E Clarification Demo (edit → HTML → PDF)"
       },
       {
         "command": "artifactStudio.generateField",
@@ -225,7 +225,7 @@
         "artifactStudio.llm.apiKey": {
           "type": "string",
           "default": "",
-          "description": "Optional fallback API key (prefer \u201cArtifact Studio: Set LLM API Key\u201d which uses SecretStorage)."
+          "description": "Optional fallback API key (prefer “Artifact Studio: Set LLM API Key” which uses SecretStorage)."
         }
       }
     },
