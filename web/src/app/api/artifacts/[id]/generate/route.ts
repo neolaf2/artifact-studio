@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { loadArtifact } from '@/lib/loadArtifact';
-import { getArtifactMeta } from '@/lib/registry';
+import { resolveArtifactMeta } from '@/lib/projectStore';
 import { completeJsonPrompt } from '@/lib/llm/client';
 import {
   buildArtifactPrompt,
@@ -12,7 +12,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 export async function POST(req: Request, ctx: Ctx) {
   const { id } = await ctx.params;
-  if (!getArtifactMeta(id)) {
+  if (!(await resolveArtifactMeta(id))) {
     return NextResponse.json({ error: 'Unknown artifact' }, { status: 404 });
   }
   try {
