@@ -1,8 +1,8 @@
 {
   "name": "artifact-studio",
   "displayName": "Artifact Studio",
-  "description": "Generate PDF artifacts from JSON/YAML data and local Typst templates.",
-  "version": "0.2.0",
+  "description": "Generate PDF (Typst) and HTML display/editor artifacts from shared JSON/YAML + JSON Schema.",
+  "version": "0.3.0",
   "publisher": "artifact-studio-local",
   "engines": {
     "vscode": "^1.95.0"
@@ -45,7 +45,7 @@
       },
       {
         "command": "artifactStudio.openOutput",
-        "title": "Artifact Studio: Open Generated PDF"
+        "title": "Artifact Studio: Open Generated Output"
       },
       {
         "command": "artifactStudio.toggleWatch",
@@ -70,6 +70,14 @@
       {
         "command": "artifactStudio.exportMarkdown",
         "title": "Artifact Studio: Export Markdown with Pandoc"
+      },
+      {
+        "command": "artifactStudio.htmlDisplay",
+        "title": "Artifact Studio: Open HTML Display"
+      },
+      {
+        "command": "artifactStudio.htmlEditor",
+        "title": "Artifact Studio: Open HTML Editor"
       }
     ],
     "views": {
@@ -94,6 +102,16 @@
         },
         {
           "command": "artifactStudio.toggleWatch",
+          "when": "view == artifactStudio.artifacts",
+          "group": "navigation"
+        },
+        {
+          "command": "artifactStudio.htmlDisplay",
+          "when": "view == artifactStudio.artifacts",
+          "group": "navigation"
+        },
+        {
+          "command": "artifactStudio.htmlEditor",
           "when": "view == artifactStudio.artifacts",
           "group": "navigation"
         }

@@ -165,3 +165,15 @@ JSON output is parsed and must be an object. Schema and ontology requirements co
 Additional local verification required: first-run checks with missing/present tools, a model provider's authentication and cancellation behavior, Markdown drafting and JSON extraction against the sample ontology/schema, and actual Pandoc export. No live LLM request was made while developing this package.
 
 References: [VS Code Language Model API](https://code.visualstudio.com/api/extension-guides/ai/language-model), [Pandoc user guide](https://pandoc.org/MANUAL.html).
+
+
+## HTML display & editor (v0.3)
+
+Artifacts may use `"renderer": "html-display"` or `"html-editor"` with the same
+`data.yaml` / `data.json` + `dataSchema` as Typst PDF recipes.
+
+Commands:
+- **Artifact Studio: Open HTML Display** — build and open the read-only letter/view
+- **Artifact Studio: Open HTML Editor** — schema-driven form; **Save to workspace** writes data back
+
+See `samples/supplier-clarification-html-zh` and skill `skills/portable-html-form-renderer`.

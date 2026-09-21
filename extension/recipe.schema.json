@@ -29,7 +29,7 @@
           },
           "template": {
             "type": "string",
-            "pattern": "\\.typ$"
+            "description": "Typst .typ or HTML .html template"
           },
           "data": {
             "type": "string",
@@ -37,15 +37,30 @@
           },
           "output": {
             "type": "string",
-            "pattern": "\\.pdf$"
+            "description": ".pdf or .html output"
+          },
+          "renderer": {
+            "type": "string",
+            "enum": [
+              "typst",
+              "html-display",
+              "html-editor"
+            ],
+            "description": "Build backend. Inferred from template/output when omitted."
+          },
+          "theme": {
+            "type": "string",
+            "description": "Optional CSS theme for HTML artifacts (default theme.css)."
           },
           "ontology": {
-            "type": "string",
-            "description": "Ontology reference file for AI authoring."
+            "type": "string"
           },
           "dataSchema": {
             "type": "string",
-            "description": "JSON Schema reference file for AI authoring."
+            "description": "JSON Schema for data (required for html-editor)."
+          },
+          "note": {
+            "type": "string"
           }
         }
       }

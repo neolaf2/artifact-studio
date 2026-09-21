@@ -10,6 +10,15 @@ function inside(root, relative) {
   return result;
 }
 
+
+function detectRenderer(item) {
+  if (item.renderer) return item.renderer;
+  if (/\.typ$/i.test(item.template) || /\.pdf$/i.test(item.output)) return 'typst';
+  if (/editor/i.test(item.id) || /editor/i.test(item.template)) return 'html-editor';
+  if (/\.html?$/i.test(item.template) || /\.html?$/i.test(item.output)) return 'html-display';
+  return 'typst';
+}
+
 async function loadRecipe(file, id) {
   const root = path.dirname(path.resolve(file));
   const config = JSON.parse(await fs.readFile(file, 'utf8'));
@@ -19,8 +28,20 @@ async function loadRecipe(file, id) {
     if (!item || typeof item.id !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(item.id) || seen.has(item.id)) throw new Error('Artifact IDs must be unique and contain letters, digits, underscores or hyphens.');
     seen.add(item.id);
     for (const key of ['template', 'data', 'output']) inside(root, item[key]);
-    if (!/\.typ$/i.test(item.template) || !/\.(json|ya?ml)$/i.test(item.data) || !/\.pdf$/i.test(item.output)) throw new Error('Expected .typ template, .json/.yaml/.yml data, and .pdf output.');
+    if (item.ontology) inside(root, item.ontology);
+    if (item.dataSchema) inside(root, item.dataSchema);
+    if (item.theme) inside(root, item.theme);
     if (item.output === item.data || item.output === item.template) throw new Error('Output must not overwrite source.');
+    const renderer = detectRenderer(item);
+    item.renderer = renderer;
+    if (!/\.(json|ya?ml)$/i.test(item.data)) throw new Error('Expected .json/.yaml/.yml data.');
+    if (renderer === 'typst') {
+      if (!/\.typ$/i.test(item.template) || !/\.pdf$/i.test(item.output)) throw new Error('Typst artifacts need a .typ template and .pdf output.');
+    } else if (renderer === 'html-display' || renderer === 'html-editor') {
+      if (!/\.html?$/i.test(item.template) || !/\.html?$/i.test(item.output)) throw new Error('HTML artifacts need an .html template and .html output.');
+    } else {
+      throw new Error(`Unsupported renderer: ${renderer}`);
+    }
   }
   const recipe = id ? config.artifacts.find(x => x.id === id) : config.artifacts[0];
   if (!recipe) throw new Error(`Unknown artifact: ${id}`);
@@ -60,6 +81,10 @@ function run(executable, args, cwd, log = () => {}) {
 
 async function build(file, id, options = {}) {
   const { root, recipe } = await loadRecipe(file, id);
+  if (recipe.renderer === 'html-display' || recipe.renderer === 'html-editor') {
+    const { buildHtml } = require('./html');
+    return buildHtml(file, id, options);
+  }
   const template = await checkPath(root, recipe.template);
   await checkPath(root, recipe.data);
   const output = await checkPath(root, recipe.output, true);
@@ -89,4 +114,4 @@ async function build(file, id, options = {}) {
   } finally { await fs.rm(staging, { recursive: true, force: true }); }
 }
 
-module.exports = { inside, loadRecipe, checkPath, run, build };
+module.exports = { inside, loadRecipe, checkPath, run, build, detectRenderer };

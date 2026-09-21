@@ -13,6 +13,15 @@ Copyright © 2026 **Richard Tong**. Licensed under the [Apache License 2.0](./LI
 
 **中文文档:** [README.zh-CN.md](./README.zh-CN.md) · [docs/zh/](./docs/zh/)
 
+## HTML display / editor
+
+Same JSON/YAML + JSON Schema contract as Typst. Extension commands:
+
+- `Artifact Studio: Open HTML Display`
+- `Artifact Studio: Open HTML Editor`
+
+Skill: [`skills/portable-html-form-renderer`](./skills/portable-html-form-renderer/). Samples: `samples/supplier-clarification-html-zh`.
+
 ## Routes to a PDF (pick one)
 
 All routes ultimately call **local Typst**. Choose the entry point that matches your workflow:

@@ -227,7 +227,7 @@ fieldset.field textarea { min-height: 4.5rem; resize: vertical; }
     </form>
   </div>
   <script>
-    const INITIAL = {"title": "澄清函", "doc_type": "供应商澄清与补正通知", "status": "draft", "language": "zh-CN", "issuer": {"name": "星海能源集团有限公司采购中心", "name_en": "StarSea Energy Group Procurement Center", "department": "清标与评审工作组", "address": "上海市浦东新区示例大道88号"}, "signatory": {"name": "（待签）", "title": "采购项目负责人", "email": "procurement-demo@example.com"}, "project": {"name": "智能巡检系统采购项目", "id": "SSE-IT-2026-091", "bid_section": "标段一"}, "supplier": {"legal_name": "北京示例科技有限公司", "supplier_id": "SUP-001", "contact_name": "张明", "contact_title": "投标授权代表", "address": "北京市海淀区中关村大街1号"}, "reference": "澄字〔2026〕0147号", "issue_date": "2026年9月21日", "response_due": "收到本函之日起3个工作日内（截止2026年9月26日17:00前）", "opening": "北京示例科技有限公司：\n\n在对贵单位递交的投标（应答）文件进行清标与评审过程中，评标委员会（清标工作组）发现下列事项需要贵单位予以澄清或补充证明材料。请严格按照本函所列事项逐条书面回复，并附相应证明材料。\n\n本函为草稿，未经采购人批准不得对外发送。逾期未复或回复不符合招标文件要求的，评标委员会可按招标文件及有关规定处理。\n", "closing": "回复要求：\n一、请逐项对应澄清事项编号作答，不得遗漏；\n二、证明材料应清晰可辨，加盖单位公章，并标注与事项编号的对应关系；\n三、如涉及报价调整，须符合招标文件关于澄清、补正的规定，不得借澄清改变投标实质性内容；\n四、请将回复文件密封提交（或按招标文件规定的电子渠道上传），并注明项目名称、项目编号及“澄清回复”字样。\n\n特此函告。\n", "questions": [{"id": "澄-001", "requirement_id": "REQ-001", "problem_id": "PRB-001", "item": "法人资格与注册证明", "reference": "招标文件第3.1.1条", "finding": "营业执照扫描件模糊，无法核验统一社会信用代码及经营范围是否覆盖本项目。", "question": "请重新提交清晰的营业执照复印件（加盖公章），并书面确认统一社会信用代码与投标文件封面记载一致。", "materials": ["营业执照清晰扫描件（加盖公章）", "法定代表人身份证明或授权委托书"], "response_format": "书面确认并附证明材料"}, {"id": "澄-002", "requirement_id": "REQ-008", "problem_id": "PRB-002", "item": "项目经理资质与在职证明", "reference": "招标文件第3.2.3条 / 评分办法第2.1项", "finding": "技术方案所列项目经理姓名与所附资格证书持有人不一致。", "question": "请明确拟任项目经理人选，提供其有效资格证书及在职证明；如更换人选，请同步更新技术方案相应章节并说明变更原因。", "materials": ["项目经理资格证书", "在职证明或近三个月社保证明", "更新后的技术方案相关页（如有变更）"], "response_format": "书面说明并附证明材料"}, {"id": "澄-003", "requirement_id": "REQ-015", "problem_id": "PRB-003", "item": "分项报价与开标一览表一致性", "reference": "开标一览表 / 分项报价表", "finding": "分项合价与投标总价存在差额，且未说明是否含增值税及适用税率。", "question": "请核对并说明分项报价表与开标一览表金额差异原因，明确报价是否含税及税率；如需补正，请按招标文件规定提交更正说明（不得改变实质性报价条件，除非文件允许）。", "materials": ["差异说明函", "修订后的分项报价表（如招标文件允许）"], "response_format": "书面说明；必要时提交更正表"}], "attachments": ["招标文件相关条款摘录（供参考）", "清标问题清单摘录（内部编号 PRB-001～PRB-003）"]};
+    const INITIAL = {"title":"澄清函","doc_type":"供应商澄清与补正通知","status":"draft","language":"zh-CN","issuer":{"name":"星海能源集团有限公司采购中心","name_en":"StarSea Energy Group Procurement Center","department":"清标与评审工作组","address":"上海市浦东新区示例大道88号"},"signatory":{"name":"（待签）","title":"采购项目负责人","email":"procurement-demo@example.com"},"project":{"name":"智能巡检系统采购项目","id":"SSE-IT-2026-091","bid_section":"标段一"},"supplier":{"legal_name":"北京示例科技有限公司","supplier_id":"SUP-001","contact_name":"张明","contact_title":"投标授权代表","address":"北京市海淀区中关村大街1号"},"reference":"澄字〔2026〕0147号","issue_date":"2026年9月21日","response_due":"收到本函之日起3个工作日内（截止2026年9月26日17:00前）","opening":"北京示例科技有限公司：\n\n在对贵单位递交的投标（应答）文件进行清标与评审过程中，评标委员会（清标工作组）发现下列事项需要贵单位予以澄清或补充证明材料。请严格按照本函所列事项逐条书面回复，并附相应证明材料。\n\n本函为草稿，未经采购人批准不得对外发送。逾期未复或回复不符合招标文件要求的，评标委员会可按招标文件及有关规定处理。\n","closing":"回复要求：\n一、请逐项对应澄清事项编号作答，不得遗漏；\n二、证明材料应清晰可辨，加盖单位公章，并标注与事项编号的对应关系；\n三、如涉及报价调整，须符合招标文件关于澄清、补正的规定，不得借澄清改变投标实质性内容；\n四、请将回复文件密封提交（或按招标文件规定的电子渠道上传），并注明项目名称、项目编号及“澄清回复”字样。\n\n特此函告。\n","questions":[{"id":"澄-001","requirement_id":"REQ-001","problem_id":"PRB-001","item":"法人资格与注册证明","reference":"招标文件第3.1.1条","finding":"营业执照扫描件模糊，无法核验统一社会信用代码及经营范围是否覆盖本项目。","question":"请重新提交清晰的营业执照复印件（加盖公章），并书面确认统一社会信用代码与投标文件封面记载一致。","materials":["营业执照清晰扫描件（加盖公章）","法定代表人身份证明或授权委托书"],"response_format":"书面确认并附证明材料"},{"id":"澄-002","requirement_id":"REQ-008","problem_id":"PRB-002","item":"项目经理资质与在职证明","reference":"招标文件第3.2.3条 / 评分办法第2.1项","finding":"技术方案所列项目经理姓名与所附资格证书持有人不一致。","question":"请明确拟任项目经理人选，提供其有效资格证书及在职证明；如更换人选，请同步更新技术方案相应章节并说明变更原因。","materials":["项目经理资格证书","在职证明或近三个月社保证明","更新后的技术方案相关页（如有变更）"],"response_format":"书面说明并附证明材料"},{"id":"澄-003","requirement_id":"REQ-015","problem_id":"PRB-003","item":"分项报价与开标一览表一致性","reference":"开标一览表 / 分项报价表","finding":"分项合价与投标总价存在差额，且未说明是否含增值税及适用税率。","question":"请核对并说明分项报价表与开标一览表金额差异原因，明确报价是否含税及税率；如需补正，请按招标文件规定提交更正说明（不得改变实质性报价条件，除非文件允许）。","materials":["差异说明函","修订后的分项报价表（如招标文件允许）"],"response_format":"书面说明；必要时提交更正表"}],"attachments":["招标文件相关条款摘录（供参考）","清标问题清单摘录（内部编号 PRB-001～PRB-003）"]};
     function collect(form) {
       // Prefer structured walk via data-path attributes
       const out = structuredClone(INITIAL);
@@ -310,5 +310,60 @@ fieldset.field textarea { min-height: 4.5rem; resize: vertical; }
       }).join('\\n');
     };
   </script>
+
+<script>
+(function(){
+  const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : null;
+  function collect(form){
+    const out = structuredClone(INITIAL);
+    form.querySelectorAll('[data-path]').forEach(el => {
+      const parts = el.getAttribute('data-path').split('.');
+      let cur = out;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const key = parts[i];
+        const next = parts[i+1];
+        if (/^\d+$/.test(next)) {
+          if (!Array.isArray(cur[key])) cur[key] = [];
+          const idx = Number(next);
+          while (cur[key].length <= idx) cur[key].push({});
+          cur = cur[key][idx];
+          i++;
+        } else {
+          if (cur[key] == null || typeof cur[key] !== 'object') cur[key] = {};
+          cur = cur[key];
+        }
+      }
+      const last = parts[parts.length - 1];
+      cur[last] = el.type === 'checkbox' ? el.checked : el.value;
+    });
+    return out;
+  }
+  function wire(){
+    const form = document.getElementById('data-form');
+    if (!form) return;
+    const bar = document.querySelector('.editor-toolbar');
+    if (bar && vscode) {
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.textContent = 'Save to workspace';
+      saveBtn.onclick = () => vscode.postMessage({ type: 'save', data: collect(form) });
+      bar.appendChild(saveBtn);
+      const prevBtn = document.createElement('button');
+      prevBtn.type = 'button';
+      prevBtn.className = 'secondary';
+      prevBtn.textContent = 'Preview display';
+      prevBtn.onclick = () => vscode.postMessage({ type: 'preview', data: collect(form) });
+      bar.appendChild(prevBtn);
+    }
+    const bj = document.getElementById('btn-json');
+    if (bj) bj.onclick = () => {
+      const blob = new Blob([JSON.stringify(collect(form), null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'data.json'; a.click();
+    };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+})();
+</script>
 </body>
 </html>
