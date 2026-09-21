@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="{{language}}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{title}}</title>
+  <style>{{theme_css}}</style>
+  <style>:root { --accent: {{accent}}; }</style>
+</head>
+<body>
+  <article class="page">
+    <h1 class="doc-title">{{title}}</h1>
+    <p class="doc-type">{{doc_type}}</p>
+    <hr class="rule" />
+    {{#if_draft}}
+    <div class="banner-draft"><strong>草　稿</strong> 未经采购人批准，不得作为正式澄清文件对外发送。</div>
+    {{/if_draft}}
+    <div class="meta">
+      <div><span class="label">发函单位：</span>{{issuer_name}}</div>
+      <div><span class="label">发函日期：</span>{{issue_date}}</div>
+      <div><span class="label">项目名称：</span>{{project_name}}</div>
+      <div><span class="label">项目编号：</span>{{project_id}}</div>
+      <div><span class="label">文　　号：</span>{{reference}}</div>
+      <div><span class="label">回复期限：</span>{{response_due}}</div>
+    </div>
+    <p class="kv"><span class="label">致：</span>{{supplier_legal_name}}</p>
+    {{#if_supplier_id}}<p class="kv"><span class="label">供应商编号：</span>{{supplier_id}}</p>{{/if_supplier_id}}
+    {{#if_contact}}<p class="kv"><span class="label">收件人：</span>{{contact_line}}</p>{{/if_contact}}
+    <div class="opening">{{opening_html}}</div>
+    <h2 class="section">澄清事项</h2>
+    {{questions_html}}
+    <div class="closing">{{closing_html}}</div>
+    {{attachments_html}}
+    <div class="sign">
+      {{issuer_name}}<br />
+      {{#if_issuer_dept}}{{issuer_department}}<br />{{/if_issuer_dept}}
+      {{#if_signatory}}{{signatory_name}}<br />{{signatory_title}}<br />{{/if_signatory}}
+      （签章）
+    </div>
+    <footer class="page-footer">
+      <span>澄字样例 · Artifact Studio / HTML</span>
+      <span>display</span>
+    </footer>
+  </article>
+</body>
+</html>

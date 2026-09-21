@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="{{language}}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edit · {{title}}</title>
+  <style>{{theme_css}}</style>
+</head>
+<body>
+  <div class="editor-toolbar">
+    <strong>HTML Form Editor</strong>
+    <span class="hint" style="color:#94a3b8">Same data contract as Typst letter.typ</span>
+    <button type="button" id="btn-json">Download JSON</button>
+    <button type="button" id="btn-yaml" class="secondary">Download YAML</button>
+    <button type="button" id="btn-preview" class="secondary">Open display preview</button>
+  </div>
+  <div class="editor-shell">
+    <form id="data-form" autocomplete="off">
+      {{form_fields_html}}
+    </form>
+  </div>
+  <script>
+    const INITIAL = {{initial_json}};
+    function collect(form) {
+      // Prefer structured walk via data-path attributes
+      const out = structuredClone(INITIAL);
+      form.querySelectorAll('[data-path]').forEach(el => {
+        const path = el.getAttribute('data-path').split('.');
+        let cur = out;
+        for (let i = 0; i < path.length - 1; i++) {
+          const key = path[i];
+          const idx = /^\d+$/.test(path[i+1]) ? Number(path[i+1]) : null;
+          if (idx !== null) {
+            if (!Array.isArray(cur[key])) cur[key] = [];
+            while (cur[key].length <= idx) cur[key].push({});
+            cur = cur[key];
+            i++; // consume index
+            // continue into object at idx on next loop via path[i] being index — handled below
+            cur = cur[idx] || (cur[idx] = {});
+            continue;
+          }
+          if (cur[key] == null || typeof cur[key] !== 'object') cur[key] = {};
+          cur = cur[key];
+        }
+        const last = path[path.length - 1];
+        let val = el.type === 'checkbox' ? el.checked : el.value;
+        if (el.dataset.jsonArray === 'true') {
+          val = el.value.split('\\n').map(s => s.trim()).filter(Boolean);
+        }
+        cur[last] = val;
+      });
+      return out;
+    }
+    function download(filename, text, type) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], {type}));
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    document.getElementById('btn-json').onclick = () => {
+      const data = collect(document.getElementById('data-form'));
+      download('data.json', JSON.stringify(data, null, 2), 'application/json');
+    };
+    document.getElementById('btn-yaml').onclick = () => {
+      const data = collect(document.getElementById('data-form'));
+      // minimal YAML dump for flat-ish clarification docs
+      download('data.yaml', window.__toYAML(data), 'text/yaml');
+    };
+    document.getElementById('btn-preview').onclick = () => {
+      const data = collect(document.getElementById('data-form'));
+      sessionStorage.setItem('artifact-studio-preview-data', JSON.stringify(data));
+      alert('Data captured to sessionStorage key artifact-studio-preview-data. Re-render display with scripts/render_html.py after saving JSON/YAML.');
+    };
+    window.__toYAML = function toYAML(obj, indent) {
+      indent = indent || 0;
+      const sp = '  '.repeat(indent);
+      if (obj === null || obj === undefined) return 'null';
+      if (typeof obj === 'string') {
+        if (obj.includes('\\n') || obj.length > 60) {
+          return '|\\n' + obj.split('\\n').map(l => sp + '  ' + l).join('\\n');
+        }
+        return JSON.stringify(obj);
+      }
+      if (typeof obj === 'number' || typeof obj === 'boolean') return String(obj);
+      if (Array.isArray(obj)) {
+        if (!obj.length) return '[]';
+        return obj.map(item => {
+          if (item && typeof item === 'object' && !Array.isArray(item)) {
+            const inner = toYAML(item, indent + 1).replace(/^\\s*/, '');
+            // object array item
+            const lines = toYAML(item, indent + 1).split('\\n');
+            return sp + '- ' + lines[0].trim() + '\\n' + lines.slice(1).map(l => sp + '  ' + l.trimStart()).join('\\n');
+          }
+          return sp + '- ' + toYAML(item, 0);
+        }).join('\\n');
+      }
+      return Object.entries(obj).map(([k,v]) => {
+        if (v && typeof v === 'object') {
+          return sp + k + ':\\n' + toYAML(v, indent + 1);
+        }
+        return sp + k + ': ' + toYAML(v, 0);
+      }).join('\\n');
+    };
+  </script>
+</body>
+</html>

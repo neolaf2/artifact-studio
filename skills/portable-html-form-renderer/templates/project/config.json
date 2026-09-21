@@ -1,0 +1,13 @@
+{
+  "document": {
+    "title": "供应商澄清函",
+    "locale": "zh-CN"
+  },
+  "brand": {
+    "accent": "#0f172a"
+  },
+  "html": {
+    "default_mode": "display",
+    "paper": "a4"
+  }
+}

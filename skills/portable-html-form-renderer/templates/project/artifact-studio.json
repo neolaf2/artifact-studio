@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "artifacts": [
+    {
+      "id": "clarification-html-display",
+      "template": "form.display.html",
+      "data": "data.yaml",
+      "output": "output/clarification-display.html",
+      "dataSchema": "schema/data.schema.json",
+      "renderer": "html-display"
+    },
+    {
+      "id": "clarification-html-editor",
+      "template": "form.editor.html",
+      "data": "data.yaml",
+      "output": "output/clarification-editor.html",
+      "dataSchema": "schema/data.schema.json",
+      "renderer": "html-editor"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "title": "澄清函 / Request for Clarification",
+  "doc_type": "供应商澄清函",
+  "status": "draft",
+  "language": "zh-CN",
+  "issuer": {
+    "name": "星海能源集团有限公司采购中心",
+    "name_en": "StarSea Energy Group Procurement Center",
+    "department": "清标与评审工作组",
+    "address": "上海市浦东新区示例大道88号"
+  },
+  "signatory": {
+    "name": "（待签）",
+    "title": "采购项目负责人",
+    "email": "procurement-demo@example.com"
+  },
+  "project": {
+    "name": "智能巡检系统采购项目",
+    "id": "SSE-IT-2026-091",
+    "bid_section": "标段一"
+  },
+  "supplier": {
+    "legal_name": "北京示例科技有限公司",
+    "supplier_id": "SUP-001",
+    "contact_name": "张明",
+    "contact_title": "投标授权代表",
+    "address": "北京市海淀区中关村大街1号"
+  },
+  "reference": "CLR-2026-0147",
+  "issue_date": "2026年9月21日",
+  "response_due": "收到本函后3个工作日内（不晚于 2026-09-26 17:00）",
+  "opening": "在对贵方递交的投标/应答文件进行清标与评审过程中，评标委员会（或清标工作组）就下列事项需要贵方予以澄清或补充材料。请于回复期限内书面答复，并附上相应证明材料。本函为草稿，未经买方批准不得对外发送。\n",
+  "closing": "1. 请逐项对应上述澄清事项编号作答；\n2. 所附材料须清晰可辨，并标注与事项编号的对应关系；\n3. 逾期未复的，评标委员会可按招标/采购文件约定处理。\n特此函告。\n",
+  "questions": [
+    {
+      "id": "CLR-001",
+      "requirement_id": "REQ-001",
+      "problem_id": "PRB-001",
+      "item": "法人资格与注册证明",
+      "reference": "招标文件 §3.1.1",
+      "finding": "营业执照扫描件不清晰，无法核验统一社会信用代码与经营范围。",
+      "question": "请重新提交清晰的营业执照复印件（加盖公章），并确认统一社会信用代码与投标文件封面一致。",
+      "materials": [
+        "营业执照清晰扫描件（加盖公章）",
+        "法定代表人身份证明或授权委托书"
+      ],
+      "response_format": "书面确认 + 附件"
+    },
+    {
+      "id": "CLR-002",
+      "requirement_id": "REQ-008",
+      "problem_id": "PRB-002",
+      "item": "项目经理资质",
+      "reference": "招标文件 §3.2.3 / 评分办法 2.1",
+      "finding": "技术方案中项目经理姓名与资质证书持有人不一致。",
+      "question": "请说明拟任项目经理人选，并提供其有效的相关资格证书及在职证明；如更换人选，请同步更新技术方案对应章节。",
+      "materials": [
+        "项目经理资质证书",
+        "在职/社保证明",
+        "更新后的技术方案相关页"
+      ],
+      "response_format": "书面说明 + 附件"
+    },
+    {
+      "id": "CLR-003",
+      "requirement_id": "REQ-015",
+      "problem_id": "PRB-003",
+      "item": "分项报价一致性",
+      "reference": "开标一览表 / 分项报价表",
+      "finding": "分项合价与投标总价存在差额，且未说明是否含税。",
+      "question": "请核对并澄清分项报价表与开标一览表金额差异原因，明确报价是否含增值税及税率。",
+      "materials": [
+        "修订后的分项报价表（如需）",
+        "差异说明函"
+      ],
+      "response_format": "书面说明；必要时提交更正表（按招标文件规定）"
+    }
+  ],
+  "attachments": [
+    "招标文件相关条款摘录（供参考）",
+    "清标问题清单摘录（内部编号 PRB-001~003）"
+  ]
+}
