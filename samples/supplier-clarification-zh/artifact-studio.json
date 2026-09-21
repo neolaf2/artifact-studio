@@ -1,13 +1,80 @@
 {
   "version": 1,
+  "ast": {
+    "tbox": {
+      "schema": "tbox/data.schema.json",
+      "ontology": "tbox/ontology.md",
+      "schemaRootCompat": "data.schema.json"
+    },
+    "abox": {
+      "data": "abox/data.json",
+      "dataTwin": "abox/data.yaml",
+      "snapshotNote": "abox/SNAPSHOT.md",
+      "defaultTemplate": "templates/abox.default.json",
+      "rootCompat": {
+        "data": "data.json",
+        "dataTwin": "data.yaml"
+      }
+    },
+    "rbox": {
+      "review": "rbox/review.yaml",
+      "schema": "rbox/review.schema.json",
+      "readme": "rbox/README.md"
+    },
+    "views": {
+      "htmlDisplay": "views/form.display.html",
+      "htmlEditor": "views/form.editor.html",
+      "typst": "views/letter.typ",
+      "theme": "views/theme.css",
+      "vscode": "views/vscode/",
+      "note": "HTML/Typst are views — not R-box."
+    },
+    "inputs": "inputs/",
+    "outputs": {
+      "intermediate": "outputs/intermediate/",
+      "final": "outputs/final/"
+    },
+    "provenance": "provenance/",
+    "logs": "logs/",
+    "cache": {
+      "rag": "cache/rag/"
+    }
+  },
   "artifacts": [
     {
-      "id": "clarification-zh",
-      "template": "letter.typ",
-      "data": "data.yaml",
-      "output": "output/澄清函-示例.pdf",
-      "ontology": "ontology.md",
-      "dataSchema": "data.schema.json"
+      "id": "clarification-html-display",
+      "template": "views/form.display.html",
+      "data": "abox/data.yaml",
+      "output": "outputs/final/clarification-display.html",
+      "dataSchema": "tbox/data.schema.json",
+      "renderer": "html-display",
+      "kind": "view"
+    },
+    {
+      "id": "clarification-html-editor",
+      "template": "views/form.editor.html",
+      "data": "abox/data.yaml",
+      "output": "outputs/final/clarification-editor.html",
+      "dataSchema": "tbox/data.schema.json",
+      "renderer": "html-editor",
+      "kind": "view"
+    },
+    {
+      "id": "clarification-pdf",
+      "template": "views/letter.typ",
+      "data": "abox/data.yaml",
+      "output": "outputs/final/clarification.pdf",
+      "dataSchema": "tbox/data.schema.json",
+      "renderer": "typst",
+      "kind": "view"
+    },
+    {
+      "id": "clarification-review-rbox",
+      "template": "rbox/review.yaml",
+      "data": "abox/data.json",
+      "dataSchema": "rbox/review.schema.json",
+      "renderer": "review-box",
+      "kind": "rbox"
     }
   ]
 }

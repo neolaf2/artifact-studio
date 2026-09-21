@@ -12,7 +12,7 @@ const { build } = require('../extension/src/core');
 
 async function main() {
   const sample = path.resolve(
-    process.argv[2] || path.join(__dirname, '../samples/supplier-clarification-html-zh')
+    process.argv[2] || path.join(__dirname, '../samples/supplier-clarification-zh')
   );
   const dataPath = path.join(sample, 'data.json');
   const yamlPath = path.join(sample, 'data.yaml');

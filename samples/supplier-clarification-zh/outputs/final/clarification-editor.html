@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edit · 澄清函</title>
+  <style>/* Parallel to theme.typ — clarification letter HTML */
+:root {
+  --accent: #0f172a;
+  --accent-soft: #1e293b;
+  --draft: #c2410c;
+  --draft-bg: #fff7ed;
+  --card: #f8fafc;
+  --border: #cbd5e1;
+  --muted: #64748b;
+  --text: #0f172a;
+  --font: "PingFang SC", "Noto Sans CJK SC", "Helvetica Neue", sans-serif;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 11pt;
+  line-height: 1.55;
+  color: var(--text);
+  background: #e2e8f0;
+}
+.page {
+  max-width: 210mm;
+  margin: 1.5rem auto;
+  padding: 22mm 24mm;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+h1.doc-title {
+  margin: 0;
+  text-align: center;
+  font-size: 20pt;
+}
+.doc-type {
+  text-align: center;
+  color: #334155;
+  margin: 0.3em 0 0.7em;
+}
+hr.rule {
+  border: none;
+  border-top: 1pt solid var(--accent);
+  margin: 0.7em 0 1em;
+}
+.banner-draft {
+  background: var(--draft-bg);
+  border-left: 3.5pt solid var(--draft);
+  padding: 9pt 12pt;
+  margin-bottom: 1em;
+  color: #9a3412;
+}
+.meta {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 0.5em 1em;
+  margin-bottom: 1em;
+}
+.meta .label, .kv .label { font-weight: 700; margin-right: 0.3em; }
+.opening, .closing { white-space: pre-wrap; text-indent: 2em; }
+.opening p, .closing p { text-indent: 2em; margin: 0.35em 0; }
+h2.section {
+  font-size: 13pt;
+  margin: 1em 0 0.5em;
+}
+.question {
+  background: var(--card);
+  border: 0.6pt solid var(--border);
+  border-radius: 2pt;
+  padding: 11pt;
+  margin: 0 0 0.55em;
+}
+.question h3 {
+  margin: 0 0 0.3em;
+  font-size: 12pt;
+}
+.q-meta {
+  font-size: 9.5pt;
+  color: #475569;
+  margin-bottom: 0.4em;
+}
+.q-meta span { margin-right: 0.9em; }
+.materials { margin: 0.3em 0 0 1em; padding: 0; }
+.materials li { margin: 0.1em 0; }
+.response-format { font-size: 9.5pt; color: #334155; }
+.sign {
+  text-align: right;
+  margin-top: 1.6em;
+  line-height: 1.6;
+}
+footer.page-footer {
+  margin-top: 2em;
+  padding-top: 0.5em;
+  border-top: 0.4pt solid var(--border);
+  font-size: 8.5pt;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Editor */
+.editor-toolbar {
+  position: sticky; top: 0; z-index: 5;
+  background: #0f172a; color: #fff;
+  padding: 0.6rem 1rem;
+  display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
+}
+.editor-toolbar button {
+  background: #38bdf8; border: none; color: #0f172a;
+  font-weight: 700; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer;
+}
+.editor-toolbar button.secondary { background: #e2e8f0; }
+.editor-shell { max-width: 920px; margin: 1rem auto 3rem; padding: 0 1rem; }
+fieldset.field {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem 1rem;
+  margin: 0 0 0.75rem;
+  background: #fff;
+}
+fieldset.field legend { font-weight: 700; padding: 0 0.35rem; }
+fieldset.field input[type=text],
+fieldset.field input[type=number],
+fieldset.field input[type=email],
+fieldset.field textarea,
+fieldset.field select {
+  width: 100%;
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+fieldset.field textarea { min-height: 4.5rem; resize: vertical; }
+.array-item {
+  border: 1px dashed #94a3b8;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  background: var(--card);
+}
+.hint { color: var(--muted); font-size: 0.85rem; }
+
+@media print {
+  body { background: #fff; }
+  .page { box-shadow: none; margin: 0; max-width: none; }
+  .editor-toolbar { display: none !important; }
+}
+</style>
+</head>
+<body>
+  <div class="editor-toolbar">
+    <strong>HTML Form Editor</strong>
+    <span class="hint" style="color:#94a3b8">Same data contract as Typst letter.typ</span>
+    <button type="button" id="btn-json">Download JSON</button>
+    <button type="button" id="btn-yaml" class="secondary">Download YAML</button>
+    <button type="button" id="btn-preview" class="secondary">Open display preview</button>
+  </div>
+  <div class="editor-shell">
+    <form id="data-form" autocomplete="off">
+      <fieldset class="field"><legend>title</legend><input type="text" data-path="title" value="澄清函" /></fieldset>
+<fieldset class="field"><legend>doc_type</legend><input type="text" data-path="doc_type" value="供应商澄清与补正通知" /></fieldset>
+<fieldset class="field"><legend>status</legend><select data-path="status"><option value="draft" selected>draft</option><option value="approved">approved</option><option value="sent">sent</option></select></fieldset>
+<fieldset class="field"><legend>language</legend><input type="text" data-path="language" value="zh-CN" /></fieldset>
+<fieldset class="field"><legend>issuer</legend><fieldset class="field"><legend>name</legend><input type="text" data-path="issuer.name" value="星海能源集团有限公司采购中心" /></fieldset>
+<fieldset class="field"><legend>name_en</legend><input type="text" data-path="issuer.name_en" value="StarSea Energy Group Procurement Center" /></fieldset>
+<fieldset class="field"><legend>department</legend><input type="text" data-path="issuer.department" value="清标与评审工作组" /></fieldset>
+<fieldset class="field"><legend>address</legend><input type="text" data-path="issuer.address" value="上海市浦东新区示例大道88号" /></fieldset></fieldset>
+<fieldset class="field"><legend>signatory</legend><fieldset class="field"><legend>name</legend><input type="text" data-path="signatory.name" value="（待签）" /></fieldset>
+<fieldset class="field"><legend>title</legend><input type="text" data-path="signatory.title" value="采购项目负责人" /></fieldset>
+<fieldset class="field"><legend>email</legend><input type="text" data-path="signatory.email" value="procurement-demo@example.com" /></fieldset></fieldset>
+<fieldset class="field"><legend>project</legend><fieldset class="field"><legend>name</legend><input type="text" data-path="project.name" value="智能巡检系统采购项目" /></fieldset>
+<fieldset class="field"><legend>id</legend><input type="text" data-path="project.id" value="SSE-IT-2026-091" /></fieldset>
+<fieldset class="field"><legend>bid_section</legend><input type="text" data-path="project.bid_section" value="标段一" /></fieldset></fieldset>
+<fieldset class="field"><legend>supplier</legend><fieldset class="field"><legend>legal_name</legend><input type="text" data-path="supplier.legal_name" value="北京示例科技有限公司" /></fieldset>
+<fieldset class="field"><legend>supplier_id</legend><input type="text" data-path="supplier.supplier_id" value="SUP-001" /></fieldset>
+<fieldset class="field"><legend>contact_name</legend><input type="text" data-path="supplier.contact_name" value="张明" /></fieldset>
+<fieldset class="field"><legend>contact_title</legend><input type="text" data-path="supplier.contact_title" value="投标授权代表" /></fieldset>
+<fieldset class="field"><legend>address</legend><input type="text" data-path="supplier.address" value="北京市海淀区中关村大街1号" /></fieldset></fieldset>
+<fieldset class="field"><legend>reference</legend><input type="text" data-path="reference" value="澄字〔2026〕0147号" /></fieldset>
+<fieldset class="field"><legend>issue_date</legend><input type="text" data-path="issue_date" value="2026年9月21日" /></fieldset>
+<fieldset class="field"><legend>response_due</legend><input type="text" data-path="response_due" value="收到本函之日起3个工作日内（截止2026年9月26日17:00前）" /></fieldset>
+<fieldset class="field"><legend>opening</legend><textarea data-path="opening">北京示例科技有限公司：
+
+在对贵单位递交的投标（应答）文件进行清标与评审过程中，评标委员会（清标工作组）发现下列事项需要贵单位予以澄清或补充证明材料。请严格按照本函所列事项逐条书面回复，并附相应证明材料。
+
+本函为草稿，未经采购人批准不得对外发送。逾期未复或回复不符合招标文件要求的，评标委员会可按招标文件及有关规定处理。
+</textarea></fieldset>
+<fieldset class="field"><legend>closing</legend><textarea data-path="closing">回复要求：
+一、请逐项对应澄清事项编号作答，不得遗漏；
+二、证明材料应清晰可辨，加盖单位公章，并标注与事项编号的对应关系；
+三、如涉及报价调整，须符合招标文件关于澄清、补正的规定，不得借澄清改变投标实质性内容；
+四、请将回复文件密封提交（或按招标文件规定的电子渠道上传），并注明项目名称、项目编号及“澄清回复”字样。
+
+特此函告。
+</textarea></fieldset>
+<fieldset class="field"><legend>questions（数组）</legend><div class="array-item"><div class="hint">[0]</div><fieldset class="field"><legend>id</legend><input type="text" data-path="questions.0.id" value="澄-001" /></fieldset>
+<fieldset class="field"><legend>requirement_id</legend><input type="text" data-path="questions.0.requirement_id" value="REQ-001" /></fieldset>
+<fieldset class="field"><legend>problem_id</legend><input type="text" data-path="questions.0.problem_id" value="PRB-001" /></fieldset>
+<fieldset class="field"><legend>item</legend><input type="text" data-path="questions.0.item" value="法人资格与注册证明" /></fieldset>
+<fieldset class="field"><legend>reference</legend><input type="text" data-path="questions.0.reference" value="招标文件第3.1.1条" /></fieldset>
+<fieldset class="field"><legend>finding</legend><textarea data-path="questions.0.finding">营业执照扫描件模糊，无法核验统一社会信用代码及经营范围是否覆盖本项目。</textarea></fieldset>
+<fieldset class="field"><legend>question</legend><textarea data-path="questions.0.question">请重新提交清晰的营业执照复印件（加盖公章），并书面确认统一社会信用代码与投标文件封面记载一致。</textarea></fieldset>
+<fieldset class="field"><legend>materials（数组）</legend><label>materials [0]<input type="text" data-path="questions.0.materials.0" value="营业执照清晰扫描件（加盖公章）" /></label><label>materials [1]<input type="text" data-path="questions.0.materials.1" value="法定代表人身份证明或授权委托书" /></label></fieldset>
+<fieldset class="field"><legend>response_format</legend><input type="text" data-path="questions.0.response_format" value="书面确认并附证明材料" /></fieldset></div><div class="array-item"><div class="hint">[1]</div><fieldset class="field"><legend>id</legend><input type="text" data-path="questions.1.id" value="澄-002" /></fieldset>
+<fieldset class="field"><legend>requirement_id</legend><input type="text" data-path="questions.1.requirement_id" value="REQ-008" /></fieldset>
+<fieldset class="field"><legend>problem_id</legend><input type="text" data-path="questions.1.problem_id" value="PRB-002" /></fieldset>
+<fieldset class="field"><legend>item</legend><input type="text" data-path="questions.1.item" value="项目经理资质与在职证明" /></fieldset>
+<fieldset class="field"><legend>reference</legend><input type="text" data-path="questions.1.reference" value="招标文件第3.2.3条 / 评分办法第2.1项" /></fieldset>
+<fieldset class="field"><legend>finding</legend><textarea data-path="questions.1.finding">技术方案所列项目经理姓名与所附资格证书持有人不一致。</textarea></fieldset>
+<fieldset class="field"><legend>question</legend><textarea data-path="questions.1.question">请明确拟任项目经理人选，提供其有效资格证书及在职证明；如更换人选，请同步更新技术方案相应章节并说明变更原因。</textarea></fieldset>
+<fieldset class="field"><legend>materials（数组）</legend><label>materials [0]<input type="text" data-path="questions.1.materials.0" value="项目经理资格证书" /></label><label>materials [1]<input type="text" data-path="questions.1.materials.1" value="在职证明或近三个月社保证明" /></label><label>materials [2]<input type="text" data-path="questions.1.materials.2" value="更新后的技术方案相关页（如有变更）" /></label></fieldset>
+<fieldset class="field"><legend>response_format</legend><input type="text" data-path="questions.1.response_format" value="书面说明并附证明材料" /></fieldset></div><div class="array-item"><div class="hint">[2]</div><fieldset class="field"><legend>id</legend><input type="text" data-path="questions.2.id" value="澄-003" /></fieldset>
+<fieldset class="field"><legend>requirement_id</legend><input type="text" data-path="questions.2.requirement_id" value="REQ-015" /></fieldset>
+<fieldset class="field"><legend>problem_id</legend><input type="text" data-path="questions.2.problem_id" value="PRB-003" /></fieldset>
+<fieldset class="field"><legend>item</legend><input type="text" data-path="questions.2.item" value="分项报价与开标一览表一致性" /></fieldset>
+<fieldset class="field"><legend>reference</legend><input type="text" data-path="questions.2.reference" value="开标一览表 / 分项报价表" /></fieldset>
+<fieldset class="field"><legend>finding</legend><textarea data-path="questions.2.finding">分项合价与投标总价存在差额，且未说明是否含增值税及适用税率。</textarea></fieldset>
+<fieldset class="field"><legend>question</legend><textarea data-path="questions.2.question">请核对并说明分项报价表与开标一览表金额差异原因，明确报价是否含税及税率；如需补正，请按招标文件规定提交更正说明（不得改变实质性报价条件，除非文件允许）。</textarea></fieldset>
+<fieldset class="field"><legend>materials（数组）</legend><label>materials [0]<input type="text" data-path="questions.2.materials.0" value="差异说明函" /></label><label>materials [1]<input type="text" data-path="questions.2.materials.1" value="修订后的分项报价表（如招标文件允许）" /></label></fieldset>
+<fieldset class="field"><legend>response_format</legend><input type="text" data-path="questions.2.response_format" value="书面说明；必要时提交更正表" /></fieldset></div></fieldset>
+<fieldset class="field"><legend>attachments（数组）</legend><label>attachments [0]<input type="text" data-path="attachments.0" value="招标文件相关条款摘录（供参考）" /></label><label>attachments [1]<input type="text" data-path="attachments.1" value="清标问题清单摘录（内部编号 PRB-001～PRB-003）" /></label></fieldset>
+    </form>
+  </div>
+  <script>
+    const INITIAL = {"title":"澄清函","doc_type":"供应商澄清与补正通知","status":"draft","language":"zh-CN","issuer":{"name":"星海能源集团有限公司采购中心","name_en":"StarSea Energy Group Procurement Center","department":"清标与评审工作组","address":"上海市浦东新区示例大道88号"},"signatory":{"name":"（待签）","title":"采购项目负责人","email":"procurement-demo@example.com"},"project":{"name":"智能巡检系统采购项目","id":"SSE-IT-2026-091","bid_section":"标段一"},"supplier":{"legal_name":"北京示例科技有限公司","supplier_id":"SUP-001","contact_name":"张明","contact_title":"投标授权代表","address":"北京市海淀区中关村大街1号"},"reference":"澄字〔2026〕0147号","issue_date":"2026年9月21日","response_due":"收到本函之日起3个工作日内（截止2026年9月26日17:00前）","opening":"北京示例科技有限公司：\n\n在对贵单位递交的投标（应答）文件进行清标与评审过程中，评标委员会（清标工作组）发现下列事项需要贵单位予以澄清或补充证明材料。请严格按照本函所列事项逐条书面回复，并附相应证明材料。\n\n本函为草稿，未经采购人批准不得对外发送。逾期未复或回复不符合招标文件要求的，评标委员会可按招标文件及有关规定处理。\n","closing":"回复要求：\n一、请逐项对应澄清事项编号作答，不得遗漏；\n二、证明材料应清晰可辨，加盖单位公章，并标注与事项编号的对应关系；\n三、如涉及报价调整，须符合招标文件关于澄清、补正的规定，不得借澄清改变投标实质性内容；\n四、请将回复文件密封提交（或按招标文件规定的电子渠道上传），并注明项目名称、项目编号及“澄清回复”字样。\n\n特此函告。\n","questions":[{"id":"澄-001","requirement_id":"REQ-001","problem_id":"PRB-001","item":"法人资格与注册证明","reference":"招标文件第3.1.1条","finding":"营业执照扫描件模糊，无法核验统一社会信用代码及经营范围是否覆盖本项目。","question":"请重新提交清晰的营业执照复印件（加盖公章），并书面确认统一社会信用代码与投标文件封面记载一致。","materials":["营业执照清晰扫描件（加盖公章）","法定代表人身份证明或授权委托书"],"response_format":"书面确认并附证明材料"},{"id":"澄-002","requirement_id":"REQ-008","problem_id":"PRB-002","item":"项目经理资质与在职证明","reference":"招标文件第3.2.3条 / 评分办法第2.1项","finding":"技术方案所列项目经理姓名与所附资格证书持有人不一致。","question":"请明确拟任项目经理人选，提供其有效资格证书及在职证明；如更换人选，请同步更新技术方案相应章节并说明变更原因。","materials":["项目经理资格证书","在职证明或近三个月社保证明","更新后的技术方案相关页（如有变更）"],"response_format":"书面说明并附证明材料"},{"id":"澄-003","requirement_id":"REQ-015","problem_id":"PRB-003","item":"分项报价与开标一览表一致性","reference":"开标一览表 / 分项报价表","finding":"分项合价与投标总价存在差额，且未说明是否含增值税及适用税率。","question":"请核对并说明分项报价表与开标一览表金额差异原因，明确报价是否含税及税率；如需补正，请按招标文件规定提交更正说明（不得改变实质性报价条件，除非文件允许）。","materials":["差异说明函","修订后的分项报价表（如招标文件允许）"],"response_format":"书面说明；必要时提交更正表"}],"attachments":["招标文件相关条款摘录（供参考）","清标问题清单摘录（内部编号 PRB-001～PRB-003）"]};
+    function collect(form) {
+      // Prefer structured walk via data-path attributes
+      const out = structuredClone(INITIAL);
+      form.querySelectorAll('[data-path]').forEach(el => {
+        const path = el.getAttribute('data-path').split('.');
+        let cur = out;
+        for (let i = 0; i < path.length - 1; i++) {
+          const key = path[i];
+          const idx = /^\d+$/.test(path[i+1]) ? Number(path[i+1]) : null;
+          if (idx !== null) {
+            if (!Array.isArray(cur[key])) cur[key] = [];
+            while (cur[key].length <= idx) cur[key].push({});
+            cur = cur[key];
+            i++; // consume index
+            // continue into object at idx on next loop via path[i] being index — handled below
+            cur = cur[idx] || (cur[idx] = {});
+            continue;
+          }
+          if (cur[key] == null || typeof cur[key] !== 'object') cur[key] = {};
+          cur = cur[key];
+        }
+        const last = path[path.length - 1];
+        let val = el.type === 'checkbox' ? el.checked : el.value;
+        if (el.dataset.jsonArray === 'true') {
+          val = el.value.split('\\n').map(s => s.trim()).filter(Boolean);
+        }
+        cur[last] = val;
+      });
+      return out;
+    }
+    function download(filename, text, type) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], {type}));
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    document.getElementById('btn-json').onclick = () => {
+      const data = collect(document.getElementById('data-form'));
+      download('data.json', JSON.stringify(data, null, 2), 'application/json');
+    };
+    document.getElementById('btn-yaml').onclick = () => {
+      const data = collect(document.getElementById('data-form'));
+      // minimal YAML dump for flat-ish clarification docs
+      download('data.yaml', window.__toYAML(data), 'text/yaml');
+    };
+    document.getElementById('btn-preview').onclick = () => {
+      const data = collect(document.getElementById('data-form'));
+      sessionStorage.setItem('artifact-studio-preview-data', JSON.stringify(data));
+      alert('Data captured to sessionStorage key artifact-studio-preview-data. Re-render display with scripts/render_html.py after saving JSON/YAML.');
+    };
+    window.__toYAML = function toYAML(obj, indent) {
+      indent = indent || 0;
+      const sp = '  '.repeat(indent);
+      if (obj === null || obj === undefined) return 'null';
+      if (typeof obj === 'string') {
+        if (obj.includes('\\n') || obj.length > 60) {
+          return '|\\n' + obj.split('\\n').map(l => sp + '  ' + l).join('\\n');
+        }
+        return JSON.stringify(obj);
+      }
+      if (typeof obj === 'number' || typeof obj === 'boolean') return String(obj);
+      if (Array.isArray(obj)) {
+        if (!obj.length) return '[]';
+        return obj.map(item => {
+          if (item && typeof item === 'object' && !Array.isArray(item)) {
+            const inner = toYAML(item, indent + 1).replace(/^\\s*/, '');
+            // object array item
+            const lines = toYAML(item, indent + 1).split('\\n');
+            return sp + '- ' + lines[0].trim() + '\\n' + lines.slice(1).map(l => sp + '  ' + l.trimStart()).join('\\n');
+          }
+          return sp + '- ' + toYAML(item, 0);
+        }).join('\\n');
+      }
+      return Object.entries(obj).map(([k,v]) => {
+        if (v && typeof v === 'object') {
+          return sp + k + ':\\n' + toYAML(v, indent + 1);
+        }
+        return sp + k + ': ' + toYAML(v, 0);
+      }).join('\\n');
+    };
+  </script>
+
+<script>
+(function(){
+  const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : null;
+  function collect(form){
+    const out = structuredClone(INITIAL);
+    form.querySelectorAll('[data-path]').forEach(el => {
+      const parts = el.getAttribute('data-path').split('.');
+      let cur = out;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const key = parts[i];
+        const next = parts[i+1];
+        if (/^\d+$/.test(next)) {
+          if (!Array.isArray(cur[key])) cur[key] = [];
+          const idx = Number(next);
+          while (cur[key].length <= idx) cur[key].push({});
+          cur = cur[key][idx];
+          i++;
+        } else {
+          if (cur[key] == null || typeof cur[key] !== 'object') cur[key] = {};
+          cur = cur[key];
+        }
+      }
+      const last = parts[parts.length - 1];
+      cur[last] = el.type === 'checkbox' ? el.checked : el.value;
+    });
+    return out;
+  }
+  function wire(){
+    const form = document.getElementById('data-form');
+    if (!form) return;
+    const bar = document.querySelector('.editor-toolbar');
+    if (bar && vscode) {
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.textContent = 'Save to workspace';
+      saveBtn.onclick = () => vscode.postMessage({ type: 'save', data: collect(form) });
+      bar.appendChild(saveBtn);
+      const prevBtn = document.createElement('button');
+      prevBtn.type = 'button';
+      prevBtn.className = 'secondary';
+      prevBtn.textContent = 'Preview display';
+      prevBtn.onclick = () => vscode.postMessage({ type: 'preview', data: collect(form) });
+      bar.appendChild(prevBtn);
+    }
+    const bj = document.getElementById('btn-json');
+    if (bj) bj.onclick = () => {
+      const blob = new Blob([JSON.stringify(collect(form), null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'data.json'; a.click();
+    };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+})();
+</script>
+</body>
+</html>

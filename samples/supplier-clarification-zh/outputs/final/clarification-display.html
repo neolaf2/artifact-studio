@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>澄清函</title>
+  <style>/* Parallel to theme.typ — clarification letter HTML */
+:root {
+  --accent: #0f172a;
+  --accent-soft: #1e293b;
+  --draft: #c2410c;
+  --draft-bg: #fff7ed;
+  --card: #f8fafc;
+  --border: #cbd5e1;
+  --muted: #64748b;
+  --text: #0f172a;
+  --font: "PingFang SC", "Noto Sans CJK SC", "Helvetica Neue", sans-serif;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 11pt;
+  line-height: 1.55;
+  color: var(--text);
+  background: #e2e8f0;
+}
+.page {
+  max-width: 210mm;
+  margin: 1.5rem auto;
+  padding: 22mm 24mm;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+h1.doc-title {
+  margin: 0;
+  text-align: center;
+  font-size: 20pt;
+}
+.doc-type {
+  text-align: center;
+  color: #334155;
+  margin: 0.3em 0 0.7em;
+}
+hr.rule {
+  border: none;
+  border-top: 1pt solid var(--accent);
+  margin: 0.7em 0 1em;
+}
+.banner-draft {
+  background: var(--draft-bg);
+  border-left: 3.5pt solid var(--draft);
+  padding: 9pt 12pt;
+  margin-bottom: 1em;
+  color: #9a3412;
+}
+.meta {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 0.5em 1em;
+  margin-bottom: 1em;
+}
+.meta .label, .kv .label { font-weight: 700; margin-right: 0.3em; }
+.opening, .closing { white-space: pre-wrap; text-indent: 2em; }
+.opening p, .closing p { text-indent: 2em; margin: 0.35em 0; }
+h2.section {
+  font-size: 13pt;
+  margin: 1em 0 0.5em;
+}
+.question {
+  background: var(--card);
+  border: 0.6pt solid var(--border);
+  border-radius: 2pt;
+  padding: 11pt;
+  margin: 0 0 0.55em;
+}
+.question h3 {
+  margin: 0 0 0.3em;
+  font-size: 12pt;
+}
+.q-meta {
+  font-size: 9.5pt;
+  color: #475569;
+  margin-bottom: 0.4em;
+}
+.q-meta span { margin-right: 0.9em; }
+.materials { margin: 0.3em 0 0 1em; padding: 0; }
+.materials li { margin: 0.1em 0; }
+.response-format { font-size: 9.5pt; color: #334155; }
+.sign {
+  text-align: right;
+  margin-top: 1.6em;
+  line-height: 1.6;
+}
+footer.page-footer {
+  margin-top: 2em;
+  padding-top: 0.5em;
+  border-top: 0.4pt solid var(--border);
+  font-size: 8.5pt;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Editor */
+.editor-toolbar {
+  position: sticky; top: 0; z-index: 5;
+  background: #0f172a; color: #fff;
+  padding: 0.6rem 1rem;
+  display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
+}
+.editor-toolbar button {
+  background: #38bdf8; border: none; color: #0f172a;
+  font-weight: 700; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer;
+}
+.editor-toolbar button.secondary { background: #e2e8f0; }
+.editor-shell { max-width: 920px; margin: 1rem auto 3rem; padding: 0 1rem; }
+fieldset.field {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem 1rem;
+  margin: 0 0 0.75rem;
+  background: #fff;
+}
+fieldset.field legend { font-weight: 700; padding: 0 0.35rem; }
+fieldset.field input[type=text],
+fieldset.field input[type=number],
+fieldset.field input[type=email],
+fieldset.field textarea,
+fieldset.field select {
+  width: 100%;
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+fieldset.field textarea { min-height: 4.5rem; resize: vertical; }
+.array-item {
+  border: 1px dashed #94a3b8;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  background: var(--card);
+}
+.hint { color: var(--muted); font-size: 0.85rem; }
+
+@media print {
+  body { background: #fff; }
+  .page { box-shadow: none; margin: 0; max-width: none; }
+  .editor-toolbar { display: none !important; }
+}
+</style>
+  <style>:root { --accent: #0f172a; }</style>
+</head>
+<body>
+  <article class="page">
+    <h1 class="doc-title">澄清函</h1>
+    <p class="doc-type">供应商澄清与补正通知</p>
+    <hr class="rule" />
+    
+    <div class="banner-draft"><strong>草　稿</strong> 未经采购人批准，不得作为正式澄清文件对外发送。</div>
+    
+    <div class="meta">
+      <div><span class="label">发函单位：</span>星海能源集团有限公司采购中心</div>
+      <div><span class="label">发函日期：</span>2026年9月21日</div>
+      <div><span class="label">项目名称：</span>智能巡检系统采购项目</div>
+      <div><span class="label">项目编号：</span>SSE-IT-2026-091</div>
+      <div><span class="label">文　　号：</span>澄字〔2026〕0147号</div>
+      <div><span class="label">回复期限：</span>收到本函之日起3个工作日内（截止2026年9月26日17:00前）</div>
+    </div>
+    <p class="kv"><span class="label">致：</span>北京示例科技有限公司</p>
+    <p class="kv"><span class="label">供应商编号：</span>SUP-001</p>
+    <p class="kv"><span class="label">收件人：</span>张明（投标授权代表）</p>
+    <div class="opening"><p>北京示例科技有限公司：</p>
+<p>在对贵单位递交的投标（应答）文件进行清标与评审过程中，评标委员会（清标工作组）发现下列事项需要贵单位予以澄清或补充证明材料。请严格按照本函所列事项逐条书面回复，并附相应证明材料。</p>
+<p>本函为草稿，未经采购人批准不得对外发送。逾期未复或回复不符合招标文件要求的，评标委员会可按招标文件及有关规定处理。</p></div>
+    <h2 class="section">澄清事项</h2>
+    
+    <section class="question">
+      <h3>澄-001　法人资格与注册证明</h3>
+      <div class="q-meta">
+        <span>关联要求：REQ-001</span>
+        <span>问题编号：PRB-001</span>
+        <span>文件依据：招标文件第3.1.1条</span>
+      </div>
+      <p><strong>发现问题：</strong>原发现问题已更新</p>
+      <p><strong>请澄清：</strong>请重新提交清晰的营业执照复印件（加盖公章），并书面确认统一社会信用代码与投标文件封面记载一致。</p>
+      <p><strong>请补充材料：</strong></p><ul class="materials"><li>营业执照清晰扫描件（加盖公章）</li><li>法定代表人身份证明或授权委托书</li></ul>
+      <p class="response-format">回复形式：书面确认并附证明材料</p>
+    </section>
+
+    <section class="question">
+      <h3>澄-002　项目经理资质与在职证明</h3>
+      <div class="q-meta">
+        <span>关联要求：REQ-008</span>
+        <span>问题编号：PRB-002</span>
+        <span>文件依据：招标文件第3.2.3条 / 评分办法第2.1项</span>
+      </div>
+      <p><strong>发现问题：</strong>技术方案所列项目经理姓名与所附资格证书持有人不一致。</p>
+      <p><strong>请澄清：</strong>请明确拟任项目经理人选，提供其有效资格证书及在职证明；如更换人选，请同步更新技术方案相应章节并说明变更原因。</p>
+      <p><strong>请补充材料：</strong></p><ul class="materials"><li>项目经理资格证书</li><li>在职证明或近三个月社保证明</li><li>更新后的技术方案相关页（如有变更）</li></ul>
+      <p class="response-format">回复形式：书面说明并附证明材料</p>
+    </section>
+
+    <section class="question">
+      <h3>澄-003　分项报价与开标一览表一致性</h3>
+      <div class="q-meta">
+        <span>关联要求：REQ-015</span>
+        <span>问题编号：PRB-003</span>
+        <span>文件依据：开标一览表 / 分项报价表</span>
+      </div>
+      <p><strong>发现问题：</strong>分项合价与投标总价存在差额，且未说明是否含增值税及适用税率。</p>
+      <p><strong>请澄清：</strong>请核对并说明分项报价表与开标一览表金额差异原因，明确报价是否含税及税率；如需补正，请按招标文件规定提交更正说明（不得改变实质性报价条件，除非文件允许）。</p>
+      <p><strong>请补充材料：</strong></p><ul class="materials"><li>差异说明函</li><li>修订后的分项报价表（如招标文件允许）</li></ul>
+      <p class="response-format">回复形式：书面说明；必要时提交更正表</p>
+    </section>
+    <div class="closing"><p>回复要求：</p>
+<p>一、请逐项对应澄清事项编号作答，不得遗漏；</p>
+<p>二、证明材料应清晰可辨，加盖单位公章，并标注与事项编号的对应关系；</p>
+<p>三、如涉及报价调整，须符合招标文件关于澄清、补正的规定，不得借澄清改变投标实质性内容；</p>
+<p>四、请将回复文件密封提交（或按招标文件规定的电子渠道上传），并注明项目名称、项目编号及“澄清回复”字样。</p>
+<p>特此函告。</p></div>
+    <p><strong>附件：</strong></p><ul class="materials"><li>招标文件相关条款摘录（供参考）</li><li>清标问题清单摘录（内部编号 PRB-001～PRB-003）</li></ul>
+    <div class="sign">
+      星海能源集团有限公司采购中心<br />
+      清标与评审工作组<br />
+      （待签）<br />采购项目负责人<br />
+      （签章）
+    </div>
+    <footer class="page-footer">
+      <span>澄字样例 · Artifact Studio / HTML</span>
+      <span>display</span>
+    </footer>
+  </article>
+</body>
+</html>

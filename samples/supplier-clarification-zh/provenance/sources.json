@@ -1,0 +1,10 @@
+{
+  "contentHash": "sha256:bcccc03b1ff03f9902f28b340b763ec0c28554b3b312a48b43e879f8184a3080",
+  "sources": [
+    "samples/supplier-clarification-html-zh",
+    "samples/supplier-clarification-zh",
+    "samples/supplier-clarification",
+    "samples/supplier-clarification-html",
+    "web/content/artifacts/clarification"
+  ]
+}
