@@ -275,3 +275,9 @@ cd web && npm install && npm run dev
 
 Open http://localhost:3000 and choose the clarification letter to edit against the T-box schema.
 
+## Deploy web app to Vercel (CI)
+
+The Next.js app under `web/` deploys via GitHub Actions (`.github/workflows/deploy-vercel.yml`) to project **artifact-studio-web**.
+
+Set GitHub secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` once (see `web/README.md`). LLM and durable-save env vars remain configured in the Vercel project dashboard — CI does not overwrite them.
+
