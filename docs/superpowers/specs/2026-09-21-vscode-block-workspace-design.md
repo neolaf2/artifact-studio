@@ -1,7 +1,9 @@
 # Block Workspace for the VS Code Extension — Design
 
 - **Date:** 2026-09-21
-- **Status:** Approved design; implementation plan not yet written
+- **Status:** Approved design, revised to include the project tree.
+  Implementation **blocked** on the `tender.typ` compile fix reaching `main` (see §12).
+- **Revised:** 2026-09-21 — added the project model and linked-file closure (§6)
 - **Surface:** VS Code / Cursor extension (v1 of a three-surface program)
 
 ## 1. Context
@@ -40,13 +42,16 @@ extracted in v1; see §3.
 3. Review every agent edit as a diff before it lands.
 4. Surface schema errors on the block that caused them.
 5. Give Typst template editing real language support without building it.
+6. Show the artifact's **whole project tree** — every linked template, asset,
+   stylesheet and data file — and let any of them be opened and edited.
 
 ## 3. Non-goals for v1
 
 - PDF click targets, Typst `#metadata` instrumentation, coordinate hit-testing.
 - The web and WASM surfaces.
 - Extracting `@artifact-studio/core`.
-- Collaboration, version history, project lists.
+- Collaboration, version history, and a multi-project switcher. (The project
+  *tree* for the open artifact **is** in scope — see §6.)
 - De-duplicating the existing triplicated prompt modules (tracked separately;
   v1 must not add a fourth copy).
 
@@ -61,6 +66,8 @@ extracted in v1; see §3.
 | D5 | Standardize paths on **JSON Pointer** (RFC 6901) | Ajv already reports `instancePath` as JSON Pointer. Unifying gives error-to-block highlighting with no mapping layer. |
 | D6 | **Always diff, then accept** — never auto-apply | In procurement documents a silently-wrong clause is expensive. The diff is the human's only control surface, so it must always appear. |
 | D7 | Accept applies via `WorkspaceEdit` | Matches the existing editor path, so undo, dirty state, save, and the JSON/YAML twin sync all work unchanged. |
+| D8 | The tree is **role-based** (T-box / A-box / R-box / Views / Assets / Output), not a second file explorer | VS Code already has a file explorer; duplicating it adds nothing. Grouping by role matches the project's own vocabulary, and is the same model the web surface renders where no host explorer exists. |
+| D9 | The linked-file set is **discovered from the compiler**, via `typst compile --deps`, not inferred from the manifest | The manifest declares six paths; templates pull in more. `--deps` reports the true closure, and the same JSON serves the tree, the watcher, and (later) the WASM virtual-filesystem preload. |
 
 ## 5. The block contract
 
@@ -91,7 +98,80 @@ One address space serves three consumers:
 `shared/llm-generate` currently uses, so existing prompt builders keep working
 without being rewritten in v1.
 
-## 6. The edit loop
+## 6. Project model and the linked-file closure
+
+### What already works
+
+Compilation already uses the full linked set. `core.js` passes `--root <project>`,
+so Typst resolves every `image()`, `read()` and `include` under the package. Assets
+are not missing from the build.
+
+What is missing is that **the tooling cannot see them.** `artifact-studio.json`
+declares six paths — `template`, `data`, `output`, and the optional `ontology`,
+`dataSchema`, `theme`. Anything a template pulls in beyond those is invisible to the
+extension, which is why the file watcher at `extension.js:352` is a blunt `**/*`:
+it has no way to know which files matter.
+
+This section closes that gap. It is not a compile fix.
+
+### Two layers
+
+| Layer | Source | Available | Gives |
+|-------|--------|-----------|-------|
+| **Declared** | `artifact-studio.json` | immediately | entry points |
+| **Discovered** | `typst compile --deps` | after a compile | true closure: assets, partials, fonts |
+
+`typst compile --deps - --deps-format json` (Typst 0.15.1, verified) emits
+root-relative paths:
+
+```json
+{ "inputs": ["data.json", "letter.typ"], "outputs": ["/abs/path/out.pdf"] }
+```
+
+The tree renders the **union** of both layers:
+
+- Declared **and** discovered → normal node.
+- Discovered, not declared → **Assets**.
+- Declared, never read → flagged as unused or stale. (This is how the duplicated
+  schema copies under `samples/tender-document-v20918/` surface: four byte-identical
+  `data.schema.json` files, only one of which any compile reads.)
+
+Before the first compile, only the declared layer exists; the tree renders it and
+marks the closure as not yet known. The closure is refreshed on every successful
+build and cached per artifact.
+
+### Role-based tree
+
+```
+▾ 招标文件 V20918                    (artifact, from artifact-studio.json)
+  ▾ T-box    tbox/data.schema.json · tbox/ontology.md
+  ▾ A-box    abox/data.json          → opens the AST editor
+  ▾ R-box    rbox/review.yaml
+  ▾ Views    tender.typ · form.display.html · theme.css
+  ▾ Assets   (discovered)
+  ▾ Output   output/tender.pdf
+  ⚠ declared but unused: schema/data.schema.json
+```
+
+Role assignment is by declared kind first (`dataSchema` and `ontology` are T-box,
+`data` is A-box, `template` and `theme` are Views), then by convention for
+discovered files (anything under `rbox/` is R-box; the rest are Assets). Opening any
+node opens it in an ordinary editor, except `data.json`, which opens the existing
+AST editor.
+
+### Consumers of the closure
+
+One mechanism, three consumers — which is why it is worth building now rather than
+with surface 2:
+
+1. **Tree** — what to show, and what is unused.
+2. **Watcher** — replaces `**/*` with the closure, so rebuilds trigger only on files
+   the compile actually read.
+3. **WASM virtual filesystem** (surface 3, later) — a browser has no filesystem, so
+   the hosted editor must preload exactly the files a compile will touch. `--deps`
+   is that manifest.
+
+## 7. The edit loop
 
 ```
 click block
@@ -142,7 +222,7 @@ Splicing produces a new object; the original is never mutated, per
 `rules/common/coding-style.md`. Accept applies the result through
 `vscode.WorkspaceEdit`, exactly as `artifactEditor.js:102` does today.
 
-## 7. Components
+## 8. Components
 
 ### New — plain modules with no `vscode` import
 
@@ -154,22 +234,26 @@ cheap when surface 2 arrives.
 |--------|----------------|
 | `extension/src/blocks.js` | JSON Pointer parse/format, dotted-path conversion, immutable subtree get/splice, `data-ast-path` injection into rendered HTML |
 | `extension/src/editLoop.js` | Proposal lifecycle: build prompt, call agent, splice into a candidate, validate, expose accept/reject/retry |
+| `extension/src/project.js` | Project model: declared layer from the manifest, discovered layer from `--deps`, union, role assignment, unused/stale detection |
 
 ### Modified
 
 | File | Change |
 |------|--------|
 | `extension/src/html.js` | Emit `data-ast-path` on block elements; add prompt box and proposal controls to the display renderer |
-| `extension/src/extension.js:104` | `enableScripts: edit` must become true for display panels; add nonce-based CSP (see §10) |
+| `extension/src/extension.js:104` | `enableScripts: edit` must become true for display panels; add nonce-based CSP (see §11) |
 | `extension/src/llmGenerate.js` | Accept a subtree path, not only a leaf field path |
 | `extension/package.json` | Add `extensionDependencies: ["Myriad-Dreamin.tinymist"]` |
+| `extension/src/core.js` | Add `--deps - --deps-format json` to the compile; return the closure alongside `{id, output, pages}` |
+| `extension/src/extension.js:24` | `TreeDataProvider` becomes role-based over the project model |
+| `extension/src/extension.js:352` | Watcher narrows from `**/*` to the closure; falls back to the declared layer before the first successful build |
 
 ### Untouched
 
-`core.js` and the build pipeline, the CLI, and every Typst template. No template
+The CLI, and every Typst template. No template
 instrumentation is required in v1 — this is the direct consequence of D2.
 
-## 8. Error handling
+## 9. Error handling
 
 | Failure | Behaviour |
 |---------|-----------|
@@ -180,7 +264,7 @@ instrumentation is required in v1 — this is the direct consequence of D2.
 | Typst build fails after accept | Existing behaviour — diagnostics to Problems panel, last good PDF preserved |
 | Ajv error path names a missing block | Fall back to document-level error display |
 
-## 9. Testing
+## 10. Testing
 
 Unit tests, `node --test`, no editor harness:
 
@@ -192,10 +276,20 @@ Unit tests, `node --test`, no editor harness:
 - Proposal lifecycle against a stubbed agent: valid, invalid, unparseable, and
   needs-input paths.
 
-Integration: the full loop against the existing LLM mock, asserting that a rejected
-proposal leaves `data.json` byte-identical.
+Project model:
 
-## 10. Risks
+- `--deps` JSON parsing, including absolute output paths and root-relative inputs.
+- Union of declared and discovered layers; correct classification into normal,
+  Assets, and unused/stale.
+- Role assignment for declared kinds and for discovered files by convention.
+- Pre-first-compile state: declared layer renders, closure reported as unknown.
+
+Integration: the full loop against the existing LLM mock, asserting that a rejected
+proposal leaves `data.json` byte-identical; and a real compile of
+`samples/supplier-clarification-zh` asserting the closure contains `letter.typ`
+and `data.json`.
+
+## 11. Risks
 
 | Risk | Mitigation |
 |------|------------|
@@ -203,8 +297,27 @@ proposal leaves `data.json` byte-identical.
 | HTML preview layout differs from the PDF | Accepted. PDF remains one click away for final layout checks |
 | An agent rewriting a subtree can break cross-references (duplicate ids, stale `requirement_id`) that schema validation cannot catch | Out of scope for v1; candidate for an R-box rule |
 | Pre-existing: `extension.js:123` writes JSON content into `.yaml` files on save | Not addressed in v1; noted so it is not mistaken for new breakage |
+| The closure is only known after a successful compile, so a template that fails to build yields no Assets | Tree falls back to the declared layer and marks the closure unknown; the watcher falls back to the declared layer too |
+| `--deps` output shape is Typst-version-dependent | Verified against 0.15.1. Parsing is isolated in `project.js` with its own tests, so a format change is a one-module fix |
 
-## 11. Follow-on work
+## 12. Prerequisite and sequencing
+
+**Implementation of this spec does not begin until the `tender.typ` compile fix is
+merged to `main`.** Another developer holds that work on a separate branch.
+
+The dependency is concrete, not procedural: `samples/tender-document-v20918` is the
+richest artifact package in the repo and the natural fixture for closure and
+role-assignment tests, but on Typst 0.15.1 it currently fails to compile — 2 errors,
+145 warnings, no PDF — because the template is authored in Markdown syntax
+(`<500 万元` opens an unclosed label; `**bold**` is empty-strong in Typst, where
+strong is `*bold*`). A compile that fails produces no `--deps` output, so the
+discovered layer cannot be tested against it.
+
+`samples/supplier-clarification-zh` compiles cleanly and can serve as the interim
+fixture, but the tender package is the one that exercises T-box / A-box / R-box
+roles together.
+
+## 13. Follow-on work
 
 1. Surface 2 (local web server) — extract `@artifact-studio/core`, reuse the block
    contract verbatim.
