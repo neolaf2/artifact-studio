@@ -30,6 +30,23 @@ function readSnapshotHash(snapshot: Record<string, unknown> | undefined): string
   return typeof hash === 'string' ? hash : undefined;
 }
 
+
+async function downloadPdfFromHtml(html: string, filename: string) {
+  const w = window.open('', '_blank', 'noopener,noreferrer,width=900,height=1200');
+  if (!w) throw new Error('Popup blocked — allow popups to download PDF from HTML preview');
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  await new Promise<void>((resolve) => {
+    const done = () => resolve();
+    if (w.document.readyState === 'complete') done();
+    else w.addEventListener('load', done, { once: true });
+  });
+  w.focus();
+  w.print(); // user can "Save as PDF"
+  // Do not close immediately — let the print dialog finish
+}
+
 export function ArtifactEditor({ initial }: Props) {
   const [bundle, setBundle] = useState<ArtifactBundle>(initial);
   const [data, setData] = useState<Record<string, unknown>>(initial.data);
@@ -191,8 +208,15 @@ export function ArtifactEditor({ initial }: Props) {
         body: JSON.stringify({ data }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `PDF failed (${res.status})`);
+        const body = await res.json().catch(() => ({} as { error?: string }));
+        // Vercel without Chromium binaries: fall back to printing the live HTML preview
+        try {
+          await downloadPdfFromHtml(previewHtml, `${bundle.meta.id}.pdf`);
+          setStatus('Use the print dialog → Save as PDF (HTML preview fallback)');
+          return;
+        } catch {
+          throw new Error(body.error || `PDF failed (${res.status})`);
+        }
       }
       const blob = await res.blob();
       const cd = res.headers.get('Content-Disposition') || '';
@@ -239,7 +263,7 @@ export function ArtifactEditor({ initial }: Props) {
         <button type="button" disabled={generatingAll} onClick={onGenerateArtifact} className="rounded-md border border-amber-400/60 bg-amber-500/20 px-2.5 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-500/30 disabled:opacity-60">
           {generatingAll ? 'Generating…' : '✨ Generate'}
         </button>
-        <button type="button" disabled={pdfBusy} onClick={() => void onDownloadPdf()} className="rounded-md border border-sky-400/70 bg-sky-500/20 px-2.5 py-1.5 text-xs font-medium text-sky-50 hover:bg-sky-500/30 disabled:opacity-60" title="Compile Typst view for this pack (generic; needs local Typst)">
+        <button type="button" disabled={pdfBusy} onClick={() => void onDownloadPdf()} className="rounded-md border border-sky-400/70 bg-sky-500/20 px-2.5 py-1.5 text-xs font-medium text-sky-50 hover:bg-sky-500/30 disabled:opacity-60" title="PDF from Typst locally, or HTML preview on Vercel">
           {pdfBusy ? 'Building PDF…' : 'Download PDF'}
         </button>
         <button type="button" disabled={saving} onClick={() => void persist('manual')} className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60" title="Cmd/Ctrl+S">
